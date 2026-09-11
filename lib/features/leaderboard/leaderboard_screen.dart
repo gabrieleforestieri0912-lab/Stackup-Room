@@ -13,7 +13,7 @@ class LeaderboardScreen extends StatelessWidget {
     final mock = [
       ('acme', 'Acme AI', '€12.4k', 7),
       ('vertex', 'Vertex', '€8.1k', 5),
-      ('stackup', 'StackUp Room', '—', 1),
+      ('stackup', 'Stackup Room', '—', 1),
     ];
 
     return Scaffold(

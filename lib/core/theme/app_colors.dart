@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Palette "club esclusivo per founder seri" — dark default.
 ///
 /// Riferimento concettuale: Taskly dark (0xFF0F0F1A / 0xFF1A1A2E / 0xFFA67CFF)
-/// declinato come identità autonoma StackUp Room.
+/// declinato come identità autonoma Stackup Room.
 class AppColors {
   const AppColors({
     required this.background,

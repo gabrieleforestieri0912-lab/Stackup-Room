@@ -1,4 +1,4 @@
-# StackUp Room — Scope Giorno 1
+# Stackup Room — Scope Giorno 1
 
 > **Branch:** `feature/stackuproom-day1-<timestamp>`  
 > **Piattaforma MVP:** iOS + Android (Flutter). Windows desktop = Giorno 6 (disabilitato fino ad allora).  
@@ -9,22 +9,22 @@
 
 ## 1) Conferma naming
 
-**Deciso e non negoziabile:** `StackUp Room`.
+**Deciso e non negoziabile:** `Stackup Room`.
 
-### Legame con "StackUp" esistente in portfolio Vertex — verifica
+### Legame con "Stackup" esistente in portfolio Vertex — verifica
 
 Ricerca effettuata in `Vertex/App/*`, `Vertex/Tech/*`, `Vertex/Web/*` (taskly, vertex, agentcloud):
 
-- **Nessun progetto denominato "StackUp" rilevato** nel portfolio ispezionabile localmente al 2026-09-11.
-- In assenza di asset di brand pre-esistenti (logo, palette, design system StackUp), **StackUp Room è trattato come prodotto indipendente dal Giorno 1**.
+- **Nessun progetto denominato "Stackup" rilevato** nel portfolio ispezionabile localmente al 2026-09-11.
+- In assenza di asset di brand pre-esistenti (logo, palette, design system Stackup), **Stackup Room è trattato come prodotto indipendente dal Giorno 1**.
 
 **Implicazione brand per MVP:**
 
 - Non ereditiamo palette/tono da altri prodotti Vertex per evitare accoppiamento involontario.
-- Proposta tono MVP: **"club esclusivo per founder seri"** → dark theme di default, tipografia essenziale, accenti viola profondi su nero/blu notte (coerente con l'estetica già usata in Taskly `0xFF7B39FC / 0xFF0F0F1A` ma declinata come identità autonoma di StackUp Room).
-- Se in realtà esiste un progetto "StackUp" non presente in repo locale (es. Figma privato, altro repo non clonato, naming interno diverso), **domanda aperta per te al Checkpoint 1:**
+- Proposta tono MVP: **"club esclusivo per founder seri"** → dark theme di default, tipografia essenziale, accenti viola profondi su nero/blu notte (coerente con l'estetica già usata in Taskly `0xFF7B39FC / 0xFF0F0F1A` ma declinata come identità autonoma di Stackup Room).
+- Se in realtà esiste un progetto "Stackup" non presente in repo locale (es. Figma privato, altro repo non clonato, naming interno diverso), **domanda aperta per te al Checkpoint 1:**
 
-> **Q1 — Vuoi che StackUp Room mantenga coerenza visiva/verbale con un progetto StackUp esistente fuori da questo workspace? Se sì, condividi palette, logo, font e tono di voce, altrimenti confermiamo indipendenza totale e procediamo con identità autonoma proposta qui.**
+> **Q1 — Vuoi che Stackup Room mantenga coerenza visiva/verbale con un progetto Stackup esistente fuori da questo workspace? Se sì, condividi palette, logo, font e tono di voce, altrimenti confermiamo indipendenza totale e procediamo con identità autonoma proposta qui.**
 
 **Raccomandazione fallback:** in assenza di risposta, **indipendenza totale** + palette dark proprietaria documentata in `lib/core/theme` (Fase 3).
 
@@ -42,7 +42,7 @@ Posizionamento centrale confermato: **daily momentum + accountability**, non lea
 | 4 | Entrambi: feed passivo / directory statica | Non copiamo feed sociale generico, like/commenti infiniti, o directory sfogliabile senza contesto. | **AI coaching digest:** Edge Function che sintetizza i check-in della settimana (pattern, blocchi ricorrenti, suggerimenti). Valore tangibile settimanale, non rumore quotidiano. |
 | 5 | Entrambi: onboarding leggero, bassa retention | Non puntiamo su iscrizione rapida senza impegno. | **Rituale giornaliero progettato per retention:** promemoria locale 9:00 (configurabile), testo libero 280 char, stato offline-first (Hive), attrito minimo ma cadenza obbligata. Chi non fa check-in scende — incentivo comportamentale, non cosmetico. |
 
-**Sintesi posizionamento in una frase:** *StartuPage ti mostra dove sei. Unicorns Club ti mostra a chi presentarti. StackUp Room ti fa muovere ogni giorno — e lo prova con numeri veri.*
+**Sintesi posizionamento in una frase:** *StartuPage ti mostra dove sei. Unicorns Club ti mostra a chi presentarti. Stackup Room ti fa muovere ogni giorno — e lo prova con numeri veri.*
 
 ---
 
@@ -192,7 +192,7 @@ leaderboard (VIEW, non tabella)
 
 1. Confermi fallback 1-6 così come scritti, o vuoi invertire uno?
 2. Riverpod: preferisci codegen (`riverpod_generator`) o provider manuali? (raccomando codegen — motivo in tabella)
-3. StackUp Room: indipendente o coerente con asset StackUp esistenti non presenti in repo locale? Se coerente, condividi asset.
+3. Stackup Room: indipendente o coerente con asset Stackup esistenti non presenti in repo locale? Se coerente, condividi asset.
 4. Confermi branch naming `feature/stackuproom-day1-<timestamp>` e PR verso `main` senza merge automatico?
 
 ---

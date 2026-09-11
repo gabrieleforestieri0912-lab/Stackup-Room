@@ -20,7 +20,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
 
     if (_hasError) {
       return Scaffold(
-        appBar: AppBar(title: const Text('StackUp Room')),
+        appBar: AppBar(title: const Text('Stackup Room')),
         body: AppErrorView(
           title: 'Supabase non raggiungibile',
           message: 'Verifica la connessione o la configurazione in .env. L\'app resta usabile in modalità offline.',
@@ -30,7 +30,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('StackUp Room')),
+      appBar: AppBar(title: const Text('Stackup Room')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

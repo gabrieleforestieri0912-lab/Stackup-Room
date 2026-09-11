@@ -1,17 +1,39 @@
-# stackup_room
+# Stackup Room
 
-A new Flutter project.
+Social network verticale per founder indie — daily check-in, leaderboard revenue verificata, digest AI.
 
-## Getting Started
+Stack: Flutter (Riverpod + Hive) + Supabase (Auth, Postgres, RLS, Edge Functions).
 
-This project is a starting point for a Flutter application.
+> Branch Giorno 1: `feature/stackuproom-day1-<timestamp>` — nessun push diretto su `main`.
 
-A few resources to get you started if this is your first Flutter project:
+## Quick start (Windows + PowerShell)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```powershell
+flutter pub get
+# opzionale: configura Supabase
+Copy-Item .env.example .env
+# edita SUPABASE_URL / ANON_KEY — mai service_role
+flutter analyze
+flutter test
+flutter emulators --launch Pixel_9
+flutter run -d Pixel_9
+# oppure con dart-define:
+flutter run --dart-define=SUPABASE_URL=https://... --dart-define=SUPABASE_ANON_KEY=...
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Struttura
+
+```
+lib/
+  core/{env,supabase,storage,theme,widgets}
+  features/{auth,checkin,leaderboard,profile,splash}
+  navigation/app_shell.dart
+  main.dart
+docs/scope.md
+```
+
+Vedi `docs/scope.md` per MVP 6 giorni, user journey e modello dati.
+
+## Tema
+
+Dark default (club esclusivo) — `lib/core/theme/app_theme.dart:10`.

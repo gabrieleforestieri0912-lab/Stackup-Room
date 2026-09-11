@@ -26,7 +26,7 @@ class SplashScreen extends StatelessWidget {
               child: Icon(Icons.layers_rounded, color: c.primary, size: 36),
             ),
             const SizedBox(height: 16),
-            Text('StackUp Room',
+            Text('Stackup Room',
                 style: TextStyle(color: c.text, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
             const SizedBox(height: 4),
             Text('Daily momentum for serious founders',

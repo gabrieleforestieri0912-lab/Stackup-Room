@@ -21,16 +21,16 @@ Future<void> main() async {
   await HiveService.initialize();
   await SupabaseService.initialize();
 
-  runApp(const ProviderScope(child: StackUpApp()));
+  runApp(const ProviderScope(child: StackupApp()));
 }
 
-class StackUpApp extends StatelessWidget {
-  const StackUpApp({super.key});
+class StackupApp extends StatelessWidget {
+  const StackupApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'StackUp Room',
+      title: 'Stackup Room',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
