@@ -1,0 +1,22 @@
+# Supabase local config (opzionale)
+# Se usi supabase CLI locale: copia questo in supabase/config.toml e adatta project_id.
+# Altrimenti applica la migration direttamente in SQL Editor del progetto remoto:
+#   Dashboard → SQL Editor → incolla supabase/migrations/20260912213800_profiles_onboarding.sql
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+# project_id = "stackup-room"

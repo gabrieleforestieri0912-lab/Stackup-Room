@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/notifications/notification_service.dart';
 import 'core/storage/hive_service.dart';
 import 'core/supabase/supabase_client.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/auth_provider.dart';
+import 'features/auth/login_screen.dart';
+import 'features/onboarding/onboarding_provider.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'navigation/app_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // .env opzionale — app gira anche senza (modalità offline/mock)
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
@@ -20,6 +24,12 @@ Future<void> main() async {
 
   await HiveService.initialize();
   await SupabaseService.initialize();
+  // Notifiche: init lazy, ma prepara timezone presto (non blocca avvio)
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('[Notifications] init in main() errore (non bloccante): $e');
+  }
 
   runApp(const ProviderScope(child: StackupApp()));
 }
@@ -34,23 +44,27 @@ class StackupApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark, // club esclusivo = dark default (Fase 3)
-      home: const _Root(),
+      themeMode: ThemeMode.dark,
+      home: const AuthGate(),
     );
   }
 }
 
-/// Root con splash breve poi shell. Gestisce errore init senza crash.
-class _Root extends StatefulWidget {
-  const _Root();
+/// Gate centrale che decide il routing in base a AuthNotifier:
+/// - initial → Splash
+/// - unauthenticated → LoginScreen
+/// - authenticatedOnboardingRequired → OnboardingScreen (resume da Hive)
+/// - authenticated → AppShell
+class AuthGate extends ConsumerStatefulWidget {
+  const AuthGate({super.key});
 
   @override
-  State<_Root> createState() => _RootState();
+  ConsumerState<AuthGate> createState() => _AuthGateState();
 }
 
-class _RootState extends State<_Root> {
-  bool _ready = false;
-  String? _error;
+class _AuthGateState extends ConsumerState<AuthGate> {
+  bool _splashMinDurationDone = false;
+  String? _bootError;
 
   @override
   void initState() {
@@ -60,19 +74,18 @@ class _RootState extends State<_Root> {
 
   Future<void> _boot() async {
     try {
-      // Simula init asincrono (Hive/Supabase già fatti in main, ma lascia splash visibile)
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
-      setState(() => _ready = true);
+      setState(() => _splashMinDurationDone = true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _bootError = e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error != null) {
+    if (_bootError != null) {
       return Scaffold(
         body: Center(
           child: Padding(
@@ -82,16 +95,45 @@ class _RootState extends State<_Root> {
               children: [
                 const Icon(Icons.error_outline_rounded, size: 48, color: Colors.redAccent),
                 const SizedBox(height: 12),
-                Text('Errore avvio: $_error', textAlign: TextAlign.center),
+                Text('Errore avvio: $_bootError', textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: () => setState(() => _error = null), child: const Text('Riprova')),
+                ElevatedButton(
+                  onPressed: () => setState(() => _bootError = null),
+                  child: const Text('Riprova'),
+                ),
               ],
             ),
           ),
         ),
       );
     }
-    if (!_ready) return const SplashScreen();
-    return const AppShell();
+
+    final auth = ref.watch(authProvider);
+
+    // Splash finché auth è in initial O finché non è passata la durata minima (evita flash)
+    if (auth.status == AuthStatus.initial || !_splashMinDurationDone) {
+      return const SplashScreen();
+    }
+
+    switch (auth.status) {
+      case AuthStatus.unauthenticated:
+        return const LoginScreen();
+      case AuthStatus.authenticatedOnboardingRequired:
+        // Pre-carica onboarding da profilo remoto (se disponibile)
+        // Non blocca: Hive ha già cache, profile arricchisce
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(onboardingProvider.notifier).loadFromProfile(auth.profile);
+        });
+        return OnboardingScreen(
+          onProfileRefreshed: () {
+            // Dopo completamento onboarding, ricarica profilo per passare a authenticated
+            ref.read(authProvider.notifier).refreshProfile();
+          },
+        );
+      case AuthStatus.authenticated:
+        return const AppShell();
+      case AuthStatus.initial:
+        return const SplashScreen();
+    }
   }
 }
