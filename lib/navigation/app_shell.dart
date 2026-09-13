@@ -4,9 +4,10 @@ import '../core/theme/app_colors.dart';
 import '../features/checkin/checkin_screen.dart';
 import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/startup/presentation/portfolio_screen.dart';
 
-/// Shell di navigazione base — bottom nav: Home/Check-in, Leaderboard, Profilo.
-/// Requisito Fase 3. Usa IndexedStack per evitare rebuild costosi.
+/// Shell di navigazione — Fase 3: Today, Portfolio, Leaderboard, Profilo.
+/// IndexedStack per evitare rebuild costosi.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -19,6 +20,7 @@ class _AppShellState extends State<AppShell> {
 
   static const _screens = [
     CheckinScreen(),
+    PortfolioScreen(),
     LeaderboardScreen(),
     ProfileScreen(),
   ];
@@ -36,7 +38,8 @@ class _AppShellState extends State<AppShell> {
           currentIndex: _index,
           onTap: (i) => setState(() => _index = i),
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.edit_note_rounded), label: 'Check-in'),
+            BottomNavigationBarItem(icon: Icon(Icons.edit_note_rounded), label: 'Today'),
+            BottomNavigationBarItem(icon: Icon(Icons.business_center_rounded), label: 'Portfolio'),
             BottomNavigationBarItem(icon: Icon(Icons.leaderboard_rounded), label: 'Leaderboard'),
             BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profilo'),
           ],

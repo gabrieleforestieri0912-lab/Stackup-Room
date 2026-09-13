@@ -6,6 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/breakpoints.dart';
 import '../../core/widgets/app_error_view.dart';
 import '../auth/auth_provider.dart';
+import '../startup/presentation/project_switcher.dart';
+import '../startup/startup_provider.dart';
 import 'checkin_provider.dart';
 
 /// Home "Today" — Fase 2
@@ -66,6 +68,8 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> with SingleTicker
               backgroundColor: c.background,
               title: Text(_greeting(displayName), style: TextStyle(color: c.text, fontSize: 16, fontWeight: FontWeight.w700)),
               actions: [
+                const ProjectSwitcher(),
+                const SizedBox(width: 8),
                 RepaintBoundary(child: _StreakBadge(streak: streak, c: c, reduceMotion: reduceMotion)),
                 const SizedBox(width: 12),
               ],
@@ -302,16 +306,21 @@ class _TodoTabState extends ConsumerState<_TodoTab> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(todayProvider);
+    final startups = ref.watch(startupProvider);
+    final filterName = startups.selected?.name;
+    final filtered = filterName == null ? state.tasks : state.tasks.where((t) => (t.project ?? 'Generale') == filterName).toList();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (filterName != null)
+          Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: widget.c.accentSignal.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(8)), child: Text('Filtrato: $filterName — ${filtered.length} task', style: TextStyle(color: widget.c.accentSignal, fontSize: 11, fontWeight: FontWeight.w600))),
         Row(children: [
-          Expanded(child: TextField(controller: _ctrl, decoration: InputDecoration(hintText: 'Aggiungi task del giorno...', prefixIcon: const Icon(Icons.add_task_rounded)), onSubmitted: (v) => _add())),
+          Expanded(child: TextField(controller: _ctrl, decoration: InputDecoration(hintText: filterName == null ? 'Aggiungi task del giorno...' : 'Aggiungi task per $filterName...', prefixIcon: const Icon(Icons.add_task_rounded)), onSubmitted: (v) => _add())),
           const SizedBox(width: 8),
           ElevatedButton(onPressed: _add, child: const Text('Aggiungi')),
         ]),
         const SizedBox(height: 16),
-        if (state.tasks.isEmpty)
+        if (filtered.isEmpty)
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(color: widget.c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: widget.c.border)),
@@ -326,7 +335,7 @@ class _TodoTabState extends ConsumerState<_TodoTab> {
             ]),
           )
         else
-          ..._grouped(state.tasks),
+          ..._grouped(filtered),
       ],
     );
   }
@@ -334,7 +343,8 @@ class _TodoTabState extends ConsumerState<_TodoTab> {
   void _add() {
     final v = _ctrl.text.trim();
     if (v.isEmpty) return;
-    ref.read(todayProvider.notifier).addTask(v);
+    final sel = ref.read(startupProvider).selected?.name;
+    ref.read(todayProvider.notifier).addTask(v, project: sel);
     _ctrl.clear();
   }
 
