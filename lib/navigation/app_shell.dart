@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../features/ai_coach/presentation/ai_coach_screen.dart';
 import '../features/checkin/checkin_screen.dart';
+import '../features/community/presentation/community_screen.dart';
 import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/startup/presentation/portfolio_screen.dart';
@@ -24,6 +25,7 @@ class _AppShellState extends State<AppShell> {
     PortfolioScreen(),
     LeaderboardScreen(),
     AiCoachScreen(),
+    CommunityScreen(),
     ProfileScreen(),
   ];
 
@@ -44,6 +46,7 @@ class _AppShellState extends State<AppShell> {
             BottomNavigationBarItem(icon: Icon(Icons.business_center_rounded), label: 'Portfolio'),
             BottomNavigationBarItem(icon: Icon(Icons.leaderboard_rounded), label: 'Leaderboard'),
             BottomNavigationBarItem(icon: Icon(Icons.smart_toy_rounded), label: 'AI Coach'),
+            BottomNavigationBarItem(icon: Icon(Icons.forum_rounded), label: 'Community'),
             BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profilo'),
           ],
         ),
