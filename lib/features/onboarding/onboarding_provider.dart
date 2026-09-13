@@ -53,7 +53,9 @@ class OnboardingState {
   }
 
   bool get canProceedStep1 => displayName.trim().length >= 2;
-  bool get canProceedStep2 => true; // tutto opzionale/skippabile
+  /// Obbligatorio con defer esplicito: per procedere via "Continua" serve nome startup >=2.
+  /// La via "Lo faccio dopo" passa da skipStep2() che azzera i campi.
+  bool get canProceedStep2 => (startupName?.trim().length ?? 0) >= 2;
   bool get isOneLinerValid => oneLiner.length <= 140;
 
   OnboardingState copyWith({
@@ -252,6 +254,10 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
   Future<bool> completeStep2() async {
     if (!state.isOneLinerValid) {
       state = state.copyWith(error: 'One-liner troppo lungo (max 140)');
+      return false;
+    }
+    if (!state.canProceedStep2) {
+      state = state.copyWith(error: 'Inserisci il nome della startup (min 2 caratteri) o scegli “Lo faccio dopo”');
       return false;
     }
     state = state.copyWith(isSaving: true, clearError: true);

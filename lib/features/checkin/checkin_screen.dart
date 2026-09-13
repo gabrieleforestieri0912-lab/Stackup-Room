@@ -1,133 +1,498 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/storage/hive_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/breakpoints.dart';
 import '../../core/widgets/app_error_view.dart';
+import '../auth/auth_provider.dart';
+import 'checkin_provider.dart';
 
-/// Home / Check-in — placeholder v0 (logica completa Giorno 4).
-class CheckinScreen extends StatefulWidget {
+/// Home "Today" — Fase 2
+/// AppBar saluto + streak, Tab Todo/Schedule, lista task, standup rapido, empty state.
+/// Animazioni rispettano MediaQuery.disableAnimations + RepaintBoundary per sezioni animate.
+class CheckinScreen extends ConsumerStatefulWidget {
   const CheckinScreen({super.key});
 
   @override
-  State<CheckinScreen> createState() => _CheckinScreenState();
+  ConsumerState<CheckinScreen> createState() => _CheckinScreenState();
 }
 
-class _CheckinScreenState extends State<CheckinScreen> {
+class _CheckinScreenState extends ConsumerState<CheckinScreen> with SingleTickerProviderStateMixin {
   bool _hasError = false;
+  late TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
+    final auth = ref.watch(authProvider);
+    final streak = ref.watch(streakProvider);
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     if (_hasError) {
       return Scaffold(
         appBar: AppBar(title: const Text('Stackup Room')),
         body: AppErrorView(
           title: 'Supabase non raggiungibile',
-          message: 'Verifica la connessione o la configurazione in .env. L\'app resta usabile in modalità offline.',
+          message: 'Verifica la connessione. L\'app resta usabile offline (Hive).',
           onRetry: () => setState(() => _hasError = false),
         ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Stackup Room')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          // Header club esclusivo
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.border),
+    final displayName = (auth.profile?['display_name'] as String?) ?? HiveService.onboardingDisplayName ?? auth.user?.email?.split('@').first ?? 'Founder';
+    final startupName = (auth.profile?['startup_name'] as String?) ?? HiveService.onboardingStartupName;
+    final hasStartup = startupName != null && startupName.trim().isNotEmpty;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = Breakpoints.isDesktop(constraints.maxWidth);
+        final body = CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: c.background,
+              title: Text(_greeting(displayName), style: TextStyle(color: c.text, fontSize: 16, fontWeight: FontWeight.w700)),
+              actions: [
+                RepaintBoundary(child: _StreakBadge(streak: streak, c: c, reduceMotion: reduceMotion)),
+                const SizedBox(width: 12),
+              ],
+              bottom: TabBar(
+                controller: _tab,
+                labelColor: c.text,
+                unselectedLabelColor: c.textTertiary,
+                indicatorColor: c.accentSignal,
+                indicatorWeight: 2.5,
+                tabs: const [Tab(text: 'Todo'), Tab(text: 'Schedule')],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SliverToBoxAdapter(child: _StandupCard(c: c)),
+            if (!hasStartup)
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: c.accentSignal.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12), border: Border.all(color: c.accentSignal.withValues(alpha: 0.25))),
+                  child: Row(children: [
+                    Icon(Icons.rocket_launch_rounded, size: 18, color: c.accentSignal),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('Aggiungi la tua prima startup per filtrare i task per progetto.', style: TextStyle(color: c.text, fontSize: 12, fontWeight: FontWeight.w500))),
+                    TextButton(onPressed: () => DefaultTabController.of(context), child: Text('Aggiungi', style: TextStyle(color: c.accentSignal, fontWeight: FontWeight.w700))),
+                  ]),
+                ),
+              ),
+            SliverFillRemaining(
+              child: TabBarView(
+                controller: _tab,
+                children: [
+                  _TodoTab(c: c, reduceMotion: reduceMotion, hasStartup: hasStartup),
+                  _ScheduleTab(c: c, reduceMotion: reduceMotion),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        if (isDesktop) {
+          // Layout 2 colonne su >900px — lista a sx, dettaglio a dx (Fase 8 spec anticipata per Today)
+          return Scaffold(
+            backgroundColor: c.background,
+            body: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: c.primaryMuted,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.bolt_rounded, color: c.primaryLight),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Daily momentum',
-                              style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 15)),
-                          Text('Un check-in al giorno. Streak > vanity.',
-                              style: TextStyle(color: c.textSecondary, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Cosa hai mosso oggi?',
-                    style: TextStyle(color: c.textTertiary, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                const SizedBox(height: 8),
-                TextField(
-                  maxLength: 280,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Es. Chiuso onboarding Stripe, MRR +€120...',
-                    counterStyle: TextStyle(color: c.textTertiary, fontSize: 11),
-                  ),
-                ),
-                const SizedBox(height: 12),
+                Expanded(child: body),
+                Container(width: 1, color: c.border),
                 SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Check-in — logica Giorno 4. v0: solo UI.')),
-                      );
-                    },
-                    child: const Text('Pubblica check-in'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton(
-                    onPressed: () => setState(() => _hasError = true),
-                    child: Text('Simula errore connessione', style: TextStyle(color: c.textTertiary, fontSize: 12)),
-                  ),
+                  width: 360,
+                  child: _DesktopDetailPane(c: c),
                 ),
               ],
             ),
+          );
+        }
+        return Scaffold(backgroundColor: c.background, body: body);
+      },
+    );
+  }
+
+  String _greeting(String name) {
+    final h = DateTime.now().hour;
+    final saluto = h < 12 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+    return '$saluto, $name';
+  }
+}
+
+class _DesktopDetailPane extends StatelessWidget {
+  const _DesktopDetailPane({required this.c});
+  final AppColors c;
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text('Dettaglio', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)),
+        const SizedBox(height: 8),
+        Text('Seleziona un task o un blocco orario per vederne il dettaglio. (Fase 3: portfolio startup)', style: TextStyle(color: c.textSecondary, fontSize: 12, height: 1.4)),
+        const SizedBox(height: 16),
+        Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: c.border)), child: Text('Windows layout 2-colonne attivo (>900px) — verifica responsive Fase 8.', style: TextStyle(color: c.textTertiary, fontSize: 11))),
+      ],
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Streak badge con bounce scale quando incrementa
+// ------------------------------------------------------------
+class _StreakBadge extends StatefulWidget {
+  const _StreakBadge({required this.streak, required this.c, required this.reduceMotion});
+  final int streak;
+  final AppColors c;
+  final bool reduceMotion;
+  @override
+  State<_StreakBadge> createState() => _StreakBadgeState();
+}
+
+class _StreakBadgeState extends State<_StreakBadge> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+  int _prev = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(duration: const Duration(milliseconds: 520), vsync: this);
+    _scale = Tween<double>(begin: 1, end: 1.18).animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant _StreakBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.streak > _prev && !widget.reduceMotion) {
+      _ctrl.forward(from: 0).then((_) => _ctrl.reverse());
+    }
+    _prev = widget.streak;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(scale: _scale.value, child: child),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(color: widget.streak > 0 ? widget.c.accentSignal : widget.c.surfaceAlt, borderRadius: BorderRadius.circular(20), border: Border.all(color: widget.streak > 0 ? widget.c.accentSignal : widget.c.border)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.local_fire_department_rounded, size: 16, color: widget.streak > 0 ? Colors.white : widget.c.textTertiary),
+            const SizedBox(width: 4),
+            Text('${widget.streak}', style: TextStyle(color: widget.streak > 0 ? Colors.white : widget.c.textTertiary, fontWeight: FontWeight.w800, fontSize: 13)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Standup rapido — 3 campi brevi, salva su Hive + Supabase
+// ------------------------------------------------------------
+class _StandupCard extends ConsumerStatefulWidget {
+  const _StandupCard({required this.c});
+  final AppColors c;
+  @override
+  ConsumerState<_StandupCard> createState() => _StandupCardState();
+}
+
+class _StandupCardState extends ConsumerState<_StandupCard> {
+  final _ieri = TextEditingController();
+  final _oggi = TextEditingController();
+  final _blocchi = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _ieri.dispose();
+    _oggi.dispose();
+    _blocchi.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: widget.c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: widget.c.border)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Icon(Icons.wb_sunny_rounded, size: 16, color: widget.c.accentSignal), const SizedBox(width: 6), Text('Standup rapido — <30s', style: TextStyle(color: widget.c.text, fontWeight: FontWeight.w700, fontSize: 13))]),
+        const SizedBox(height: 4),
+        Text('Cosa hai fatto ieri / oggi / blocchi?', style: TextStyle(color: widget.c.textSecondary, fontSize: 12)),
+        const SizedBox(height: 12),
+        TextField(controller: _ieri, decoration: InputDecoration(hintText: 'Ieri: ...', prefixIcon: const Icon(Icons.history_rounded, size: 18)), maxLines: 1),
+        const SizedBox(height: 8),
+        TextField(controller: _oggi, decoration: InputDecoration(hintText: 'Oggi: ...', prefixIcon: const Icon(Icons.today_rounded, size: 18)), maxLines: 1),
+        const SizedBox(height: 8),
+        TextField(controller: _blocchi, decoration: InputDecoration(hintText: 'Blocchi: ...', prefixIcon: const Icon(Icons.block_rounded, size: 18)), maxLines: 1),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _saving
+                ? null
+                : () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    setState(() => _saving = true);
+                    final body = 'Ieri:${_ieri.text} | Oggi:${_oggi.text} | Blocchi:${_blocchi.text}';
+                    final date = DateTime.now().toIso8601String().substring(0, 10);
+                    await ref.read(checkinProvider.notifier).setLastCheckin(date, body);
+                    // TODO Fase 4: salva su Supabase daily_checkins via Edge Function (mai anon)
+                    if (!mounted) return;
+                    messenger.showSnackBar(SnackBar(content: Text('Standup salvato — streak ${ref.read(streakProvider)} 🔥')));
+                    _ieri.clear();
+                    _oggi.clear();
+                    _blocchi.clear();
+                    setState(() => _saving = false);
+                  },
+            child: _saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Salva standup'),
           ),
-          const SizedBox(height: 16),
-          Text('Storico',
-              style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.3)),
-          const SizedBox(height: 8),
+        ),
+      ]),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Todo tab — lista task raggruppati per progetto, checkbox con animazione
+// ------------------------------------------------------------
+class _TodoTab extends ConsumerStatefulWidget {
+  const _TodoTab({required this.c, required this.reduceMotion, required this.hasStartup});
+  final AppColors c;
+  final bool reduceMotion;
+  final bool hasStartup;
+  @override
+  ConsumerState<_TodoTab> createState() => _TodoTabState();
+}
+
+class _TodoTabState extends ConsumerState<_TodoTab> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(todayProvider);
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(children: [
+          Expanded(child: TextField(controller: _ctrl, decoration: InputDecoration(hintText: 'Aggiungi task del giorno...', prefixIcon: const Icon(Icons.add_task_rounded)), onSubmitted: (v) => _add())),
+          const SizedBox(width: 8),
+          ElevatedButton(onPressed: _add, child: const Text('Aggiungi')),
+        ]),
+        const SizedBox(height: 16),
+        if (state.tasks.isEmpty)
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.border),
+            decoration: BoxDecoration(color: widget.c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: widget.c.border)),
+            child: Column(children: [
+              Icon(Icons.task_alt_rounded, color: widget.c.textTertiary, size: 32),
+              const SizedBox(height: 8),
+              Text('Nessun task ancora', style: TextStyle(color: widget.c.textSecondary, fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 4),
+              Text('Aggiungi il primo task per iniziare il momentum.', style: TextStyle(color: widget.c.textTertiary, fontSize: 12), textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: () => _ctrl.text = 'Es. Definisci MVP pricing', child: const Text('Suggerisci esempio')),
+            ]),
+          )
+        else
+          ..._grouped(state.tasks),
+      ],
+    );
+  }
+
+  void _add() {
+    final v = _ctrl.text.trim();
+    if (v.isEmpty) return;
+    ref.read(todayProvider.notifier).addTask(v);
+    _ctrl.clear();
+  }
+
+  List<Widget> _grouped(List<TodayTask> tasks) {
+    final byProject = <String, List<TodayTask>>{};
+    for (final t in tasks) {
+      byProject.putIfAbsent(t.project ?? 'Generale', () => []).add(t);
+    }
+    final out = <Widget>[];
+    for (final entry in byProject.entries) {
+      out.add(Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 6),
+        child: Text(entry.key, style: TextStyle(color: widget.c.textSecondary, fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6)),
+      ));
+      for (final task in entry.value) {
+        out.add(_TaskRow(task: task, c: widget.c, reduceMotion: widget.reduceMotion));
+      }
+    }
+    return out;
+  }
+}
+
+class _TaskRow extends ConsumerWidget {
+  const _TaskRow({required this.task, required this.c, required this.reduceMotion});
+  final TodayTask task;
+  final AppColors c;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final completed = task.completed;
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(color: completed ? c.surfaceAlt.withValues(alpha: 0.6) : c.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: completed ? c.border.withValues(alpha: 0.6) : c.border)),
+        child: AnimatedOpacity(
+          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
+          opacity: completed ? 0.62 : 1,
+          child: ListTile(
+            leading: Checkbox(
+              value: completed,
+              activeColor: c.success,
+              onChanged: (_) => ref.read(todayProvider.notifier).toggle(task.id),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            child: Column(
-              children: [
-                Icon(Icons.inbox_rounded, color: c.textTertiary, size: 32),
-                const SizedBox(height: 8),
-                Text('Nessun check-in ancora',
-                    style: TextStyle(color: c.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
-                Text('Il tuo primo check-in apparirà qui.',
-                    style: TextStyle(color: c.textTertiary, fontSize: 12)),
-              ],
+            title: AnimatedDefaultTextStyle(
+              duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
+              style: TextStyle(color: completed ? c.textTertiary : c.text, fontWeight: FontWeight.w500, fontSize: 14, decoration: completed ? TextDecoration.lineThrough : TextDecoration.none, decorationColor: c.textTertiary),
+              child: Text(task.title),
             ),
+            trailing: IconButton(icon: Icon(Icons.close_rounded, size: 18, color: c.textTertiary), onPressed: () => ref.read(todayProvider.notifier).remove(task.id)),
+            onTap: () => ref.read(todayProvider.notifier).toggle(task.id),
           ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Schedule tab — blocchi trascinabili con LongPressDraggable
+// ------------------------------------------------------------
+class _ScheduleTab extends ConsumerWidget {
+  const _ScheduleTab({required this.c, required this.reduceMotion});
+  final AppColors c;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sched = ref.watch(scheduleProvider);
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Trascina i blocchi per ripianificare (long-press)', style: TextStyle(color: c.textTertiary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+        const SizedBox(height: 12),
+        for (int hour = 7; hour <= 20; hour++)
+          _HourSlot(hour: hour, c: c, reduceMotion: reduceMotion, blocks: sched.blocks.where((b) => b.hour == hour).toList()),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(onPressed: () => _addDialog(context, ref), icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Aggiungi blocco')),
+      ],
+    );
+  }
+
+  void _addDialog(BuildContext context, WidgetRef ref) {
+    final ctrl = TextEditingController();
+    int hour = 10;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => AlertDialog(
+            title: const Text('Nuovo blocco'),
+            content: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'Titolo blocco'), autofocus: true),
+              const SizedBox(height: 12),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                IconButton(onPressed: () => setS(() => hour = (hour - 1).clamp(0, 23)), icon: Icon(Icons.remove_circle_outline_rounded, color: c.primary)),
+                Container(width: 80, padding: const EdgeInsets.symmetric(vertical: 8), decoration: BoxDecoration(color: c.primaryMuted, borderRadius: BorderRadius.circular(8)), child: Text('${hour.toString().padLeft(2, '0')}:00', textAlign: TextAlign.center, style: TextStyle(color: c.primaryLight, fontWeight: FontWeight.w700))),
+                IconButton(onPressed: () => setS(() => hour = (hour + 1).clamp(0, 23)), icon: Icon(Icons.add_circle_outline_rounded, color: c.primary)),
+              ]),
+            ]),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annulla')),
+              ElevatedButton(onPressed: () { if (ctrl.text.trim().isNotEmpty) ref.read(scheduleProvider.notifier).add(hour, ctrl.text.trim()); Navigator.pop(ctx); }, child: const Text('Aggiungi')),
+            ],
+          )),
+    );
+  }
+}
+
+class _HourSlot extends ConsumerWidget {
+  const _HourSlot({required this.hour, required this.c, required this.reduceMotion, required this.blocks});
+  final int hour;
+  final AppColors c;
+  final bool reduceMotion;
+  final List<ScheduleBlock> blocks;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DragTarget<ScheduleBlock>(
+      onAcceptWithDetails: (d) => ref.read(scheduleProvider.notifier).move(d.data.id, hour),
+      builder: (context, candidate, rejected) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(color: candidate.isNotEmpty ? c.accentSignal.withValues(alpha: 0.08) : c.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: candidate.isNotEmpty ? c.accentSignal.withValues(alpha: 0.4) : c.border)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(width: 52, child: Text('${hour.toString().padLeft(2, '0')}:00', style: TextStyle(color: c.textTertiary, fontWeight: FontWeight.w700, fontSize: 11))),
+          Expanded(
+            child: blocks.isEmpty
+                ? Text('— libero', style: TextStyle(color: c.textTertiary, fontSize: 12, fontStyle: FontStyle.italic))
+                : Column(children: [for (final b in blocks) _DraggableBlock(block: b, c: c, reduceMotion: reduceMotion)]),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _DraggableBlock extends StatelessWidget {
+  const _DraggableBlock({required this.block, required this.c, required this.reduceMotion});
+  final ScheduleBlock block;
+  final AppColors c;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: c.primaryMuted, borderRadius: BorderRadius.circular(10), border: Border.all(color: c.border)),
+      child: Row(children: [Icon(Icons.drag_indicator_rounded, size: 16, color: c.textTertiary), const SizedBox(width: 8), Expanded(child: Text(block.title, style: TextStyle(color: c.text, fontSize: 13, fontWeight: FontWeight.w500))), IconButton(padding: EdgeInsets.zero, constraints: const BoxConstraints(), icon: Icon(Icons.close_rounded, size: 16, color: c.textTertiary), onPressed: () {})]),
+    );
+    if (reduceMotion) return child;
+    return LongPressDraggable<ScheduleBlock>(
+      data: block,
+      feedback: Transform.scale(scale: 1.04, child: Material(color: Colors.transparent, child: Opacity(opacity: 0.9, child: child))),
+      childWhenDragging: Opacity(opacity: 0.35, child: child),
+      child: child,
     );
   }
 }

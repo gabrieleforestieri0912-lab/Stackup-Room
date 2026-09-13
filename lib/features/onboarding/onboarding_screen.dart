@@ -308,7 +308,7 @@ class _Step2Startup extends ConsumerWidget {
         children: [
           Text('La tua startup', style: TextStyle(color: c.text, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
           const SizedBox(height: 6),
-          Text('Opzionale — puoi saltare e completare dopo.',
+          Text('Obbligatorio — configurala ora o scegli “Lo faccio dopo” per un empty-state guidato in Home.',
               style: TextStyle(color: c.textSecondary, fontSize: 14, height: 1.4)),
           const SizedBox(height: 28),
           TextField(
@@ -317,7 +317,7 @@ class _Step2Startup extends ConsumerWidget {
             textCapitalization: TextCapitalization.words,
             onChanged: (v) => ref.read(onboardingProvider.notifier).setStartupName(v.isEmpty ? null : v),
             decoration: const InputDecoration(
-              labelText: 'Nome startup (opzionale)',
+              labelText: 'Nome startup *',
               hintText: 'Es. Acme AI',
               prefixIcon: Icon(Icons.rocket_launch_outlined),
             ),
@@ -523,7 +523,11 @@ class _BottomBar extends ConsumerWidget {
           }
           break;
         case OnboardingStep.step2Startup:
-          await notifier.completeStep2();
+          final ok2 = await notifier.completeStep2();
+          if (!ok2 && context.mounted) {
+            final msg = ref.read(onboardingProvider).error ?? 'Inserisci il nome startup o scegli “Lo faccio dopo”';
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          }
           break;
         case OnboardingStep.step3Reminder:
           final ok = await notifier.completeStep3();
@@ -604,7 +608,7 @@ class _BottomBar extends ConsumerWidget {
               if (state.step == OnboardingStep.step2Startup)
                 TextButton(
                   onPressed: state.isSaving ? null : () => notifier.skipStep2(),
-                  child: Text('Salta per ora', style: TextStyle(color: c.textSecondary)),
+                  child: Text('Lo faccio dopo', style: TextStyle(color: c.textSecondary)),
                 ),
               if (isStep3)
                 TextButton(

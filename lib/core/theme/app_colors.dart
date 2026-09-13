@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Palette "club esclusivo per founder seri" — dark default.
+/// Palette Stackup Room — dark default.
 ///
-/// Riferimento concettuale: Taskly dark (0xFF0F0F1A / 0xFF1A1A2E / 0xFFA67CFF)
-/// declinato come identità autonoma Stackup Room.
+/// Vertex monocromatico #0A0A0A / #C4C4C4 con accentSignal vivo #FF6A3D
+/// per gamification (streak, leaderboard, momentum). Uso parsimonioso.
 class AppColors {
   const AppColors({
     required this.background,
@@ -12,6 +12,7 @@ class AppColors {
     required this.primary,
     required this.primaryLight,
     required this.primaryMuted,
+    required this.accentSignal,
     required this.text,
     required this.textSecondary,
     required this.textTertiary,
@@ -27,6 +28,9 @@ class AppColors {
   final Color primary;
   final Color primaryLight;
   final Color primaryMuted;
+  /// Colore vivo per streak/leaderboard/gamification — arancio momentum.
+  /// Non usare per CTA generiche; solo badge, counter, highlight competitivi.
+  final Color accentSignal;
   final Color text;
   final Color textSecondary;
   final Color textTertiary;
@@ -36,18 +40,19 @@ class AppColors {
   final Color warning;
 
   static const dark = AppColors(
-    background: Color(0xFF0A0A14),
-    surface: Color(0xFF141428),
-    surfaceAlt: Color(0xFF1E1E3A),
-    primary: Color(0xFF8B5CF6),
-    primaryLight: Color(0xFFA78BFA),
-    primaryMuted: Color(0xFF2D1B69),
-    text: Color(0xFFF1F1F5),
-    textSecondary: Color(0xFF9CA3AF),
+    background: Color(0xFF0A0A0A),
+    surface: Color(0xFF161616),
+    surfaceAlt: Color(0xFF1F1F1F),
+    primary: Color(0xFFC4C4C4),
+    primaryLight: Color(0xFFF2F2F2),
+    primaryMuted: Color(0xFF2A2A2A),
+    accentSignal: Color(0xFFFF6A3D),
+    text: Color(0xFFF2F2F2),
+    textSecondary: Color(0xFF9A9A9A),
     textTertiary: Color(0xFF6B7280),
-    border: Color(0xFF2A2A4A),
+    border: Color(0xFF2A2A2A),
     error: Color(0xFFF87171),
-    success: Color(0xFF34D399),
+    success: Color(0xFF4ADE80),
     warning: Color(0xFFFBBF24),
   );
 
@@ -58,6 +63,7 @@ class AppColors {
     primary: Color(0xFF7C3AED),
     primaryLight: Color(0xFFEDE9FE),
     primaryMuted: Color(0xFFE9E3FF),
+    accentSignal: Color(0xFFFF6A3D),
     text: Color(0xFF111827),
     textSecondary: Color(0xFF6B7280),
     textTertiary: Color(0xFF9CA3AF),
