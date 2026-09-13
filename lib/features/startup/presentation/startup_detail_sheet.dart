@@ -19,6 +19,7 @@ class _StartupDetailSheetState extends ConsumerState<StartupDetailSheet> {
   late TextEditingController _website;
   late TextEditingController _notes;
   late StartupStatus _status;
+  late bool _isPublic;
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class _StartupDetailSheetState extends ConsumerState<StartupDetailSheet> {
     _website = TextEditingController(text: widget.startup.website ?? '');
     _notes = TextEditingController(text: widget.startup.notes ?? '');
     _status = widget.startup.status;
+    _isPublic = widget.startup.isPublic;
   }
 
   @override
@@ -68,7 +70,22 @@ class _StartupDetailSheetState extends ConsumerState<StartupDetailSheet> {
             TextField(controller: _website, decoration: const InputDecoration(labelText: 'Website (opzionale)', prefixIcon: Icon(Icons.link_rounded))),
             const SizedBox(height: 10),
             TextField(controller: _notes, maxLines: 3, decoration: const InputDecoration(labelText: 'Note private', prefixIcon: Icon(Icons.note_outlined))),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
+            // Fase 7 — privacy-first: il progetto è privato finché non lo rendi visibile.
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: _isPublic,
+              onChanged: (v) => setState(() => _isPublic = v),
+              title: Text('Portfolio pubblico', style: TextStyle(color: c.text, fontWeight: FontWeight.w600, fontSize: 13)),
+              subtitle: Text(
+                _isPublic
+                    ? 'Visibile agli altri founder (nome, stato, descrizione — mai le note private)'
+                    : 'Visibile solo a te',
+                style: TextStyle(color: c.textTertiary, fontSize: 11),
+              ),
+              secondary: Icon(_isPublic ? Icons.public_rounded : Icons.lock_outline_rounded, color: _isPublic ? c.accentSignal : c.textTertiary),
+            ),
+            const SizedBox(height: 8),
             Row(children: [
               Expanded(child: OutlinedButton.icon(onPressed: () => _archive(context), icon: Icon(Icons.archive_rounded, color: c.warning), label: Text('Archivia', style: TextStyle(color: c.warning)))),
               const SizedBox(width: 10),
@@ -90,7 +107,7 @@ class _StartupDetailSheetState extends ConsumerState<StartupDetailSheet> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Descrizione max 280')));
       return;
     }
-    await ref.read(startupProvider.notifier).update(widget.startup, name: name, status: _status, description: _desc.text.isEmpty ? null : _desc.text, website: _website.text.isEmpty ? null : _website.text, notes: _notes.text.isEmpty ? null : _notes.text);
+    await ref.read(startupProvider.notifier).update(widget.startup, name: name, status: _status, description: _desc.text.isEmpty ? null : _desc.text, website: _website.text.isEmpty ? null : _website.text, notes: _notes.text.isEmpty ? null : _notes.text, isPublic: _isPublic);
     if (mounted) Navigator.pop(context);
   }
 

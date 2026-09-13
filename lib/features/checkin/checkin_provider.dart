@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/storage/hive_service.dart';
+import '../../core/sync/outbox_service.dart';
 
 /// Stato Hive del check-in (offline-first minima).
 class CheckinState {
@@ -92,6 +94,8 @@ class TodayState {
 class TodayNotifier extends StateNotifier<TodayState> {
   TodayNotifier() : super(const TodayState()) {
     _load();
+    // Retry della coda offline all'avvio (Today è il primo tab della shell).
+    unawaited(OutboxService.flush());
   }
 
   static const _kTasks = 'today_tasks_v2';
@@ -110,21 +114,33 @@ class TodayNotifier extends StateNotifier<TodayState> {
     await HiveService.box.put(_kTasks, raw);
   }
 
+  // Offline-first (Fase 8): Hive è la source of truth locale, la coda outbox
+  // porta le mutazioni su Supabase quando la rete torna.
+
   Future<void> addTask(String title, {String? project}) async {
     final t = TodayTask(id: DateTime.now().microsecondsSinceEpoch.toString(), title: title.trim(), project: project);
     if (t.title.isEmpty) return;
     state = TodayState(tasks: [...state.tasks, t]);
     await _persist();
+    await OutboxService.queueTaskUpsert(clientId: t.id, title: t.title, project: t.project, completed: t.completed);
+    unawaited(OutboxService.flush());
   }
 
   Future<void> toggle(String id) async {
     state = TodayState(tasks: state.tasks.map((t) => t.id == id ? t.copyWith(completed: !t.completed) : t).toList());
     await _persist();
+    final t = state.tasks.where((e) => e.id == id);
+    if (t.isNotEmpty) {
+      await OutboxService.queueTaskUpsert(clientId: t.first.id, title: t.first.title, project: t.first.project, completed: t.first.completed);
+      unawaited(OutboxService.flush());
+    }
   }
 
   Future<void> remove(String id) async {
     state = TodayState(tasks: state.tasks.where((t) => t.id != id).toList());
     await _persist();
+    await OutboxService.queueTaskDelete(id);
+    unawaited(OutboxService.flush());
   }
 }
 

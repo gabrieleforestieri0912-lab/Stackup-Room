@@ -25,6 +25,30 @@ class Env {
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
+  // --- RevenueCat (Fase 7) ---
+  // Chiavi pubbliche SDK (safe lato client per design RevenueCat).
+  // Priorità: chiave platform-specifica > chiave generica. Mai product ID qui:
+  // le offering 3/6/12 mesi sono configurate sulla dashboard RevenueCat.
+  static String get revenueCatAppleApiKey {
+    const define = String.fromEnvironment('REVENUECAT_APPLE_API_KEY');
+    if (define.isNotEmpty) return define;
+    return _dotenvOrGeneric('REVENUECAT_APPLE_API_KEY');
+  }
+
+  static String get revenueCatGoogleApiKey {
+    const define = String.fromEnvironment('REVENUECAT_GOOGLE_API_KEY');
+    if (define.isNotEmpty) return define;
+    return _dotenvOrGeneric('REVENUECAT_GOOGLE_API_KEY');
+  }
+
+  static String _dotenvOrGeneric(String platformKey) {
+    final platform = dotenv.maybeGet(platformKey);
+    if (platform != null && platform.isNotEmpty) return platform;
+    const generic = String.fromEnvironment('REVENUECAT_API_KEY');
+    if (generic.isNotEmpty) return generic;
+    return dotenv.maybeGet('REVENUECAT_API_KEY') ?? '';
+  }
+
   static void assertNoServiceRole() {
     final hasServiceRole = dotenv.maybeGet('SUPABASE_SERVICE_ROLE_KEY') != null ||
         const String.fromEnvironment('SUPABASE_SERVICE_ROLE_KEY').isNotEmpty;

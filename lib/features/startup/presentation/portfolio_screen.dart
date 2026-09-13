@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/breakpoints.dart';
+import '../../../core/widgets/two_pane_layout.dart';
 import '../domain/startup.dart';
 import '../startup_provider.dart';
 import 'startup_card.dart';
@@ -16,28 +16,15 @@ class PortfolioScreen extends ConsumerWidget {
     final c = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
     final state = ref.watch(startupProvider);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = Breakpoints.isDesktop(constraints.maxWidth);
-        final list = _ListPane(c: c, state: state, isDesktop: isDesktop);
-        if (!isDesktop) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Portfolio'), actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: () => ref.read(startupProvider.notifier).refresh())]),
-            body: list,
-            floatingActionButton: FloatingActionButton.extended(onPressed: () => _showAdd(context, ref), label: const Text('Nuova startup'), icon: const Icon(Icons.add_rounded)),
-          );
-        }
-        // Desktop: 2 colonne lista + dettaglio placeholder (selezionato)
-        return Scaffold(
-          appBar: AppBar(title: const Text('Portfolio'), actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: () => ref.read(startupProvider.notifier).refresh())]),
-          body: Row(children: [
-            Expanded(child: list),
-            Container(width: 1, color: c.border),
-            SizedBox(width: 380, child: _DetailPane(c: c, state: state)),
-          ]),
-          floatingActionButton: FloatingActionButton.extended(onPressed: () => _showAdd(context, ref), label: const Text('Nuova startup'), icon: const Icon(Icons.add_rounded)),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(title: const Text('Portfolio'), actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: () => ref.read(startupProvider.notifier).refresh())]),
+      // Desktop ≥900px: lista a sinistra + dettaglio a destra.
+      body: TwoPaneLayout(
+        secondaryWidth: 380,
+        bodyBuilder: (context, isDesktop) => _ListPane(c: c, state: state, isDesktop: isDesktop),
+        secondary: _DetailPane(c: c, state: state),
+      ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => _showAdd(context, ref), label: const Text('Nuova startup'), icon: const Icon(Icons.add_rounded)),
     );
   }
 

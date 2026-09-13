@@ -25,6 +25,10 @@ class HiveService {
   static late Box _box;
   static bool _initialized = false;
 
+  /// True dopo [initialize] — usato dai servizi (es. outbox) per degradare a
+  /// no-op nei test widget senza Hive inizializzato.
+  static bool get isInitialized => _initialized;
+
   static Future<void> initialize() async {
     if (_initialized) return;
     await Hive.initFlutter();

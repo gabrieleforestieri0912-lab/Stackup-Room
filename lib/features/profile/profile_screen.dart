@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/notifications/notification_service.dart';
 import '../../core/storage/hive_service.dart';
 import '../../core/supabase/supabase_client.dart';
 import '../../core/theme/app_colors.dart';
+import '../../navigation/app_shell.dart';
 import '../auth/auth_provider.dart';
+import '../checkin/checkin_provider.dart';
+import '../paywall/paywall_provider.dart';
+import '../paywall/presentation/paywall_screen.dart';
+import '../settings/presentation/settings_screen.dart';
+import '../startup/domain/startup.dart';
+import '../startup/startup_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -21,18 +28,20 @@ class ProfileScreen extends ConsumerWidget {
     final avatarUrl = (profile?['avatar_url'] as String?) ?? HiveService.onboardingAvatarUrl;
     final startupName = (profile?['startup_name'] as String?) ?? HiveService.onboardingStartupName;
     final oneLiner = (profile?['one_liner'] as String?) ?? HiveService.onboardingOneLiner;
-    final reminderHour = HiveService.reminderHour;
+    final paywall = ref.watch(paywallProvider);
+    final startups = ref.watch(startupProvider);
+    final streak = ref.watch(streakProvider);
+    final badges = _badges(streak);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profilo'),
         actions: [
-          if (auth.isAuthenticated)
-            IconButton(
-              icon: const Icon(Icons.logout_rounded),
-              tooltip: 'Logout',
-              onPressed: () => _confirmLogout(context, ref),
-            ),
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            tooltip: 'Impostazioni',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          ),
         ],
       ),
       body: ListView(
@@ -104,49 +113,63 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          _Tile(
-            icon: Icons.link_rounded,
-            title: 'Collega startup',
-            subtitle: startupName ?? 'Giorno 3 — placeholder v0',
-            c: c,
-            onTap: () {},
-          ),
-          _Tile(
-            icon: Icons.notifications_rounded,
-            title: 'Promemoria ${reminderHour.toString().padLeft(2, '0')}:00',
-            subtitle: 'Tocca per cambiare orario',
-            c: c,
-            onTap: () => _showReminderPicker(context, ref),
-          ),
-          _Tile(
-            icon: Icons.dark_mode_rounded,
-            title: 'Tema',
-            subtitle: 'Dark di default (club esclusivo)',
-            c: c,
-            onTap: () {},
-          ),
-          if (auth.isAuthenticated) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: () => _confirmLogout(context, ref),
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Logout'),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: c.error.withValues(alpha: 0.5)),
-                  foregroundColor: c.error,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+          const SizedBox(height: 12),
+          // Portfolio pubblico (Fase 7) — opt-in per progetto, privacy-first.
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: c.border)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(Icons.business_center_rounded, size: 14, color: c.accentSignal),
+                const SizedBox(width: 6),
+                Text('Portfolio pubblico', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 13)),
+                const Spacer(),
+                Text('${startups.items.where((s) => s.isPublic).length} pubblici su ${startups.items.length}', style: TextStyle(color: c.textTertiary, fontSize: 11)),
+              ]),
+              const SizedBox(height: 4),
+              if (startups.items.isEmpty)
+                Text('Nessun progetto — aggiungi dal tab Portfolio.', style: TextStyle(color: c.textSecondary, fontSize: 12))
+              else
+                for (final s in startups.items.take(3))
+                  InkWell(
+                    onTap: () => ref.read(startupProvider.notifier).setVisibility(s.id, !s.isPublic),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(children: [
+                        Icon(s.isPublic ? Icons.public_rounded : Icons.lock_outline_rounded, size: 13, color: s.isPublic ? c.accentSignal : c.textTertiary),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text('${s.name} • ${s.status.label}', style: TextStyle(color: c.textSecondary, fontSize: 12))),
+                        Text(s.isPublic ? 'pubblico' : 'privato', style: TextStyle(color: s.isPublic ? c.accentSignal : c.textTertiary, fontSize: 10, fontWeight: FontWeight.w600)),
+                      ]),
+                    ),
+                  ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => ref.read(shellIndexProvider.notifier).state = 1,
+                child: const Text('Gestisci portfolio'),
               ),
-            ),
-          ],
+            ]),
+          ),
+          const SizedBox(height: 12),
+          // Badge streak
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: c.border)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Icon(Icons.emoji_events_rounded, size: 14, color: c.accentSignal), const SizedBox(width: 6), Text('Badge streak', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 13))]),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: [for (final b in badges) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: b.earned ? c.accentSignal.withValues(alpha: 0.15) : c.surfaceAlt, borderRadius: BorderRadius.circular(20), border: Border.all(color: b.earned ? c.accentSignal : c.border)), child: Text('${b.emoji} ${b.label}', style: TextStyle(color: b.earned ? c.accentSignal : c.textTertiary, fontSize: 11, fontWeight: b.earned ? FontWeight.w700 : FontWeight.w500)))]),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          _Tile(icon: Icons.code_rounded, title: 'GitHub sync', subtitle: _githubSubtitle(profile), c: c, onTap: () => _githubSync(context, ref)),
+          _Tile(icon: Icons.workspace_premium_rounded, title: paywall.hasMembership ? 'Membership attiva ✓' : 'Membership', subtitle: paywall.hasMembership ? 'Tier ${paywall.tier ?? "—"}' : 'Sblocca community + leaderboard + AI illimitato', c: c, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaywallScreen()))),
           const SizedBox(height: 16),
           Text(
             auth.isAuthenticated
                 ? 'ID: ${user?.id.substring(0, 8) ?? '—'}…  •  ${auth.needsOnboarding ? 'Onboarding da completare' : 'Onboarding completato'}'
-                : 'v0 — Giorno 1. Giorno 2: auth + onboarding.',
+                : 'Modalità ospite — accedi per sincronizzare il profilo.',
             style: TextStyle(color: c.textTertiary, fontSize: 11),
             textAlign: TextAlign.center,
           ),
@@ -155,93 +178,53 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmLogout(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout?'),
-        content: const Text('Verrai riportato alla schermata di accesso.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annulla')),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref.read(authProvider.notifier).signOut();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logout effettuato')));
-              }
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+  /// Sottotitolo tile GitHub — metadati denormalizzati su profiles (nessun token).
+  String _githubSubtitle(Map<String, dynamic>? profile) {
+    final login = profile?['github_login'] as String?;
+    final contributions = profile?['github_contributions'] as int?;
+    if (login == null || login.isEmpty) return 'Collega GitHub via OAuth — Edge Function github-sync';
+    return '@$login • ${contributions ?? 0} attività (30gg)';
   }
 
-  void _showReminderPicker(BuildContext context, WidgetRef ref) {
-    final c = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
-    int hour = HiveService.reminderHour;
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 36, height: 4, decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(2))),
-                const SizedBox(height: 16),
-                Text('Orario promemoria', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 16)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => setSheetState(() => hour = (hour - 1).clamp(0, 23)),
-                      icon: Icon(Icons.remove_circle_outline_rounded, color: c.primary),
-                    ),
-                    Container(
-                      width: 96,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(color: c.primaryMuted, borderRadius: BorderRadius.circular(12)),
-                      child: Text('${hour.toString().padLeft(2, '0')}:00',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: c.primaryLight, fontSize: 20, fontWeight: FontWeight.w800)),
-                    ),
-                    IconButton(
-                      onPressed: () => setSheetState(() => hour = (hour + 1).clamp(0, 23)),
-                      icon: Icon(Icons.add_circle_outline_rounded, color: c.primary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await HiveService.setReminderHour(hour);
-                      // Aggiorna anche Supabase se autenticato (reminder_hour non è in profiles Giorno 2, ma Hive basta per MVP)
-                      try {
-                        await NotificationService.scheduleDailyReminder(hour: hour);
-                      } catch (_) {}
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Promemoria impostato alle ${hour.toString().padLeft(2, '0')}:00')));
-                      }
-                    },
-                    child: const Text('Salva'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  Future<void> _githubSync(BuildContext context, WidgetRef ref) async {
+    final client = SupabaseService.clientOrNull;
+    if (client == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supabase non configurato — GitHub sync in modalità mock')));
+      return;
+    }
+    try {
+      // 1) OAuth: la Edge Function genera l'URL di autorizzazione.
+      //    Client secret GitHub mai lato client (Supabase secrets).
+      final authRes = await client.functions.invoke('github-sync', body: {'action': 'authorize'});
+      final authData = authRes.data is Map ? authRes.data as Map : const {};
+      final authorizeUrl = authData['authorize_url'] as String?;
+      final connected = authData['connected'] == true;
+
+      if (!connected && authorizeUrl != null && authorizeUrl.isNotEmpty) {
+        final opened = await launchUrl(Uri.parse(authorizeUrl), mode: LaunchMode.externalApplication);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(opened
+              ? 'Autorizza Stackup Room su GitHub, poi torna qui e tocca di nuovo GitHub sync'
+              : 'Impossibile aprire il browser — URL autorizzazione GitHub: $authorizeUrl'),
+          duration: const Duration(seconds: 6),
+        ));
+        return;
+      }
+
+      // 2) Account già collegato (o OAuth non configurato) → sync attività.
+      final res = await client.functions.invoke('github-sync', body: {'action': 'sync'});
+      final data = res.data is Map ? res.data as Map : const {};
+      final msg = data['message'] ?? res.data.toString();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('GitHub: $msg')));
+      // Aggiorna i metadati denormalizzati mostrati nel profilo (login/contributi).
+      await ref.read(authProvider.notifier).refreshProfile();
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('GitHub sync errore: $e')));
+    }
   }
+
 }
 
 class _Avatar extends StatelessWidget {
@@ -268,6 +251,12 @@ class _Avatar extends StatelessWidget {
     );
   }
 }
+
+List<({String label, String emoji, bool earned})> _badges(int streak) => [
+      (label: '3 giorni', emoji: '🔥', earned: streak >= 3),
+      (label: '7 giorni', emoji: '🚀', earned: streak >= 7),
+      (label: '30 giorni', emoji: '🏆', earned: streak >= 30),
+    ];
 
 class _Tile extends StatelessWidget {
   const _Tile({required this.icon, required this.title, required this.subtitle, required this.c, this.onTap});

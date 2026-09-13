@@ -31,6 +31,7 @@ class Startup {
     this.notes,
     this.mrrCents,
     this.isArchived = false,
+    this.isPublic = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -44,6 +45,7 @@ class Startup {
   final String? notes;
   final int? mrrCents; // null = non collegato (Fase 4 Stripe read-only)
   final bool isArchived;
+  final bool isPublic; // Fase 7 — opt-in portfolio pubblico (default privacy-first: false)
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -57,6 +59,7 @@ class Startup {
         notes: j['notes'] as String?,
         mrrCents: j['mrr_cents'] as int?,
         isArchived: j['is_archived'] as bool? ?? false,
+        isPublic: j['is_public'] as bool? ?? false,
         createdAt: DateTime.parse(j['created_at'] as String),
         updatedAt: DateTime.parse(j['updated_at'] as String),
       );
@@ -70,7 +73,7 @@ class Startup {
         if (notes != null) 'notes': notes,
       };
 
-  Startup copyWith({String? name, StartupStatus? status, String? description, String? website, String? notes, bool? isArchived, int? mrrCents}) => Startup(
+  Startup copyWith({String? name, StartupStatus? status, String? description, String? website, String? notes, bool? isArchived, bool? isPublic, int? mrrCents}) => Startup(
         id: id,
         ownerId: ownerId,
         name: name ?? this.name,
@@ -80,6 +83,7 @@ class Startup {
         notes: notes ?? this.notes,
         mrrCents: mrrCents ?? this.mrrCents,
         isArchived: isArchived ?? this.isArchived,
+        isPublic: isPublic ?? this.isPublic,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );

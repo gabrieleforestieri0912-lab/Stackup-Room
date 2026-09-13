@@ -52,8 +52,14 @@ class StartupNotifier extends StateNotifier<StartupState> {
     }
   }
 
-  Future<void> update(Startup s, {String? name, StartupStatus? status, String? description, String? website, String? notes}) async {
-    await _repo.update(s, name: name, status: status, description: description, website: website, notes: notes);
+  Future<void> update(Startup s, {String? name, StartupStatus? status, String? description, String? website, String? notes, bool? isPublic}) async {
+    await _repo.update(s, name: name, status: status, description: description, website: website, notes: notes, isPublic: isPublic);
+    state = StartupState(items: await _repo.loadCache(), selectedId: state.selectedId);
+  }
+
+  /// Fase 7 — rendi (o nascondi) un progetto nel portfolio pubblico.
+  Future<void> setVisibility(String id, bool isPublic) async {
+    await _repo.setVisibility(id, isPublic);
     state = StartupState(items: await _repo.loadCache(), selectedId: state.selectedId);
   }
 

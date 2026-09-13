@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/monetization/purchases_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/storage/hive_service.dart';
 import 'core/supabase/supabase_client.dart';
+import 'core/sync/outbox_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
@@ -24,6 +28,14 @@ Future<void> main() async {
 
   await HiveService.initialize();
   await SupabaseService.initialize();
+  // RevenueCat: config base (nessun paywall ancora). Skippa se chiave assente.
+  try {
+    await PurchasesService.initialize(
+      appUserId: SupabaseService.authOrNull?.currentUser?.id,
+    );
+  } catch (e) {
+    debugPrint('[Purchases] init in main() errore (non bloccante): $e');
+  }
   // Notifiche: init lazy, ma prepara timezone presto (non blocca avvio)
   try {
     await NotificationService.initialize();
@@ -62,19 +74,39 @@ class AuthGate extends ConsumerStatefulWidget {
   ConsumerState<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends ConsumerState<AuthGate> {
+class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver {
   bool _splashMinDurationDone = false;
   String? _bootError;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _boot();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Fase 8 — al ritorno in foreground ritenta la coda offline (Hive → Supabase).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_flushOutbox());
+  }
+
+  Future<void> _flushOutbox() async {
+    final res = await OutboxService.flush();
+    if (res.sent > 0) debugPrint('[Sync] coda offline: ${res.sent} operazioni sincronizzate');
   }
 
   Future<void> _boot() async {
     try {
       await Future.delayed(const Duration(milliseconds: 800));
+      // Retry della coda offline appena l'app è avviata (no-op se la coda è vuota).
+      unawaited(_flushOutbox());
       if (!mounted) return;
       setState(() => _splashMinDurationDone = true);
     } catch (e) {

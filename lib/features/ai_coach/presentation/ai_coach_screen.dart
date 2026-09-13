@@ -49,7 +49,14 @@ class _AiCoachScreenState extends ConsumerState<AiCoachScreen> {
 
   void _jump() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+      if (!mounted || !_scroll.hasClients) return;
+      final target = _scroll.position.maxScrollExtent;
+      // Reduced motion: salta direttamente in fondo, senza animazione.
+      if (MediaQuery.of(context).disableAnimations) {
+        _scroll.jumpTo(target);
+      } else {
+        _scroll.animateTo(target, duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
+      }
     });
   }
 

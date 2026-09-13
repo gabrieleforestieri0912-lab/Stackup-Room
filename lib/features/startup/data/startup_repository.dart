@@ -37,6 +37,7 @@ class StartupRepository {
           'notes': s.notes,
           'mrr_cents': s.mrrCents,
           'is_archived': s.isArchived,
+          'is_public': s.isPublic,
           'created_at': s.createdAt.toIso8601String(),
           'updated_at': s.updatedAt.toIso8601String(),
         }).toList());
@@ -90,7 +91,7 @@ class StartupRepository {
     return local;
   }
 
-  Future<Startup?> update(Startup s, {String? name, StartupStatus? status, String? description, String? website, String? notes}) async {
+  Future<Startup?> update(Startup s, {String? name, StartupStatus? status, String? description, String? website, String? notes, bool? isPublic}) async {
     final client = SupabaseService.clientOrNull;
     final patch = <String, dynamic>{
       if (name != null) 'name': name.trim(),
@@ -98,6 +99,7 @@ class StartupRepository {
       if (description != null) 'description': description,
       if (website != null) 'website': website,
       if (notes != null) 'notes': notes,
+      if (isPublic != null) 'is_public': isPublic,
     };
     if (client != null && !s.id.startsWith('local_')) {
       try {
@@ -111,9 +113,17 @@ class StartupRepository {
       }
     }
     final cur = await loadCache();
-    final updated = s.copyWith(name: name, status: status, description: description, website: website, notes: notes);
+    final updated = s.copyWith(name: name, status: status, description: description, website: website, notes: notes, isPublic: isPublic);
     await saveCache(cur.map((e) => e.id == s.id ? updated : e).toList());
     return updated;
+  }
+
+  /// Fase 7 — toggle portfolio pubblico (opt-in per progetto).
+  Future<void> setVisibility(String id, bool isPublic) async {
+    final cur = await loadCache();
+    final matches = cur.where((e) => e.id == id);
+    if (matches.isEmpty) return;
+    await update(matches.first, isPublic: isPublic);
   }
 
   Future<void> archive(String id, bool archived) async {

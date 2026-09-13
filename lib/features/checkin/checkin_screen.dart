@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/storage/hive_service.dart';
+import '../../core/sync/outbox_service.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/breakpoints.dart';
 import '../../core/widgets/app_error_view.dart';
+import '../../core/widgets/two_pane_layout.dart';
 import '../auth/auth_provider.dart';
 import '../startup/presentation/project_switcher.dart';
 import '../startup/startup_provider.dart';
@@ -58,10 +59,9 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> with SingleTicker
     final startupName = (auth.profile?['startup_name'] as String?) ?? HiveService.onboardingStartupName;
     final hasStartup = startupName != null && startupName.trim().isNotEmpty;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = Breakpoints.isDesktop(constraints.maxWidth);
-        final body = CustomScrollView(
+    // Desktop ≥900px: TwoPaneLayout mette lista a sinistra e dettaglio a destra
+    // (breakpoint centralizzato in Breakpoints, vedi core/widgets/two_pane_layout.dart).
+    final body = CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
@@ -109,24 +109,12 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> with SingleTicker
           ],
         );
 
-        if (isDesktop) {
-          // Layout 2 colonne su >900px — lista a sx, dettaglio a dx (Fase 8 spec anticipata per Today)
-          return Scaffold(
-            backgroundColor: c.background,
-            body: Row(
-              children: [
-                Expanded(child: body),
-                Container(width: 1, color: c.border),
-                SizedBox(
-                  width: 360,
-                  child: _DesktopDetailPane(c: c),
-                ),
-              ],
-            ),
-          );
-        }
-        return Scaffold(backgroundColor: c.background, body: body);
-      },
+    return Scaffold(
+      backgroundColor: c.background,
+      body: TwoPaneLayout(
+        bodyBuilder: (context, isDesktop) => body,
+        secondary: _DesktopDetailPane(c: c),
+      ),
     );
   }
 
@@ -266,9 +254,18 @@ class _StandupCardState extends ConsumerState<_StandupCard> {
                     final body = 'Ieri:${_ieri.text} | Oggi:${_oggi.text} | Blocchi:${_blocchi.text}';
                     final date = DateTime.now().toIso8601String().substring(0, 10);
                     await ref.read(checkinProvider.notifier).setLastCheckin(date, body);
-                    // TODO Fase 4: salva su Supabase daily_checkins via Edge Function (mai anon)
+                    // Fase 8: sync offline-first — upsert idempotente su user_id+day.
+                    await OutboxService.queueStandup(
+                      day: date,
+                      yesterday: _ieri.text.trim().isEmpty ? null : _ieri.text.trim(),
+                      today: _oggi.text.trim().isEmpty ? null : _oggi.text.trim(),
+                      blockers: _blocchi.text.trim().isEmpty ? null : _blocchi.text.trim(),
+                    );
+                    final sync = await OutboxService.flush();
                     if (!mounted) return;
-                    messenger.showSnackBar(SnackBar(content: Text('Standup salvato — streak ${ref.read(streakProvider)} 🔥')));
+                    messenger.showSnackBar(SnackBar(content: Text(sync.pending > 0
+                        ? 'Standup salvato offline — in attesa di sync (${sync.pending}) 🔥'
+                        : 'Standup salvato — streak ${ref.read(streakProvider)} 🔥')));
                     _ieri.clear();
                     _oggi.clear();
                     _blocchi.clear();

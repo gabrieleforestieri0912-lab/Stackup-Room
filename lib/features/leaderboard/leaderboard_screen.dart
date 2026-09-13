@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/supabase/supabase_client.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/two_pane_layout.dart';
 import '../paywall/paywall_provider.dart';
+import '../paywall/presentation/paywall_screen.dart';
 import '../startup/startup_provider.dart';
 import 'data/leaderboard_repository.dart';
 import 'domain/leaderboard_entry.dart';
@@ -83,7 +85,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           ),
         ],
       ),
-      body: Column(children: [
+      // Desktop ≥900px: classifica a sinistra + riepilogo personale a destra.
+      body: TwoPaneLayout(
+        secondaryWidth: 340,
+        bodyBuilder: (context, isDesktop) => Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: SegmentedButton<LeaderboardSort>(
@@ -128,8 +133,80 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           ),
         ),
       ]),
+        secondary: _LeaderboardSidePane(c: c, myRank: myRank, optIn: lb.optIn, entries: lb.entries.length),
+      ),
     );
   }
+}
+
+/// Pannello destro su desktop — riepilogo personale (la vista completa delle
+/// classifica resta nella colonna principale).
+class _LeaderboardSidePane extends StatelessWidget {
+  const _LeaderboardSidePane({required this.c, required this.myRank, required this.optIn, required this.entries});
+  final AppColors c;
+  final int myRank;
+  final Map<String, dynamic>? optIn;
+  final int entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final showMrr = optIn?['show_mrr'] as bool? ?? true;
+    final showGithub = optIn?['show_github'] as bool? ?? false;
+    final showStreak = optIn?['show_streak'] as bool? ?? true;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text('Il tuo rank', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: c.border)),
+          child: Column(children: [
+            Text(myRank > 0 ? '#$myRank' : '—', style: TextStyle(color: myRank > 0 ? c.accentSignal : c.textTertiary, fontSize: 34, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(entries == 0 ? 'Nessun founder in classifica' : 'su $entries founder', style: TextStyle(color: c.textTertiary, fontSize: 11)),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        Text('Cosa rendi visibile', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 13)),
+        const SizedBox(height: 4),
+        Text('Si modificano in Impostazioni → Privacy metriche.', style: TextStyle(color: c.textTertiary, fontSize: 11)),
+        const SizedBox(height: 10),
+        _VisibilityRow(c: c, label: 'MRR verificato', visible: showMrr),
+        _VisibilityRow(c: c, label: 'Attività GitHub', visible: showGithub),
+        _VisibilityRow(c: c, label: 'Streak', visible: showStreak),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: c.primaryMuted, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.verified_rounded, size: 14, color: c.primaryLight),
+            const SizedBox(width: 6),
+            Expanded(child: Text('Solo revenue verificata scala la classifica.', style: TextStyle(color: c.primaryLight, fontSize: 11))),
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+class _VisibilityRow extends StatelessWidget {
+  const _VisibilityRow({required this.c, required this.label, required this.visible});
+  final AppColors c;
+  final String label;
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(children: [
+          Icon(visible ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 14, color: visible ? c.accentSignal : c.textTertiary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: TextStyle(color: c.textSecondary, fontSize: 12))),
+          Text(visible ? 'visibile' : 'nascosto', style: TextStyle(color: visible ? c.accentSignal : c.textTertiary, fontSize: 10, fontWeight: FontWeight.w700)),
+        ]),
+      );
 }
 
 class _PaywalledPreview extends StatelessWidget {
@@ -145,7 +222,7 @@ class _PaywalledPreview extends StatelessWidget {
       const SizedBox(height: 8),
       Opacity(opacity: 0.30, child: LeaderboardRow(entry: const LeaderboardEntry(userId: 'vertex', displayName: 'Vertex', startupName: 'Vertex', latestRevenueCents: 810000, currency: 'EUR', streakDays: 5, deltaCents: -5000), rank: 2, isMe: false, c: c)),
       const SizedBox(height: 16),
-      Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: c.accentSignal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16), border: Border.all(color: c.accentSignal.withValues(alpha: 0.3))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Icon(Icons.lock_rounded, color: c.accentSignal), const SizedBox(height: 8), Text('Leaderboard comparativa bloccata', textAlign: TextAlign.center, style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)), const SizedBox(height: 4), Text('Sblocca con membership per vedere il tuo rank reale e quello degli altri founder.', textAlign: TextAlign.center, style: TextStyle(color: c.textSecondary, fontSize: 12)), const SizedBox(height: 12), ElevatedButton(onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paywall RevenueCat — Fase 7 (3/6/12 mesi)'))), style: ElevatedButton.styleFrom(backgroundColor: c.accentSignal, foregroundColor: Colors.white), child: const Text('Vedi piani — da 3 mesi')), const SizedBox(height: 4), Text('TODO: confermare pricing su RevenueCat dashboard', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 10))])),
+      Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: c.accentSignal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16), border: Border.all(color: c.accentSignal.withValues(alpha: 0.3))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Icon(Icons.lock_rounded, color: c.accentSignal), const SizedBox(height: 8), Text('Leaderboard comparativa bloccata', textAlign: TextAlign.center, style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)), const SizedBox(height: 4), Text('Sblocca con membership per vedere il tuo rank reale e quello degli altri founder.', textAlign: TextAlign.center, style: TextStyle(color: c.textSecondary, fontSize: 12)), const SizedBox(height: 12), ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaywallScreen())), style: ElevatedButton.styleFrom(backgroundColor: c.accentSignal, foregroundColor: Colors.white), child: const Text('Vedi piani — da 3 mesi')), const SizedBox(height: 4), Text('TODO: confermare pricing su RevenueCat dashboard', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 10))])),
       const SizedBox(height: 12),
       OutlinedButton(onPressed: () {}, child: const Text('Privacy: cosa rendo visibile (toggle Fase 4)')),
     ]);

@@ -59,8 +59,8 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
     return res != null;
   }
 
-  Future<void> setOptIn({bool? showMrr, bool? showGithub}) async {
-    await _repo.setOptIn(showMrr: showMrr, showGithub: showGithub);
+  Future<void> setOptIn({bool? showMrr, bool? showGithub, bool? showStreak}) async {
+    await _repo.setOptIn(showMrr: showMrr, showGithub: showGithub, showStreak: showStreak);
     final optIn = await _repo.fetchOptIn();
     state = LeaderboardState(entries: state.entries, sort: state.sort, optIn: optIn);
   }

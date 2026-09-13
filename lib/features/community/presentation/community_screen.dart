@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/two_pane_layout.dart';
 import '../../paywall/paywall_provider.dart';
+import '../../paywall/presentation/paywall_screen.dart';
 import '../community_provider.dart';
 import '../domain/community.dart';
 import 'guide_detail_sheet.dart';
@@ -34,7 +36,7 @@ class _PaywalledCommunity extends StatelessWidget {
         const SizedBox(height: 8),
         Opacity(opacity: 0.3, child: _FakeMessage(c: c, text: 'Hai provato a validare con 5 interviste?')),
         const SizedBox(height: 16),
-        Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: c.accentSignal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16), border: Border.all(color: c.accentSignal.withValues(alpha: 0.3))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Icon(Icons.lock_rounded, color: c.accentSignal), const SizedBox(height: 8), Text('Community bloccata', textAlign: TextAlign.center, style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)), const SizedBox(height: 4), Text('Chat live, reazioni, voice notes e guide sono dietro membership.', textAlign: TextAlign.center, style: TextStyle(color: c.textSecondary, fontSize: 12)), const SizedBox(height: 12), ElevatedButton(onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paywall RevenueCat — Fase 7'))), style: ElevatedButton.styleFrom(backgroundColor: c.accentSignal, foregroundColor: Colors.white), child: const Text('Sblocca community'))])),
+        Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: c.accentSignal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16), border: Border.all(color: c.accentSignal.withValues(alpha: 0.3))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Icon(Icons.lock_rounded, color: c.accentSignal), const SizedBox(height: 8), Text('Community bloccata', textAlign: TextAlign.center, style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 14)), const SizedBox(height: 4), Text('Chat live, reazioni, voice notes e guide sono dietro membership.', textAlign: TextAlign.center, style: TextStyle(color: c.textSecondary, fontSize: 12)), const SizedBox(height: 12), ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaywallScreen())), style: ElevatedButton.styleFrom(backgroundColor: c.accentSignal, foregroundColor: Colors.white), child: const Text('Sblocca community'))])),
       ]),
     );
   }
@@ -83,16 +85,11 @@ class _CommunityContentState extends ConsumerState<_CommunityContent> with Singl
         bottom: TabBar(controller: _tab, labelColor: widget.c.text, unselectedLabelColor: widget.c.textTertiary, indicatorColor: widget.c.accentSignal, tabs: const [Tab(text: 'Chat'), Tab(text: 'Guide')]),
       ),
       body: TabBarView(controller: _tab, children: [
-        // Chat
-        Column(children: [
-          SizedBox(
-            height: 44,
-            child: ListView.separated(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), scrollDirection: Axis.horizontal, itemCount: state.channels.length, separatorBuilder: (_, __) => const SizedBox(width: 8), itemBuilder: (context, i) {
-              final ch = state.channels[i];
-              final sel = ch.id == state.selectedChannelId;
-              return ChoiceChip(label: Text('#${ch.name}', style: TextStyle(fontSize: 12, color: sel ? Colors.white : widget.c.textSecondary)), selected: sel, selectedColor: widget.c.accentSignal, onSelected: (_) => ref.read(communityProvider.notifier).selectChannel(ch.id));
-            }),
-          ),
+        // Chat — su desktop (≥900px) i canali si spostano nel pane destro.
+        TwoPaneLayout(
+          secondaryWidth: 240,
+          bodyBuilder: (context, isDesktop) => Column(children: [
+          if (!isDesktop) _ChannelStrip(state: state, c: widget.c),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(communityProvider.notifier).refreshMessages(),
@@ -120,6 +117,8 @@ class _CommunityContentState extends ConsumerState<_CommunityContent> with Singl
             ),
           ),
         ]),
+          secondary: _ChannelList(state: state, c: widget.c),
+        ),
         // Guide
         _GuideTab(state: state, c: widget.c),
       ]),
@@ -186,5 +185,68 @@ class _GuideTab extends ConsumerWidget {
         }),
       ),
     ]);
+  }
+}
+
+/// Strip orizzontale dei canali — solo mobile (su desktop si usa [_ChannelList]).
+class _ChannelStrip extends ConsumerWidget {
+  const _ChannelStrip({required this.state, required this.c});
+  final CommunityState state;
+  final AppColors c;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        scrollDirection: Axis.horizontal,
+        itemCount: state.channels.length,
+        separatorBuilder: (_, i) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => _ChannelChip(channel: state.channels[i], selected: state.channels[i].id == state.selectedChannelId, c: c),
+      ),
+    );
+  }
+}
+
+/// Lista verticale dei canali — pane destro del layout desktop.
+class _ChannelList extends ConsumerWidget {
+  const _ChannelList({required this.state, required this.c});
+  final CommunityState state;
+  final AppColors c;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Canali', style: TextStyle(color: c.text, fontWeight: FontWeight.w700, fontSize: 13)),
+        const SizedBox(height: 10),
+        for (final ch in state.channels)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ChannelChip(channel: ch, selected: ch.id == state.selectedChannelId, c: c, fullWidth: true),
+          ),
+      ],
+    );
+  }
+}
+
+class _ChannelChip extends ConsumerWidget {
+  const _ChannelChip({required this.channel, required this.selected, required this.c, this.fullWidth = false});
+  final CommunityChannel channel;
+  final bool selected;
+  final AppColors c;
+  final bool fullWidth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chip = ChoiceChip(
+      label: Text('#${channel.name}', style: TextStyle(fontSize: 12, color: selected ? Colors.white : c.textSecondary)),
+      selected: selected,
+      selectedColor: c.accentSignal,
+      onSelected: (_) => ref.read(communityProvider.notifier).selectChannel(channel.id),
+    );
+    return fullWidth ? SizedBox(width: double.infinity, child: chip) : chip;
   }
 }
