@@ -157,7 +157,7 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                     if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
                   },
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('sito ufficiale'),
+                  label: const Text('stackuproom.com'),
                 ),
               ],
             ),

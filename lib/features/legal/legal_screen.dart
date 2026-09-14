@@ -3,12 +3,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// URL pubblici — alias Vercel provvisorio in attesa del dominio stackuproom.com.
+/// URL pubblici — placeholder in attesa del dominio stackuproom.com.
 /// Per la submission store devono essere URL pubblici raggiungibili (non solo in-app).
 class LegalUrls {
-  static const privacy = 'https://site-vertex-9.vercel.app/privacy';
-  static const terms = 'https://site-vertex-9.vercel.app/terms';
-  static const support = 'https://site-vertex-9.vercel.app';
+  static const privacy = 'https://stackuproom.com/privacy.html';
+  static const terms = 'https://stackuproom.com/terms.html';
+  static const support = 'https://stackuproom.com';
 }
 
 Future<void> openLegalUrl(BuildContext context, String url) async {

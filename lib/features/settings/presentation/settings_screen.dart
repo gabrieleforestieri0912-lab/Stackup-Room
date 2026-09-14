@@ -163,7 +163,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SectionTitle('Legale', c: c),
           _Tile(icon: Icons.privacy_tip_rounded, title: 'Privacy Policy', subtitle: 'Come trattiamo i tuoi dati (privacy@stackuproom.com)', c: c, onTap: () => launchUrl(Uri.parse(LegalUrls.privacy), mode: LaunchMode.externalApplication)),
           _Tile(icon: Icons.gavel_rounded, title: 'Termini di Servizio', subtitle: 'Regole d\'uso della Room (support@stackuproom.com)', c: c, onTap: () => launchUrl(Uri.parse(LegalUrls.terms), mode: LaunchMode.externalApplication)),
-          _Tile(icon: Icons.language_rounded, title: 'Sito web', subtitle: 'Alias Vercel — hosta /privacy e /terms per store review', c: c, onTap: () => launchUrl(Uri.parse(LegalUrls.support), mode: LaunchMode.externalApplication)),
+          _Tile(icon: Icons.language_rounded, title: 'Sito web', subtitle: 'stackuproom.com — hosta /privacy e /terms per store review', c: c, onTap: () => launchUrl(Uri.parse(LegalUrls.support), mode: LaunchMode.externalApplication)),
 
           const SizedBox(height: 20),
           Text('Stackup Room • Giorno 5 launch prep', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 11)),

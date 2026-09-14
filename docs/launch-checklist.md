@@ -30,8 +30,7 @@
 
 - [x] **Pagine `/privacy` e `/terms` create** — `site/privacy.html` + `site/terms.html` + `site/index.html` minimali, stile dark coerente, testi operativi (non consulenza legale). _Stato: DONE._
 - [x] **Route in-app + link esterno** — `lib/features/legal/legal_screen.dart` (`PrivacyScreen`/`TermsScreen` + `LegalUrls`) e link da `SettingsScreen` + `ProfileScreen` verso gli URL pubblici. _Stato: DONE._
-- [x] **Pagine pubblicate e raggiungibili da URL pubblico** — `site/*` deployato su Vercel (progetto `site`, scope `vertex-9`, SSO protection disattivata), alias pubblici `https://site-vertex-9.vercel.app` + `https://site-delta-rouge-51.vercel.app`. URL per store: `https://site-vertex-9.vercel.app/privacy` e `/terms`. _Stato: DONE — verifica `curl` con 200 OK._
-  - Dominio custom `stackuproom.com` non ancora registrato/resolvibile (NXDOMAIN) — quando disponibile, aggiungere su Vercel (Settings > Domains) e aggiornare `LegalUrls` in `lib/features/legal/legal_screen.dart`.
+- [ ] **Pagine pubblicate e raggiungibili da URL pubblico** — `site/*` rimosso dal repo (l'hosting verrà gestito via dominio `stackuproom.com` prima della review). `LegalUrls` in `lib/features/legal/legal_screen.dart` punta a `https://stackuproom.com/privacy.html` (placeholder). _Stato: DA FARE — blocca la submission se manca (entrambi gli store richiedono link pubblico, non basta testo in-app)._
 
 ## Beta reale
 
@@ -59,12 +58,12 @@
 1. **Apple Review — permessi:** se `NSCameraUsageDescription` è troppo generica → rifiuto. Mitigato (stringhe dettagliate Giorno 5) ma va ricontrollato alla submission.
 2. **Apple Review — Stripe:** rischio basso (Stripe è fuori IAP per dashboard revenue), ma un reviewer non esperto potrebbe chiedere chiarimento. Mitigato con nota precompilata in `docs/store-privacy.md` §5.
 3. **Firma iOS:** spesso blocca il lancio all'ultimo minuto (certificati scaduti, provisioning mismatch). Azione: configurare subito, non a ridosso della submission.
-4. **Dominio custom non pronto:** le pagine legali sono live su alias Vercel (`site-vertex-9.vercel.app/privacy`) e quindi raggiungibili dagli store, ma il dominio `stackuproom.com` (NXDOMAIN) non è ancora registrato/configurato. Azione: registrare il dominio e puntare su Vercel (DNS), poi aggiornare `LegalUrls`. Non blocca la submission se gli URL Vercel vengono usati in App Store Connect / Play Console.
+4. **Pagine legali non raggiungibili:** `site/*` rimosso dal repo in attesa di hosting su `stackuproom.com`; blocca entrambi gli store se manca alla submission. Azione: registrare il dominio, hostare `/privacy` e `/terms`, aggiornare `LegalUrls` prima di inviare in review (verifica `curl`).
 5. **RLS non applicata in prod:** se le migration Giorno 5 non sono state eseguite sul DB prod, le policy restano solo locali. Azione: `supabase db push` o SQL Editor con tutti i file `supabase/migrations/20260914*.sql`.
 
 ## Cosa manca prima di poter inviare in review
 
-1. Eseguire i `DA FARE` bloccanti: **firma build release (Android keystore + iOS provisioning) + applicazione migration in prod + verifica RLS prod**. Le pagine legali sono già live su Vercel.
+1. Eseguire i `DA FARE` bloccanti: **hosting pagine legali (dominio stackuproom.com) + firma build release (Android keystore + iOS provisioning) + applicazione migration in prod + verifica RLS prod**.
 2. Un giro completo TestFlight + Play Internal Testing su device reale (almeno 1 tester per store).
 3. Test funnel end-to-end + analytics events su prod (vedi `docs/monitoring.md`).
 4. Copiare `docs/store-privacy.md` nei form Data Safety / App Privacy degli store.
