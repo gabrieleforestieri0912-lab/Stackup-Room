@@ -43,6 +43,24 @@ class CommunityNotifier extends StateNotifier<CommunityState> {
     if (msg != null) state = state.copyWith(messages: [...state.messages, msg]);
   }
 
+  /// Registra (già registrato su file locale) e invia un voice note.
+  /// localPath: file .m4a temporaneo; content: testo opzionale associato.
+  Future<bool> sendVoice({required String localPath, String? content, String? replyTo}) async {
+    final ch = state.selectedChannelId;
+    if (ch == null) return false;
+    final path = await _repo.uploadVoiceNote(localPath);
+    if (path == null) return false;
+    final msg = await _repo.sendMessage(channelId: ch, content: content ?? '🎙️ Voice note', replyTo: replyTo, voiceUrl: path);
+    if (msg != null) {
+      state = state.copyWith(messages: [...state.messages, msg]);
+      return true;
+    }
+    return false;
+  }
+
+  /// URL firmato per riprodurre un voice note (bucket privato).
+  Future<String?> voiceNoteUrl(String path) => _repo.getVoiceNoteUrl(path);
+
   Future<void> react(String messageId, String emoji) async {
     await _repo.toggleReaction(messageId, emoji);
     if (state.selectedChannelId != null) {

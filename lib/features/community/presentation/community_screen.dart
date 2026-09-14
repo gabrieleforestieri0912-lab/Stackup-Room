@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:async';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:record/record.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/two_pane_layout.dart';
@@ -109,7 +114,12 @@ class _CommunityContentState extends ConsumerState<_CommunityContent> with Singl
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Row(children: [
-                IconButton(icon: Icon(Icons.mic_rounded, color: widget.c.textTertiary), onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voice note — registra audio breve, upload su Storage voice_notes (Fase 6)')))),
+                _VoiceButton(c: widget.c, onDone: (path) async {
+                  final ok = await ref.read(communityProvider.notifier).sendVoice(localPath: path);
+                  if (ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voice note inviato')));
+                  }
+                }),
                 Expanded(child: TextField(controller: _ctrl, decoration: InputDecoration(hintText: 'Messaggio in #${state.channels.where((c) => c.id == state.selectedChannelId).firstOrNull?.name ?? "generale"}', prefixIcon: const Icon(Icons.chat_bubble_outline_rounded, size: 18)), onSubmitted: (_) => _send())),
                 const SizedBox(width: 8),
                 FilledButton(onPressed: _send, child: const Icon(Icons.send_rounded, size: 18)),
@@ -151,7 +161,7 @@ class _MessageTile extends StatelessWidget {
         const SizedBox(height: 6),
         if (msg.replyTo != null) Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: c.surfaceAlt, borderRadius: BorderRadius.circular(8)), child: Text('↳ reply a ${msg.replyTo!.substring(0, 8)}…', style: TextStyle(color: c.textTertiary, fontSize: 11))),
         Text(msg.content, style: TextStyle(color: c.text, fontSize: 13, height: 1.4)),
-        if (msg.voiceUrl != null) Padding(padding: const EdgeInsets.only(top: 6), child: Row(children: [Icon(Icons.play_circle_rounded, size: 16, color: c.accentSignal), const SizedBox(width: 4), Text('Voice note', style: TextStyle(color: c.accentSignal, fontSize: 11, fontWeight: FontWeight.w600))])),
+        if (msg.voiceUrl != null) Padding(padding: const EdgeInsets.only(top: 6), child: Row(children: [Icon(Icons.play_circle_rounded, size: 16, color: c.accentSignal), const SizedBox(width: 4), _VoiceNotePlayer(path: msg.voiceUrl!)])),
         const SizedBox(height: 8),
         Row(children: [
           for (final e in ['🚀', '🔥', '💡']) ...[
@@ -248,5 +258,169 @@ class _ChannelChip extends ConsumerWidget {
       onSelected: (_) => ref.read(communityProvider.notifier).selectChannel(channel.id),
     );
     return fullWidth ? SizedBox(width: double.infinity, child: chip) : chip;
+  }
+}
+
+/// Pulsante microfono — registra un voice note breve (m4a) e passa il file locale
+/// a [onDone] quando l'utente interrompe la registrazione.
+class _VoiceButton extends StatefulWidget {
+  const _VoiceButton({required this.c, required this.onDone});
+  final AppColors c;
+  final Future<void> Function(String path) onDone;
+
+  @override
+  State<_VoiceButton> createState() => _VoiceButtonState();
+}
+
+class _VoiceButtonState extends State<_VoiceButton> {
+  final _recorder = AudioRecorder();
+  bool _recording = false;
+  Timer? _t;
+  int _sec = 0;
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    _recorder.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_recording) {
+      final path = await _recorder.stop();
+      _t?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _recording = false;
+        _sec = 0;
+      });
+      if (path != null) await widget.onDone(path);
+      return;
+    }
+    final ok = await _recorder.hasPermission();
+    if (!ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Permesso microfono negato — abilitalo dalle impostazioni')));
+      }
+      return;
+    }
+    final dir = Directory.systemTemp.path;
+    final path = '$dir/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    try {
+      await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registrazione non riuscita: $e')));
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _recording = true);
+    _t = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _sec++);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.of(context).disableAnimations;
+    return GestureDetector(
+      onTap: _toggle,
+      child: Container(
+        margin: const EdgeInsets.only(right: 4),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _recording ? widget.c.accentSignal.withValues(alpha: 0.15) : Colors.transparent,
+          border: Border.all(color: _recording ? widget.c.accentSignal : widget.c.border),
+        ),
+        child: AnimatedOpacity(
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 200),
+          opacity: _recording ? 1 : 0.6,
+          child: Icon(
+            _recording ? Icons.stop_circle_rounded : Icons.mic_rounded,
+            size: 22,
+            color: _recording ? widget.c.accentSignal : widget.c.textTertiary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Riproduttore voice note — fetcha l'URL firmato (bucket privato) e lo riproduce.
+class _VoiceNotePlayer extends ConsumerStatefulWidget {
+  const _VoiceNotePlayer({required this.path});
+  final String path;
+
+  @override
+  ConsumerState<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
+}
+
+class _VoiceNotePlayerState extends ConsumerState<_VoiceNotePlayer> {
+  final _player = AudioPlayer();
+  bool _playing = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _playing = false);
+    });
+    _player.onPlayerStateChanged.listen((s) {
+      if (!mounted) return;
+      if (s == PlayerState.completed) setState(() => _playing = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_playing) {
+      await _player.stop();
+      if (mounted) setState(() => _playing = false);
+      return;
+    }
+    setState(() => _loading = true);
+    final url = await ref.read(communityProvider.notifier).voiceNoteUrl(widget.path);
+    if (url == null || !mounted) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    final reduce = MediaQuery.of(context).disableAnimations;
+    try {
+      await _player.play(UrlSource(url));
+      if (mounted) setState(() => _playing = true);
+      // Stop automatico dopo 60s (il signed URL scade a 60s)
+      await Future.delayed(const Duration(seconds: 60));
+      if (_playing && mounted && !reduce) {
+        await _player.stop();
+        if (mounted) setState(() => _playing = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Impossibile riprodurre: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
+    if (_loading) {
+      return InkWell(onTap: _toggle, child: Row(children: [const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)), const SizedBox(width: 6), Text('⏱', style: TextStyle(color: c.accentSignal, fontSize: 11, fontWeight: FontWeight.w600))]));
+    }
+    return InkWell(
+      onTap: _toggle,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(_playing ? Icons.pause_circle_rounded : Icons.play_circle_rounded, size: 20, color: c.accentSignal),
+        const SizedBox(width: 4),
+        Text(_playing ? 'In riproduzione…' : 'Voice note', style: TextStyle(color: c.accentSignal, fontSize: 11, fontWeight: FontWeight.w600)),
+      ]),
+    );
   }
 }

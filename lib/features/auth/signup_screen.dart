@@ -84,6 +84,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
+  Future<void> _oauth(String provider) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authProvider.notifier).signInWithOAuth(provider);
+      if (!mounted) return;
+    } on StateError catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Gating waitlist: se public signup disabilitato, redirect a waitlist
@@ -207,6 +226,51 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Text('Crea account'),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: c.border)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('oppure con', style: TextStyle(color: c.textTertiary, fontSize: 12)),
+                    ),
+                    Expanded(child: Divider(color: c.border)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _loading ? null : () => _oauth('google'),
+                          icon: const Icon(Icons.g_mobiledata_rounded, size: 22),
+                          label: const Text('Google'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: c.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _loading ? null : () => _oauth('apple'),
+                          icon: const Icon(Icons.apple_rounded, size: 22),
+                          label: const Text('Apple'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: c.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Row(

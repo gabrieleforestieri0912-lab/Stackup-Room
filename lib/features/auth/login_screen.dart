@@ -68,6 +68,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _oauth(String provider) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authProvider.notifier).signInWithOAuth(provider);
+      if (!mounted) return;
+      // Il routing è gestito da AuthNotifier → main.dart _Root
+    } on StateError catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _magicLink() async {
     final emailError = _validateEmail(_emailCtrl.text);
     if (emailError != null) {
@@ -192,6 +212,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: c.border)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('oppure', style: TextStyle(color: c.textTertiary, fontSize: 12)),
+                    ),
+                    Expanded(child: Divider(color: c.border)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _loading ? null : () => _oauth('google'),
+                          icon: const Icon(Icons.g_mobiledata_rounded, size: 22),
+                          label: const Text('Google'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: c.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _loading ? null : () => _oauth('apple'),
+                          icon: const Icon(Icons.apple_rounded, size: 22),
+                          label: const Text('Apple'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: c.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Row(

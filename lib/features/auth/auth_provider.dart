@@ -238,6 +238,22 @@ class AuthNotifier extends StateNotifier<AppAuthState> {
     }
   }
 
+  /// Login OAuth (Apple/Google) — apre il flow del provider su Supabase.
+  /// Nota: il provider va abilitato in Supabase Dashboard (Auth > Providers).
+  Future<void> signInWithOAuth(String provider) async {
+    final auth = SupabaseService.authOrNull;
+    if (auth == null) throw StateError('Supabase non configurato');
+    try {
+      await auth.signInWithOAuth(
+        provider == 'apple' ? OAuthProvider.apple : OAuthProvider.google,
+        redirectTo: 'com.vertex.stackuproom://login',
+      );
+      // Al ritorno dal browser esterno, onAuthStateChange aggiorna lo stato.
+    } catch (e) {
+      throw StateError(_humanizeAuthError(e));
+    }
+  }
+
   Future<void> signOut() async {
     final auth = SupabaseService.authOrNull;
     if (auth == null) {

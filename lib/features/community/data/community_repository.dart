@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
@@ -74,15 +75,31 @@ class CommunityRepository {
     final uid = client?.auth.currentUser?.id;
     if (client == null || uid == null) return null;
     try {
-      final bytes = await Future.value(null); // placeholder: in app reale leggi file
+      final file = File(localPath);
+      if (!await file.exists()) {
+        debugPrint('[Community] file voice note non trovato: $localPath');
+        return null;
+      }
+      final bytes = await file.readAsBytes();
       final path = '$uid/${DateTime.now().microsecondsSinceEpoch}.m4a';
-      // Upload stub — ritorna URL pubblico mock se storage non configurato
-      // ignore: unused_local_variable
-      final _ = bytes;
-      final url = client.storage.from('voice_notes').getPublicUrl(path);
-      return url;
+      await client.storage.from('voice_notes').uploadBinary(path, bytes);
+      // Bucket privato (voice_notes non è public): per la letura usa createSignedUrl.
+      return path;
     } catch (e) {
       debugPrint('[Community] voice upload errore: $e');
+      return null;
+    }
+  }
+
+  /// Genera URL firmato (60s) per riprodurre un voice note da bucket privato.
+  Future<String?> getVoiceNoteUrl(String path) async {
+    final client = SupabaseService.clientOrNull;
+    if (client == null) return null;
+    try {
+      final url = await client.storage.from('voice_notes').createSignedUrl(path, 60);
+      return url;
+    } catch (e) {
+      debugPrint('[Community] signed url errore: $e');
       return null;
     }
   }
