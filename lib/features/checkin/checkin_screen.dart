@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics_service.dart';
 import '../../core/storage/hive_service.dart';
 import '../../core/sync/outbox_service.dart';
 import '../../core/theme/app_colors.dart';
@@ -262,6 +263,12 @@ class _StandupCardState extends ConsumerState<_StandupCard> {
                       blockers: _blocchi.text.trim().isEmpty ? null : _blocchi.text.trim(),
                     );
                     final sync = await OutboxService.flush();
+                    // Analytics: primo check-in (streak passa da 0 a 1)
+                    final isFirst = ref.read(streakProvider) == 1;
+                    if (isFirst) {
+                      // ignore: discarded_futures
+                      AnalyticsService.track(AnalyticsService.firstCheckinCompleted);
+                    }
                     if (!mounted) return;
                     messenger.showSnackBar(SnackBar(content: Text(sync.pending > 0
                         ? 'Standup salvato offline — in attesa di sync (${sync.pending}) 🔥'

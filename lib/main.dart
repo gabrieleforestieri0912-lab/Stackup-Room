@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/env/env.dart';
 import 'core/monetization/purchases_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/storage/hive_service.dart';
@@ -15,6 +16,7 @@ import 'features/auth/login_screen.dart';
 import 'features/onboarding/onboarding_provider.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/waitlist/waitlist_screen.dart';
 import 'navigation/app_shell.dart';
 
 Future<void> main() async {
@@ -149,6 +151,7 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
 
     switch (auth.status) {
       case AuthStatus.unauthenticated:
+        if (!Env.enablePublicSignup) return const WaitlistScreen();
         return const LoginScreen();
       case AuthStatus.authenticatedOnboardingRequired:
         // Pre-carica onboarding da profilo remoto (se disponibile)

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy — Stackup Room</title>
+<meta name="description" content="Privacy Policy di Stackup Room — social network verticale per founder indie.">
+<style>
+:root{--bg:#0A0A0A;--fg:#F2F2F2;--muted:#9A9A9A;--border:#1E1E1E;--accent:#7B39FC}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6}
+a{color:var(--accent)}header,main,footer{max-width:760px;margin:0 auto;padding:24px}
+header{border-bottom:1px solid var(--border)}h1{font-size:28px;margin:0 0 6px;letter-spacing:-0.5px}h2{font-size:18px;margin:32px 0 8px;color:var(--fg)}h3{font-size:15px;margin:20px 0 6px;color:var(--fg)}
+p,li{font-size:14px;color:#D8D8D8}small{color:var(--muted)}.badge{display:inline-block;font-size:11px;padding:4px 8px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;letter-spacing:0.4px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}th,td{border:1px solid var(--border);padding:8px;text-align:left}th{background:#121212;color:var(--fg)}
+code{background:#161616;padding:2px 6px;border-radius:6px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="badge">STACKUP ROOM</div>
+  <h1>Privacy Policy</h1>
+  <p><small>Ultimo aggiornamento: 14 settembre 2026 — Versione MVP lancio. Questo testo è un punto di partenza, non consulenza legale.</small></p>
+  <p><small>Titolare: Stackup Room (progetto Vertex). Contatto privacy: <a href="mailto:privacy@stackuproom.com">privacy@stackuproom.com</a></small></p>
+</header>
+<main>
+  <h2>1. Chi siamo</h2>
+  <p>Stackup Room è un social network verticale per founder indie: daily check-in, portfolio startup, leaderboard a revenue verificata e AI coach. L'app è disponibile su iOS e Android (Flutter) e si appoggia a Supabase per autenticazione e dati.</p>
+
+  <h2>2. Dati che raccogliamo</h2>
+  <table>
+    <tr><th>Categoria</th><th>Dati</th><th>Obbligatorio?</th><th>Fonte</th></tr>
+    <tr><td>Account</td><td>Email, password (hash Supabase Auth), ID utente</td><td>Sì</td><td>Inseriti da te al signup</td></tr>
+    <tr><td>Profilo</td><td>Nome visualizzato, avatar (opzionale), startup name, one-liner 140c, orario promemoria</td><td>Nome sì, resto opzionale</td><td>Onboarding / Profilo</td></tr>
+    <tr><td>Contenuti</td><td>Check-in (max 280c), task/standup, descrizione startup, post community, messaggi AI coach</td><td>Sì (se usi la feature)</td><td>Inseriti da te</td></tr>
+    <tr><td>Avatar immagine</td><td>Foto da galleria o fotocamera (solo se scegli)</td><td>No</td><td>image_picker → Storage Supabase bucket <code>avatars</code></td></tr>
+    <tr><td>Revenue verificata</td><td>MRR/importi da Stripe (read-only via Edge Function <code>stripe-verify</code>)</td><td>No</td><td>Stripe, solo se colleghi</td></tr>
+    <tr><td>GitHub</td><td>Login, contributi 30gg (metrica), token OAuth salvato solo server-side</td><td>No</td><td>GitHub OAuth via <code>github-sync</code>, solo se colleghi</td></tr>
+    <tr><td>Acquisti</td><td>Stato abbonamento 3/6/12 mesi (RevenueCat / StoreKit / Play Billing)</td><td>No</td><td>RevenueCat</td></tr>
+    <tr><td>Analytics minimali</td><td>Eventi: signup_completed, onboarding_completed, first_checkin_completed, revenue_connected</td><td>Sì (anonimizzati)</td><td>Tabella <code>analytics_events</code></td></tr>
+    <tr><td>Notifiche</td><td>Orario promemoria locale (Hive + schedulazione daily)</td><td>No</td><td>Scelto da te</td></tr>
+  </table>
+  <p>Non raccogliamo contatti della rubrica, posizione, dati biometrici, né vendiamo dati a terze parti. Nessun tracking cross-app.</p>
+
+  <h2>3. Perché li usiamo (base giuridica)</h2>
+  <ul>
+    <li><strong>Esecuzione contratto:</strong> creare e gestire il tuo account, mostrarti la leaderboard, sincronizzare i tuoi dati.</li>
+    <li><strong>Consenso:</strong> avatar, notifiche, collegamenti Stripe/GitHub (revocabili).</li>
+    <li><strong>Legittimo interesse:</strong> analytics minimali per migliorare il funnel, prevenzione abusi, supporto.</li>
+  </ul>
+
+  <h2>4. Condivisione</h2>
+  <p>Condividiamo dati solo con i fornitori necessari, mai per pubblicità:</p>
+  <ul>
+    <li><strong>Supabase</strong> (hosting Postgres/Auth/Storage/Edge Functions) — UE/US a seconda del progetto.</li>
+    <li><strong>RevenueCat</strong> (verifica abbonamenti) — solo stato entitlements.</li>
+    <li><strong>Stripe</strong> — solo se colleghi, read-only (balance/invoices) via proxy; nessun dato carta transitato dall'app.</li>
+    <li><strong>GitHub</strong> — solo se colleghi, OAuth read:user + eventi pubblici.</li>
+    <li><strong>OpenAI / LLM</strong> — solo se configurato lato server per AI Coach; il contenuto è inviato alla Edge Function <code>ai-coach</code> e non contiene chiavi lato client.</li>
+  </ul>
+
+  <h2>5. Conservazione</h2>
+  <p>Conserviamo i dati finché l'account è attivo. Alla cancellazione account eliminiamo profilo, startup associate, check-in e avatar. Eventi analytics aggregati possono restare anonimizzati. I token OAuth (GitHub) sono eliminati alla disconnessione.</p>
+
+  <h2>6. I tuoi diritti</h2>
+  <p>Puoi in qualsiasi momento: accedere, rettificare o cancellare i tuoi dati (Profilo → Impostazioni → Elimina account, o scrivendo a <a href="mailto:privacy@stackuproom.com">privacy@stackuproom.com</a>); revocare consensi (disattiva notifiche, scollega Stripe/GitHub, rimuovi avatar); esportare i tuoi contenuti (richiesta via email, risposta entro 30 giorni).</p>
+
+  <h2>7. Sicurezza</h2>
+  <p>Trasmissione cifrata (TLS), RLS attiva su ogni tabella Supabase (nessuna tabella senza policy), token mai nel bundle mobile, bucket avatar con policy per-cartella (<code>avatars/&lt;uid&gt;/...</code>). Vedi <code>supabase/migrations/*</code> per le policy.</p>
+
+  <h2>8. Minori</h2>
+  <p>Servizio riservato a maggiorenni (18+). Non raccogliamo consapevolmente dati di minori.</p>
+
+  <h2>9. Trasferimenti extra-UE</h2>
+  <p>I fornitori possono trattare dati fuori dall'UE (es. US). Usiamo clausole contrattuali standard e configurazioni regionali dove disponibili (Supabase EU region consigliata).</p>
+
+  <h2>10. Modifiche</h2>
+  <p>Aggiorneremo questa policy ad ogni cambiamento di raccolta dati. La data in cima indica la versione vigente. Modifiche sostanziali notificate in-app.</p>
+
+  <h2>11. Contatti</h2>
+  <p>Domande o richieste: <a href="mailto:privacy@stackuproom.com">privacy@stackuproom.com</a>. Reclami: autorità garante locale (es. Garante Privacy IT).</p>
+
+  <p><small>Nota: questo documento è un template operativo per la submission store, non sostituisce consulenza legale professionale. Fai validare da un legale prima del lancio pubblico su larga scala.</small></p>
+</main>
+<footer><small>© 2026 Stackup Room — <a href="/terms.html">Termini</a> · <a href="/">Home</a></small></footer>
+</body>
+</html>

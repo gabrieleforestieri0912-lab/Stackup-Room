@@ -49,6 +49,18 @@ class Env {
     return dotenv.maybeGet('REVENUECAT_API_KEY') ?? '';
   }
 
+  // --- Launch gating (Giorno 5 Fase 1) ---
+  // Se false, l'app mostra schermata waitlist invece del signup normale.
+  // Default true = lancio pubblico immediato (coerente con docs/scope.md che non prevede beta).
+  // Per attivare waitlist: --dart-define=ENABLE_PUBLIC_SIGNUP=false (o .env)
+  static bool get enablePublicSignup {
+    const fromDefine = String.fromEnvironment('ENABLE_PUBLIC_SIGNUP');
+    if (fromDefine.isNotEmpty) return fromDefine.toLowerCase() != 'false' && fromDefine != '0';
+    final fromEnv = dotenv.maybeGet('ENABLE_PUBLIC_SIGNUP');
+    if (fromEnv != null && fromEnv.isNotEmpty) return fromEnv.toLowerCase() != 'false' && fromEnv != '0';
+    return true;
+  }
+
   static void assertNoServiceRole() {
     final hasServiceRole = dotenv.maybeGet('SUPABASE_SERVICE_ROLE_KEY') != null ||
         const String.fromEnvironment('SUPABASE_SERVICE_ROLE_KEY').isNotEmpty;

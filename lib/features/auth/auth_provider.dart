@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/analytics/analytics_service.dart';
 import '../../core/storage/hive_service.dart';
 import '../../core/supabase/supabase_client.dart';
 
@@ -197,6 +198,9 @@ class AuthNotifier extends StateNotifier<AppAuthState> {
           user: res.session!.user,
           profile: profile,
         );
+        // Analytics: signup completato (non bloccante)
+        // ignore: discarded_futures
+        AnalyticsService.track(AnalyticsService.signupCompleted, properties: {'method': 'email'});
       }
     } catch (e) {
       state = state.copyWith(error: _humanizeAuthError(e));
@@ -268,6 +272,8 @@ class AuthNotifier extends StateNotifier<AppAuthState> {
     await updateProfile({'onboarding_completed_at': nowIso});
     // Aggiorna Hive cache
     await HiveService.saveOnboardingStep3(reminderHourValue: HiveService.reminderHour, completedAtIso: nowIso);
+    // ignore: discarded_futures
+    AnalyticsService.track(AnalyticsService.onboardingCompleted);
   }
 
   void clearError() {

@@ -159,8 +159,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 : pendingSync.maybeWhen(data: (n) => n > 0 ? _Pill(text: '$n', color: c.accentSignal) : null, orElse: () => null),
           ),
 
+          _SectionTitle('Legale', c: c),
+          _Tile(icon: Icons.privacy_tip_rounded, title: 'Privacy Policy', subtitle: 'Come trattiamo i tuoi dati (privacy@stackuproom.com)', c: c, onTap: () => launchUrl(Uri.parse('https://stackuproom.com/privacy.html'), mode: LaunchMode.externalApplication)),
+          _Tile(icon: Icons.gavel_rounded, title: 'Termini di Servizio', subtitle: 'Regole d\'uso della Room (support@stackuproom.com)', c: c, onTap: () => launchUrl(Uri.parse('https://stackuproom.com/terms.html'), mode: LaunchMode.externalApplication)),
+          _Tile(icon: Icons.language_rounded, title: 'Sito web', subtitle: 'stackuproom.com — hosta /privacy e /terms per store review', c: c, onTap: () => launchUrl(Uri.parse('https://stackuproom.com'), mode: LaunchMode.externalApplication)),
+
           const SizedBox(height: 20),
-          Text('Stackup Room • Fase 8', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 11)),
+          Text('Stackup Room • Giorno 5 launch prep', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 11)),
         ],
       ),
     );

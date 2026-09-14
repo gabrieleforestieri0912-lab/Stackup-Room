@@ -50,9 +50,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Per scattare la foto avatar</string>
+	<string>Stackup Room usa la fotocamera solo se scegli di scattare la foto del tuo avatar durante l'onboarding o in Profilo. Nessun altro uso. Puoi sempre saltare questo passaggio.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Per scegliere l'avatar dalla galleria</string>
+	<string>Stackup Room accede alla galleria solo se scegli un'immagine per l'avatar. L'immagine viene caricata sul tuo profilo (bucket avatars) e puoi rimuoverla in qualsiasi momento.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

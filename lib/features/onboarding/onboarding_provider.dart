@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/analytics/analytics_service.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/storage/hive_service.dart';
 import '../../core/supabase/supabase_client.dart';
@@ -324,6 +325,8 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
       );
 
       state = state.copyWith(step: OnboardingStep.done, isSaving: false, notificationGranted: granted);
+      // ignore: discarded_futures
+      AnalyticsService.track(AnalyticsService.onboardingCompleted, properties: {'reminder_hour': state.reminderHour, 'granted': granted});
       return true;
     } catch (e) {
       debugPrint('[Onboarding] completeStep3 errore: $e');

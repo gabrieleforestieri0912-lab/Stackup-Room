@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/env/env.dart';
 import '../../core/theme/app_colors.dart';
+import '../waitlist/waitlist_screen.dart';
 import 'auth_provider.dart';
 import 'login_screen.dart';
 
@@ -84,6 +86,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Gating waitlist: se public signup disabilitato, redirect a waitlist
+    if (!Env.enablePublicSignup) return const WaitlistScreen();
     final c = Theme.of(context).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
     return Scaffold(
       body: SafeArea(

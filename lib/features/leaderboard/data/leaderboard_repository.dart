@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/analytics/analytics_service.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../domain/leaderboard_entry.dart';
 
@@ -42,7 +43,11 @@ class LeaderboardRepository {
         debugPrint('[Leaderboard] stripe-verify status ${res.status}: ${res.data}');
         return null;
       }
-      return res.data as Map<String, dynamic>;
+      final data = res.data as Map<String, dynamic>;
+      // Analytics: revenue collegata (non bloccante)
+      // ignore: discarded_futures
+      AnalyticsService.track(AnalyticsService.revenueConnected, properties: {'startup_id': startupId, 'source': data['source'] ?? 'stripe'});
+      return data;
     } catch (e) {
       debugPrint('[Leaderboard] stripe-verify errore: $e');
       return null;
