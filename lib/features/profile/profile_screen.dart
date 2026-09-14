@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../navigation/app_shell.dart';
 import '../auth/auth_provider.dart';
 import '../checkin/checkin_provider.dart';
+import '../legal/legal_screen.dart';
 import '../paywall/paywall_provider.dart';
 import '../paywall/presentation/paywall_screen.dart';
 import '../settings/presentation/settings_screen.dart';
@@ -165,7 +166,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _Tile(icon: Icons.code_rounded, title: 'GitHub sync', subtitle: _githubSubtitle(profile), c: c, onTap: () => _githubSync(context, ref)),
           _Tile(icon: Icons.workspace_premium_rounded, title: paywall.hasMembership ? 'Membership attiva ✓' : 'Membership', subtitle: paywall.hasMembership ? 'Tier ${paywall.tier ?? "—"}' : 'Sblocca community + leaderboard + AI illimitato', c: c, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaywallScreen()))),
-          _Tile(icon: Icons.privacy_tip_rounded, title: 'Privacy & Termini', subtitle: 'Privacy Policy • Termini • stackuproom.com', c: c, onTap: () => launchUrl(Uri.parse('https://stackuproom.com/privacy.html'), mode: LaunchMode.externalApplication)),
+          _Tile(icon: Icons.privacy_tip_rounded, title: 'Privacy & Termini', subtitle: 'Privacy Policy • Termini • sito Vercel', c: c, onTap: () => launchUrl(Uri.parse(LegalUrls.privacy), mode: LaunchMode.externalApplication)),
           const SizedBox(height: 16),
           Text(
             auth.isAuthenticated

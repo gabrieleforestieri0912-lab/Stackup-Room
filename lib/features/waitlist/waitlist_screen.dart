@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../legal/legal_screen.dart';
 import 'waitlist_repository.dart';
 
 /// Schermata waitlist — mostrata quando ENABLE_PUBLIC_SIGNUP=false.
@@ -152,11 +153,11 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                 const SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: () async {
-                    final uri = Uri.parse('https://stackuproom.com');
+                    final uri = Uri.parse(LegalUrls.support);
                     if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
                   },
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('stackuproom.com'),
+                  label: const Text('sito ufficiale'),
                 ),
               ],
             ),
