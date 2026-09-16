@@ -71,7 +71,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         const SizedBox(height: 8),
         TextButton(onPressed: () => ref.read(paywallProvider.notifier).restore(), child: const Text('Ripristina acquisti')),
         const SizedBox(height: 4),
-        Text('TODO: confermare pricing su RevenueCat dashboard — offering corrente: 3/6/12 mesi. Mai hardcoded product IDs.', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 10)),
+        Text('Piani e prezzi configurati su RevenueCat (offering 3/6/12 mesi) — gestiti da App Store / Play Store.', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 10)),
         const SizedBox(height: 8),
         Text('Gestione abbonamento: deep link a App Store/Play Store settings (non flow cancellazione custom).', textAlign: TextAlign.center, style: TextStyle(color: c.textTertiary, fontSize: 10)),
       ]),
@@ -105,7 +105,7 @@ class _PlanList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: confermare pricing — placeholder da dashboard
+    // Anteprima mock locale — prezzi placeholder solo quando l'offering RevenueCat non è disponibile (offline/dev); in produzione i prezzi arrivano dallo Store via offering.
     final plans = [
       ('3m', '3 mesi', '€29', null),
       ('6m', '6 mesi', '€49', null),

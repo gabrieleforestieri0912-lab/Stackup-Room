@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures, use_null_aware_elements, unnecessary_cast, unused_field
+
 import 'dart:convert';
 import 'dart:io';
 

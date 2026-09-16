@@ -1,3 +1,5 @@
+// ignore_for_file: use_null_aware_elements, unnecessary_cast
+
 import 'package:flutter/foundation.dart';
 
 import '../../../core/analytics/analytics_service.dart';

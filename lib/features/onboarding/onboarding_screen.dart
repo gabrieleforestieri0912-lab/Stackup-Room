@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:io' show File, Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -227,14 +228,15 @@ class _Step1Profile extends ConsumerWidget {
                   ref.read(onboardingProvider.notifier).pickAvatar();
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.photo_camera_rounded, color: c.primary),
-                title: const Text('Scatta foto'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  ref.read(onboardingProvider.notifier).pickAvatarCamera();
-                },
-              ),
+              if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
+                ListTile(
+                  leading: Icon(Icons.photo_camera_rounded, color: c.primary),
+                  title: const Text('Scatta foto'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ref.read(onboardingProvider.notifier).pickAvatarCamera();
+                  },
+                ),
               if (state.avatarLocalPath != null || state.avatarUrl != null)
                 ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: c.error),

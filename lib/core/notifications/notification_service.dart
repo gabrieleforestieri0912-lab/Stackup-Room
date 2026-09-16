@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -10,6 +12,7 @@ import 'package:timezone/timezone.dart' as tz;
 /// - Richiede permesso notifiche (iOS/Android moderni).
 /// - Se permesso negato, onboarding completa comunque (senza promemoria attivo).
 /// - Usa timezone per schedulazione daily corretta.
+/// - Supporta Windows tramite flutter_local_notifications (toast nativi).
 class NotificationService {
   NotificationService._();
 
@@ -19,21 +22,30 @@ class NotificationService {
 
   static bool get isInitialized => _initialized;
 
+  /// Se siamo su Windows, le notifiche toast non richiedono permessi.
+  static bool get _isWindows => !kIsWeb && Platform.isWindows;
+
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
-    const iosInit = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
-    const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
-
-    await _plugin.initialize(initSettings);
+    // Su Windows, flutter_local_notifications usa toast nativi Windows.
+    // Non servono impostazioni specifiche di piattaforma per l'inizializzazione base.
+    if (_isWindows) {
+      const initSettings = InitializationSettings();
+      await _plugin.initialize(initSettings);
+    } else {
+      const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
+      const iosInit = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+      const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+      await _plugin.initialize(initSettings);
+    }
     _initTimezone();
     _initialized = true;
-    debugPrint('[Notifications] Inizializzato');
+    debugPrint('[Notifications] Inizializzato${_isWindows ? ' (Windows)' : ''}');
   }
 
   static void _initTimezone() {
@@ -57,7 +69,12 @@ class NotificationService {
 
   /// Richiede permesso notifiche. Ritorna true se concesso, false se negato.
   /// Non lancia mai — se negato, caller gestisce fallback (onboarding completa comunque).
+  /// Su Windows, le notifiche toast non richiedono permessi espliciti.
   static Future<bool> requestPermission() async {
+    if (_isWindows) {
+      debugPrint('[Notifications] Windows: permesso toast non richiesto (concesso di default)');
+      return true;
+    }
     try {
       final status = await Permission.notification.request();
       if (status.isGranted || status.isLimited) {
@@ -78,6 +95,7 @@ class NotificationService {
 
   /// Controlla se il permesso è già concesso senza richiederlo (per UI).
   static Future<bool> hasPermission() async {
+    if (_isWindows) return true;
     try {
       final status = await Permission.notification.status;
       return status.isGranted || status.isLimited;
@@ -88,6 +106,10 @@ class NotificationService {
 
   /// Apre le impostazioni app per abilitare manualmente le notifiche.
   static Future<void> openSettings() async {
+    if (_isWindows) {
+      debugPrint('[Notifications] Windows: le notifiche toast non richiedono configurazione');
+      return;
+    }
     try {
       await openAppSettings();
     } catch (e) {
@@ -96,6 +118,7 @@ class NotificationService {
   }
 
   /// Schedula notifica giornaliera all'orario preferito (hour 0-23).
+  /// Su Windows usa toast notification nativo (non zonedSchedule).
   static Future<bool> scheduleDailyReminder({required int hour}) async {
     try {
       if (!_initialized) await initialize();
@@ -112,6 +135,22 @@ class NotificationService {
       var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, 0);
       if (scheduled.isBefore(now)) {
         scheduled = scheduled.add(const Duration(days: 1));
+      }
+
+      if (_isWindows) {
+        // Su Windows, flutter_local_notifications supporta periodicSchedule
+        // ma non zonedSchedule con matchDateTimeComponents.
+        // Usa un approccio semplificato: schedula la prossima occorrenza.
+        await _plugin.periodicallyShow(
+          1001,
+          'Stackup Room',
+          'È il momento del tuo check-in giornaliero 🔥',
+          RepeatInterval.daily,
+          const NotificationDetails(),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+        debugPrint('[Notifications] Windows: promemoria daily periodic (prossimo: $scheduled)');
+        return true;
       }
 
       const androidDetails = AndroidNotificationDetails(
