@@ -10,7 +10,9 @@ export interface User {
  name: string;
  email: string;
  avatar?: string;
- authMethod: 'local' | 'google' | 'github';
+ handle?: string | null;
+ onboardingCompleted?: boolean;
+ authMethod: 'local' | 'google' | 'github' | 'otp';
  createdAt: string;
  enrolledCourses: string[];
  certificates: { courseId: string; completedAt: string; certificateId: string }[];
@@ -24,6 +26,8 @@ export interface AuthContextType {
  loading: boolean;
  login: (email: string, password: string) => Promise<User>;
  register: (name: string, email: string, password: string) => Promise<User>;
+ requestOtp: (email: string) => Promise<void>;
+ verifyOtp: (email: string, code: string) => Promise<User>;
  logout: () => void;
  completeOAuthLogin: (userData: User, token: string) => void;
  completeGoogleLogin: (userData: User, token: string) => void;
@@ -140,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return data.user as User;
  }, [establishSession]);
 
- const completeOAuthLogin = useCallback(async (userData: User, _token: string) => {
+  const completeOAuthLogin = useCallback(async (userData: User, _token: string) => {
   // Dopo il redirect OAuth la sessione è già nel client Supabase
   try {
    const { data: { session } } = await supabase.auth.getSession();
@@ -158,6 +162,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   await fetchUser(session.access_token);
  }, []);
 
+ const requestOtp = useCallback(async (email: string) => {
+  const res = await fetch('/api/auth/otp/request', {
+   method: 'POST', headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ email }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Errore invio codice');
+ }, []);
+
+ const verifyOtp = useCallback(async (email: string, code: string) => {
+  const res = await fetch('/api/auth/otp/verify', {
+   method: 'POST', headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ email, code }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Codice non valido');
+  if (data.emailOtpToken) {
+   const { error } = await supabase.auth.verifyOtp({ email, token: data.emailOtpToken, type: 'email' });
+   if (error) throw new Error(error.message);
+   const { data: { session } } = await supabase.auth.getSession();
+   if (session?.access_token) persistToken(session.access_token);
+  } else if (data.actionLink) {
+   window.location.href = data.actionLink;
+   throw new Error('Completa il login dal link inviato via email.');
+  }
+  if (data.user) setUser(data.user as User);
+  else await refreshUser();
+  toast.success('Accesso effettuato');
+  return data.user as User;
+ }, [refreshUser]);
+
  const logout = useCallback(async () => {
   setUser(null);
   persistToken();
@@ -167,7 +202,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  }, []);
 
   return (
-   <AuthContext.Provider value={{ user, login, register, logout, completeOAuthLogin, completeGoogleLogin: completeOAuthLogin, refreshUser, loading }}>
+   <AuthContext.Provider value={{ user, login, register, logout, completeOAuthLogin, completeGoogleLogin: completeOAuthLogin, refreshUser, requestOtp, verifyOtp, loading }}>
     {children}
    </AuthContext.Provider>
   );

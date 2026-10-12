@@ -8,14 +8,18 @@ import { supabase } from '@/lib/supabase';
 import { Mail, Lock, LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-  const router = useRouter();
+ const Login: React.FC = () => {
+ const [email, setEmail] = useState('');
+ const [password, setPassword] = useState('');
+ const [showPw, setShowPw] = useState(false);
+ const [loading, setLoading] = useState(false);
+ const [error, setError] = useState('');
+ const [mode, setMode] = useState<'password' | 'otp'>('otp');
+ const [otpSent, setOtpSent] = useState(false);
+ const [code, setCode] = useState('');
+ const [info, setInfo] = useState('');
+ const { login, requestOtp, verifyOtp } = useAuth();
+ const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,6 +30,35 @@ const Login: React.FC = () => {
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Email o password errate.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpRequest = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(''); setInfo('');
+    setLoading(true);
+    try {
+      await requestOtp(email);
+      setOtpSent(true);
+      setInfo('Codice inviato. Controlla la tua email (scade tra 10 minuti).');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Errore invio codice.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpVerify = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(''); setInfo('');
+    setLoading(true);
+    try {
+      const u = await verifyOtp(email, code);
+      router.push(u?.onboardingCompleted === false ? '/onboarding' : '/room');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Codice non valido.');
     } finally {
       setLoading(false);
     }
@@ -70,6 +103,69 @@ const Login: React.FC = () => {
             </motion.div>
           )}
 
+          <div className="flex gap-2 mb-6" role="tablist" aria-label="Metodo di accesso">
+            <button
+              type="button" role="tab" aria-selected={mode === 'otp'}
+              onClick={() => { setMode('otp'); setError(''); }}
+              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${mode === 'otp' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
+            >
+              Codice email
+            </button>
+            <button
+              type="button" role="tab" aria-selected={mode === 'password'}
+              onClick={() => { setMode('password'); setError(''); }}
+              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${mode === 'password' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
+            >
+              Password
+            </button>
+          </div>
+
+          {info && (
+            <div className="mb-5 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">
+              {info}
+            </div>
+          )}
+
+          {mode === 'otp' ? (
+            <form onSubmit={otpSent ? handleOtpVerify : handleOtpRequest} className="space-y-5">
+              <div>
+                <label className="block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1.5">Email</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-orange-400 transition-colors" size={16} />
+                  <input
+                    type="email" required
+                    className="w-full pl-11 pr-4 py-3.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all font-medium text-zinc-100 text-sm rounded-xl"
+                    placeholder="nome@esempio.it" value={email} onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+              {otpSent && (
+                <div>
+                  <label className="block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1.5">Codice a 6 cifre</label>
+                  <input
+                    type="text" inputMode="numeric" autoComplete="one-time-code" required
+                    maxLength={6} pattern="\d{6}"
+                    className="w-full px-4 py-3.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all font-medium text-zinc-100 text-sm rounded-xl tracking-[0.5em] text-center"
+                    placeholder="••••••" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  />
+                </div>
+              )}
+              <button
+                type="submit" disabled={loading}
+                className="w-full py-3.5 bg-orange-600 text-white font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={16} />}
+                {loading ? 'Attendi...' : otpSent ? 'Verifica e accedi' : 'Invia codice'}
+              </button>
+              {otpSent && (
+                <button type="button" onClick={() => { setOtpSent(false); setCode(''); }} className="w-full text-center text-[11px] text-zinc-500 hover:text-orange-400 font-bold">
+                  Usa un&apos;altra email o reinvia
+                </button>
+              )}
+            </form>
+          ) : null}
+
+          {mode === 'password' ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1.5">Email</label>
@@ -122,6 +218,7 @@ const Login: React.FC = () => {
               {loading ? 'Accesso in corso...' : 'Accedi'}
             </button>
           </form>
+          ) : null}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

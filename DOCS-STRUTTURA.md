@@ -279,3 +279,20 @@ npx tsc --noEmit # Typecheck
 
 Per popolare i corsi: `npx tsx src/scripts/seed-courses.ts` (usa `.env`).
 > ⚠️ `src/scripts/check-courses.ts` imposta **tutti i prezzi a 0** — non eseguirlo se non è voluto.
+> ℹ️ Test Room: `npm test` (Vitest, `src/lib/room/__tests__/`).
+
+---
+
+## 11. Stackup Room — Stato Operativo (memoria sessioni)
+
+Moduli Room (`/room/*`, API `/api/room/*`, lib `src/lib/room/`): Auth OTP (M1), Startup+Planner+Streak (M2),
+Classifiche+Stripe/GitHub (M3), Community+moderazione+notifiche (M4), Coach AI+consenso (M5), Feedback+test (M6).
+Migrazioni `supabase/migrations/003_room_*.sql` → `008_room_feedback.sql` (nomi descrittivi, ordine numerico).
+Esclusi su richiesta: PWA, pannello admin (moderazione/feedback via SQL + email `ADMIN_EMAILS`).
+
+**Provider AI coach: xKiro** (`https://api.xkiro.com/v1/messages`, formato Anthropic, header `x-api-key`).
+Env: `XKIRO_API_KEY` (configurata in `.env` locale + Vercel prod/preview/dev, ottobre 2026),
+`AI_MODEL` (default `anthropic/claude-sonnet-5`, ID con prefisso vendor obbligatorio),
+`AI_DAILY_LIMIT` (default 50), `DEEPGRAM_API_KEY` (opz, STT vocali).
+STT: Claude non accetta audio → trascrizione solo via Deepgram, altrimenti fallback senza trascrizione.
+Altre env Room: `OTP_PEPPER`, `STRIPE_CONNECT_CLIENT_ID`, `TENOR_API_KEY`, `GITHUB_TOKEN` (tutte opz).
