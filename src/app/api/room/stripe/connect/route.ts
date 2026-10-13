@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser } from '@/lib/room/api';
+import { requireUser, unauthorized } from '@/lib/room/api';
 import { connectClientId, connectUrl } from '@/lib/room/stripe';
 
 export const runtime = 'nodejs';
 
 // Avvia il collegamento Stripe read-only per una startup (OAuth Connect, scope read_only).
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   if (!connectClientId()) return NextResponse.json({ message: 'Stripe Connect non configurato' }, { status: 501 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';

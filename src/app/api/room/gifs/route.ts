@@ -1,13 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { requireMember } from '@/lib/room/community';
+import { unauthorized } from '@/lib/room/api';
 
 export const runtime = 'nodejs';
 
 // Proxy ricerca GIF (Tenor). Chiave solo lato server.
 export async function GET(req: NextRequest) {
-  const { error } = await requireMember(req);
-  if (error) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const key = process.env.TENOR_API_KEY;
   if (!key) return NextResponse.json({ message: 'GIF non configurate', gifs: [] }, { status: 501 });
   const q = new URL(req.url).searchParams.get('q') || 'startup';

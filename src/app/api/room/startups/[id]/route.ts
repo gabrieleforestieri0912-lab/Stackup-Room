@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser, ownStartup } from '@/lib/room/api';
+import { requireUser, ownStartup, unauthorized } from '@/lib/room/api';
 import { cleanStr, extractDomain, STAGES } from '@/lib/room/m2';
 import { isValidUrlOrEmpty } from '@/lib/room/validation';
 
 export const runtime = 'nodejs';
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   if (!(await ownStartup(user.id, id))) return NextResponse.json({ message: 'Startup non trovata' }, { status: 404 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -46,8 +46,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   if (!(await ownStartup(user.id, id))) return NextResponse.json({ message: 'Startup non trovata' }, { status: 404 });
   await supabaseAdmin.from('startups').delete().eq('id', id);

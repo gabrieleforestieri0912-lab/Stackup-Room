@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser } from '@/lib/room/api';
+import { requireUser, unauthorized } from '@/lib/room/api';
 import { fetchPublicCounts } from '@/lib/room/github';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
@@ -9,16 +9,16 @@ export const runtime = 'nodejs';
 
 // Ultimi 120 giorni di conteggi pubblici (cache). Solo conteggi, mai codice.
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('github_cache').select('day,count').eq('user_id', user.id).order('day', { ascending: false }).limit(120);
   return NextResponse.json({ series: data || [] });
 }
 
 // Sincronizza dai eventi pubblici GitHub (rate limit 10/h).
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `gh-sync:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
 

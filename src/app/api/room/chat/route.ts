@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, blockedIds, displayName, notify } from '@/lib/room/community';
 import { isValidUrlOrEmpty } from '@/lib/room/validation';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
@@ -10,8 +11,8 @@ const WINDOW_MS = 7 * 24 * 3600 * 1000;
 
 // Chat live (polling) con finestra mobile di 7 giorni. Testo, GIF, note vocali, reazioni.
 export async function GET(req: NextRequest) {
-  const { error, user, profile } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const sp = new URL(req.url).searchParams;
   const since = sp.get('since');
   const limit = Math.min(100, Math.max(1, Number(sp.get('limit')) || 50));
@@ -68,8 +69,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `chat:${user.id}`), 20, 60_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Rallenta un attimo.' }, { status: 429 });
 

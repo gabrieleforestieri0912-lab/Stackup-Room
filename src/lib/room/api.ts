@@ -9,6 +9,11 @@ export async function requireUser(req: NextRequest) {
   return { error: null as NextResponse | null, user: u };
 }
 
+// Risposta 401 standard per route handler (mai null: soddisfa i tipi Next.js).
+export function unauthorized(): NextResponse {
+  return NextResponse.json({ message: 'Non autorizzato' }, { status: 401 });
+}
+
 // Verifica che la startup appartenga all'utente (tutte le risorse planner sono per-startup e private).
 export async function ownStartup(userId: string, startupId: string) {
   const { data } = await supabaseAdmin.from('startups').select('id').eq('id', startupId).eq('user_id', userId).maybeSingle();

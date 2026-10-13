@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 import { rankRevenue, rankStreak, maskOwner, type Period } from '@/lib/room/leaderboard';
 

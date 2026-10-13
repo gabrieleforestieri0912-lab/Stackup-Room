@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, blockedIds, displayName, notify } from '@/lib/room/community';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 import { isAdminEmail } from '@/lib/room/admin';
@@ -9,8 +10,8 @@ import { isValidUrlOrEmpty } from '@/lib/room/validation';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('events').select('*').gte('starts_at', new Date().toISOString()).order('starts_at').limit(50);
   const blocked = await blockedIds(user.id);
   const visible = (data || []).filter((e: { user_id: string }) => !blocked.has(e.user_id));
@@ -34,8 +35,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `events:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -55,8 +56,8 @@ export async function POST(req: NextRequest) {
 
 // Partecipazione (toggle + notifica all'organizzatore).
 export async function PUT(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const eventId = typeof body.event_id === 'string' ? body.event_id : '';
   const { data: ev } = await supabaseAdmin.from('events').select('id,user_id,title').eq('id', eventId).maybeSingle();
@@ -72,8 +73,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   const { data: ev } = await supabaseAdmin.from('events').select('user_id').eq('id', id).maybeSingle();
   if (!ev) return NextResponse.json({ message: 'Evento non trovato' }, { status: 404 });

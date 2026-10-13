@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember } from '@/lib/room/community';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
@@ -11,8 +12,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 // Feedback bug/idea con screenshot allegabile. Storage privato, visibile solo all'admin
 // (RLS negata al client + notifica email). Nessun pannello admin: gestione via email/SQL.
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `feedback:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
 
@@ -58,8 +59,8 @@ export async function POST(req: NextRequest) {
 
 // I propri feedback inviati (mai quelli altrui).
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('feedback').select('id,kind,body,status,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30);
   return NextResponse.json({ feedback: data || [] });
 }

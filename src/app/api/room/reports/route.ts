@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, REASONS, notify } from '@/lib/room/community';
 import { isAdminEmail } from '@/lib/room/admin';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
@@ -35,8 +36,8 @@ async function snippetFor(target: string, id: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `report:${user.id}`), 20, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe segnalazioni. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
 
 // Coda di revisione admin (SLA 24h: ordinata per anzianità).
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   if (!isAdminEmail(user.email)) return NextResponse.json({ message: 'Non autorizzato' }, { status: 403 });
   const status = new URL(req.url).searchParams.get('status') || 'open';
   const { data } = await supabaseAdmin.from('reports').select('*').eq('status', status).order('created_at').limit(100);
@@ -64,8 +65,8 @@ export async function GET(req: NextRequest) {
 
 // Risoluzione admin (con notifica al segnalante).
 export async function PATCH(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   if (!isAdminEmail(user.email)) return NextResponse.json({ message: 'Non autorizzato' }, { status: 403 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const id = typeof body.id === 'string' ? body.id : '';

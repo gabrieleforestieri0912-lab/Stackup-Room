@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember } from '@/lib/room/community';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
@@ -9,8 +10,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 // Upload nota vocale (storage privato). Ritorna il path da usare nel messaggio.
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `voice:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe note vocali. Riprova più tardi.' }, { status: 429 });
 
@@ -34,8 +35,8 @@ export async function POST(req: NextRequest) {
 
 // Link firmato a scadenza breve (15 min) per riprodurre una nota vocale dei 7 giorni.
 export async function GET(req: NextRequest) {
-  const { error } = await requireMember(req);
-  if (error) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const path = new URL(req.url).searchParams.get('path');
   if (!path || path.includes('..')) return NextResponse.json({ message: 'Path non valido' }, { status: 400 });
   const { data, error: sign } = await supabaseAdmin.storage.from('voice-notes').createSignedUrl(path, 900);

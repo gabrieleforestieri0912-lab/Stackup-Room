@@ -1,22 +1,22 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser } from '@/lib/room/api';
+import { requireUser, unauthorized } from '@/lib/room/api';
 import { cleanStr, extractDomain, logoUrlFor, STAGES } from '@/lib/room/m2';
 import { isValidUrlOrEmpty } from '@/lib/room/validation';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('startups').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
   return NextResponse.json({ startups: data || [] });
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
   const name = cleanStr(body.name, 80);

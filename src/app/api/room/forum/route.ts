@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, blockedIds, displayName, notify } from '@/lib/room/community';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 import { isAdminEmail } from '@/lib/room/admin';
@@ -9,8 +10,8 @@ export const runtime = 'nodejs';
 const TAGS = ['ask', 'show', 'discussione'] as const;
 
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const tag = new URL(req.url).searchParams.get('tag');
   let q = supabaseAdmin.from('forum_topics').select('*').order('created_at', { ascending: false }).limit(50);
   if (tag && (TAGS as readonly string[]).includes(tag)) q = q.eq('tag', tag);
@@ -32,8 +33,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `forum:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -47,8 +48,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   const { data: t } = await supabaseAdmin.from('forum_topics').select('user_id').eq('id', id).maybeSingle();
   if (!t) return NextResponse.json({ message: 'Topic non trovato' }, { status: 404 });
@@ -59,8 +60,8 @@ export async function DELETE(req: NextRequest) {
 
 // Risposta a un topic (notifica l'autore).
 export async function PUT(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `forum-reply:${user.id}`), 30, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;

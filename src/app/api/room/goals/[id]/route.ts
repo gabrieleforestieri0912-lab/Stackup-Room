@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser, recordShip } from '@/lib/room/api';
+import { requireUser, recordShip, unauthorized } from '@/lib/room/api';
 import { cleanStr } from '@/lib/room/m2';
 import { isValidUrlOrEmpty } from '@/lib/room/validation';
 
 export const runtime = 'nodejs';
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: existing } = await supabaseAdmin.from('goals').select('*').eq('id', id).eq('user_id', user.id).maybeSingle();
   if (!existing) return NextResponse.json({ message: 'Obiettivo non trovato' }, { status: 404 });
@@ -40,8 +40,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: existing } = await supabaseAdmin.from('goals').select('id').eq('id', id).eq('user_id', user.id).maybeSingle();
   if (!existing) return NextResponse.json({ message: 'Obiettivo non trovato' }, { status: 404 });

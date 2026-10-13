@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, EMOJI } from '@/lib/room/community';
 import { isAdminEmail } from '@/lib/room/admin';
 
@@ -8,8 +9,8 @@ export const runtime = 'nodejs';
 
 // Reazione a un messaggio (toggle).
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const emoji = typeof body.emoji === 'string' ? body.emoji : '';
@@ -28,8 +29,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
 // Modifica testo proprio entro 15 minuti (marca edited_at).
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: msg } = await supabaseAdmin.from('chat_messages').select('user_id,body,created_at').eq('id', id).maybeSingle();
   if (!msg) return NextResponse.json({ message: 'Messaggio non trovato' }, { status: 404 });
@@ -47,8 +48,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
 // Elimina messaggio proprio (o admin).
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: msg } = await supabaseAdmin.from('chat_messages').select('user_id,audio_path').eq('id', id).maybeSingle();
   if (!msg) return NextResponse.json({ message: 'Messaggio non trovato' }, { status: 404 });

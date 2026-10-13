@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser } from '@/lib/room/api';
+import { requireUser, unauthorized } from '@/lib/room/api';
 import { fetchMrr, fetchMrrForKey, connectClientId } from '@/lib/room/stripe';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
@@ -10,8 +10,8 @@ export const runtime = 'nodejs';
 
 // Ricalcola lo snapshot MRR verificato per una startup collegata (rate limit 10/h).
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `stripe-refresh:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
 
@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
 
 // Scollega un account in ogni momento (best-effort deauthorize lato Stripe).
 export async function DELETE(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const linkId = typeof body.link_id === 'string' ? body.link_id : '';
   const keyId = typeof body.key_id === 'string' ? body.key_id : '';

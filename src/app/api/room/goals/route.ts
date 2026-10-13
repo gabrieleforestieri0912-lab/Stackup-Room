@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser, ownStartup } from '@/lib/room/api';
+import { requireUser, ownStartup, unauthorized } from '@/lib/room/api';
 import { cleanStr } from '@/lib/room/m2';
 import { isValidUrlOrEmpty } from '@/lib/room/validation';
 
@@ -9,8 +9,8 @@ export const runtime = 'nodejs';
 
 // Obiettivi con prova di lavoro (URL, screenshot path, nota). Privati.
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const startupId = new URL(req.url).searchParams.get('startup_id');
   let q = supabaseAdmin.from('goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
   if (startupId) {
@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const title = cleanStr(body.title, 200);
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';

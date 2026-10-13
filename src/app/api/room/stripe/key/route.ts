@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser } from '@/lib/room/api';
+import { requireUser, unauthorized } from '@/lib/room/api';
 import { verifyRestrictedKey, fetchMrrForKey, maskKey } from '@/lib/room/stripe';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
@@ -10,8 +10,8 @@ export const runtime = 'nodejs';
 // Collega una chiave ristretta read-only (rk_live_/rk_test_) a una startup.
 // Il segreto resta solo lato server, mai restituito al client. Revocabile qui o da Stripe.
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `stripe-key:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
 

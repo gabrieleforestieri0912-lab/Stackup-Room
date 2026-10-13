@@ -1,14 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, blockedIds, displayName, EMOJI } from '@/lib/room/community';
 
 export const runtime = 'nodejs';
 
 // Dettaglio topic + risposte + reazioni.
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: topic } = await supabaseAdmin.from('forum_topics').select('*').eq('id', id).maybeSingle();
   if (!topic) return NextResponse.json({ message: 'Topic non trovato' }, { status: 404 });
@@ -45,8 +46,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
 // Reazione a topic o risposta (toggle).
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const target = body.target_type === 'post' ? 'post' : 'topic';
   const targetId = typeof body.target_id === 'string' ? body.target_id : '';

@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getAuthUser } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { isAdult16, normalizeHandle, isValidHandle, isValidUrlOrEmpty } from '@/lib/room/validation';
 import { cleanStr, extractDomain, logoUrlFor, STAGES } from '@/lib/room/m2';
 

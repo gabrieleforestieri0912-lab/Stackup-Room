@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { unauthorized } from '@/lib/room/api';
 import { requireMember } from '@/lib/room/community';
 import { transcribeAudio, aiAllowed } from '@/lib/room/coach';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
@@ -10,8 +11,8 @@ export const runtime = 'nodejs';
 // Trascrive una nota vocale dell'utente. Solo con consenso AI: l'audio lascia i nostri
 // server verso il provider STT. Senza: 403 e la nota resta inviabile senza trascrizione.
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireMember(req);
-  if (error || !user) return error;
+  const { user } = await requireMember(req);
+  if (!user) return unauthorized();
   const { data: profile } = await supabaseAdmin.from('profiles').select('ai_consent').eq('id', user.id).maybeSingle();
   if (!aiAllowed(profile)) {
     return NextResponse.json({ message: 'NEED_CONSENT', detail: 'Abilita le funzioni AI per trascrivere. La nota resta inviabile senza trascrizione.' }, { status: 403 });

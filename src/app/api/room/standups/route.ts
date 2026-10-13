@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser, ownStartup, recordShip } from '@/lib/room/api';
+import { requireUser, ownStartup, recordShip, unauthorized } from '@/lib/room/api';
 import { cleanStr, validDate } from '@/lib/room/m2';
 
 export const runtime = 'nodejs';
 
 // Standup giornaliero per startup (upsert su user+startup+giorno). Privato.
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const sp = new URL(req.url).searchParams;
   const startupId = sp.get('startup_id');
   const day = sp.get('day') || new Date().toISOString().slice(0, 10);
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';
   const day = typeof body.day === 'string' && body.day ? body.day : new Date().toISOString().slice(0, 10);

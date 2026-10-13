@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireUser, ownStartup, recordShip } from '@/lib/room/api';
+import { requireUser, ownStartup, recordShip, unauthorized } from '@/lib/room/api';
 import { cleanStr, validDate } from '@/lib/room/m2';
 
 export const runtime = 'nodejs';
 
 // Tracker personalizzati: metriche giornaliere per startup (numero o sì/no).
 export async function GET(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const sp = new URL(req.url).searchParams;
   const startupId = sp.get('startup_id');
   const days = Math.min(60, Math.max(7, Number(sp.get('days')) || 14));
@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const name = cleanStr(body.name, 60);
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
 
 // Registra il valore di oggi (upsert). Loggare = giorno shippato.
 export async function PUT(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const trackerId = typeof body.tracker_id === 'string' ? body.tracker_id : '';
   const day = typeof body.day === 'string' && body.day ? body.day : new Date().toISOString().slice(0, 10);
@@ -72,8 +72,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { error, user } = await requireUser(req);
-  if (error || !user) return error;
+  const { user } = await requireUser(req);
+  if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   const { data: t } = await supabaseAdmin.from('custom_trackers').select('id').eq('id', id).eq('user_id', user.id).maybeSingle();
   if (!t) return NextResponse.json({ message: 'Tracker non trovato' }, { status: 404 });
