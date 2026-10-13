@@ -26,6 +26,25 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   return NextResponse.json({ reacted: true });
 }
 
+// Modifica testo proprio entro 15 minuti (marca edited_at).
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const { error, user } = await requireMember(req);
+  if (error || !user) return error;
+  const { id } = await ctx.params;
+  const { data: msg } = await supabaseAdmin.from('chat_messages').select('user_id,body,created_at').eq('id', id).maybeSingle();
+  if (!msg) return NextResponse.json({ message: 'Messaggio non trovato' }, { status: 404 });
+  if (msg.user_id !== user.id) return NextResponse.json({ message: 'Non autorizzato' }, { status: 403 });
+  if (Date.now() - new Date(msg.created_at).getTime() > 15 * 60 * 1000) {
+    return NextResponse.json({ message: 'Modificabile solo entro 15 minuti.' }, { status: 400 });
+  }
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const text = typeof body.body === 'string' ? body.body.trim().slice(0, 2000) : '';
+  if (!text) return NextResponse.json({ message: 'Testo richiesto' }, { status: 400 });
+  const { data, error: up } = await supabaseAdmin.from('chat_messages').update({ body: text, edited_at: new Date().toISOString() }).eq('id', id).select().single();
+  if (up) return NextResponse.json({ message: 'Errore salvataggio' }, { status: 500 });
+  return NextResponse.json({ message: data });
+}
+
 // Elimina messaggio proprio (o admin).
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { error, user } = await requireMember(req);

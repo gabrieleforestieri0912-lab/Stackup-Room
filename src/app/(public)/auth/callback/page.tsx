@@ -67,7 +67,7 @@ const AuthCallbackPage: React.FC = () => {
 
     if (cancelled) return;
     completeOAuthLogin(data.user, data.token);
-    router.push('/');
+    router.push(data.user?.onboardingCompleted === false ? '/onboarding' : '/room');
    } catch (err) {
     console.error('Auth callback error:', err);
     setError((err as Error).message);

@@ -8,9 +8,12 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
           <Link href="/room" className="px-3 py-1.5 text-xs font-bold text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Room</Link>
           <Link href="/room/planner" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Planner</Link>
           <Link href="/room/startups" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Startup</Link>
+          <Link href="/room/corsi" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Corsi</Link>
+          <Link href="/room/certificati" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Certificati</Link>
           <Link href="/room/community" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Community</Link>
           <Link href="/room/coach" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Coach</Link>
           <Link href="/room/notifiche" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Notifiche</Link>
+          <Link href="/room/tracker" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Tracker</Link>
           <Link href="/room/leaderboard" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Classifiche</Link>
           <Link href="/room/verifiche" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Verifiche</Link>
           <Link href="/room/feedback" className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Feedback</Link>

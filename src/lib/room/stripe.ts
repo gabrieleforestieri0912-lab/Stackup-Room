@@ -39,16 +39,44 @@ export function connectUrl(userId: string, startupId: string, appUrl: string): s
   return `https://connect.stripe.com/oauth/authorize?${params.toString()}`;
 }
 
-// MRR da abbonamenti attivi dell'account collegato (sola lettura: mai dati di carta).
+// MRR da abbonamenti attivi (sola lettura: mai dati di carta).
 // Normalizza gli intervalli a mensile. Ritorna il totale nella valuta dominante.
+// accountId = Connect OAuth (chiave piattaforma); secretKey = chiave ristretta rk_ dell'utente.
 export async function fetchMrr(stripeAccountId: string): Promise<{ mrr_cents: number; currency: string }> {
   const stripe = new Stripe(secret());
+  return computeMrr(stripe, stripeAccountId);
+}
+
+export async function fetchMrrForKey(secretKey: string): Promise<{ mrr_cents: number; currency: string }> {
+  const stripe = new Stripe(secretKey);
+  return computeMrr(stripe, null);
+}
+
+// Verifica che una chiave ristretta sia valida e abbia permessi di lettura.
+export async function verifyRestrictedKey(secretKey: string): Promise<{ livemode: boolean }> {
+  const stripe = new Stripe(secretKey);
+  try {
+    await stripe.subscriptions.list({ limit: 1 });
+  } catch (e) {
+    if (e instanceof Stripe.errors.StripeAuthenticationError) throw new Error('KEY_INVALID');
+    if (e instanceof Stripe.errors.StripePermissionError) throw new Error('KEY_NO_READ');
+    throw new Error('KEY_VERIFY_FAILED');
+  }
+  return { livemode: !secretKey.startsWith('rk_test_') };
+}
+
+export function maskKey(secretKey: string): string {
+  return secretKey.slice(-4);
+}
+
+async function computeMrr(stripe: Stripe, stripeAccountId: string | null): Promise<{ mrr_cents: number; currency: string }> {
+  const opts = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
   const totals = new Map<string, number>();
   let startingAfter: string | undefined;
   for (let page = 0; page < 10; page++) {
     const subs = await stripe.subscriptions.list(
       { status: 'active', limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) },
-      { stripeAccount: stripeAccountId },
+      opts as { stripeAccount: string } | undefined,
     );
     for (const s of subs.data) {
       for (const item of s.items.data) {
@@ -73,7 +101,7 @@ export async function fetchMrr(stripeAccountId: string): Promise<{ mrr_cents: nu
     const since = Math.floor((Date.now() - 30 * 86400000) / 1000);
     const inv = await stripe.invoices.list(
       { status: 'paid', limit: 100, created: { gte: since } },
-      { stripeAccount: stripeAccountId },
+      opts as { stripeAccount: string } | undefined,
     );
     for (const i of inv.data) {
       if (i.amount_paid == null) continue;

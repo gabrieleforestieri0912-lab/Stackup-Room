@@ -8,7 +8,9 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   const { error, user } = await requireUser(req);
   if (error || !user) return error;
-  const { data: links } = await supabaseAdmin.from('stripe_links').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+  const { data: links } = await supabaseAdmin.from('stripe_links').select('id,startup_id,stripe_account_id,livemode,status').eq('user_id', user.id).order('created_at', { ascending: false });
+  // Chiavi rk: MAI il segreto al client, solo maschera.
+  const { data: keys } = await supabaseAdmin.from('stripe_keys').select('id,startup_id,key_last4,livemode,status').eq('user_id', user.id).order('created_at', { ascending: false });
   const ids = (links || []).map((l: { startup_id: string }) => l.startup_id);
   let snaps: Record<string, { mrr_cents: number; currency: string; created_at: string }> = {};
   if (ids.length > 0) {
@@ -17,5 +19,5 @@ export async function GET(req: NextRequest) {
       if (!snaps[r.startup_id]) snaps[r.startup_id] = r;
     }
   }
-  return NextResponse.json({ links: links || [], verified: snaps });
+  return NextResponse.json({ links: links || [], keys: keys || [], verified: snaps });
 }

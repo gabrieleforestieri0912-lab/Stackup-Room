@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState, FormEvent } from 'react';
 import { getAccessToken } from '@/lib/auth-token';
-import { Loader2, Send, Mic, Trash2, Flag } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Loader2, Send, Mic, Trash2, Flag, Reply, Pencil } from 'lucide-react';
 
 type Reaction = { emoji: string; count: number; mine: boolean };
 type Msg = {
   id: string; body: string; gif_url: string | null; audio_path: string | null;
   audio_seconds: number | null; created_at: string; author: string; mine: boolean; reactions: Reaction[];
+  reply_to: string | null; edited_at: string | null;
+  reply: { author: string; body: string; hidden: boolean } | null;
 };
 
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
@@ -82,6 +85,16 @@ function VoiceNote({ path, seconds, mine }: { path: string; seconds: number | nu
   );
 }
 
+function renderBody(body: string) {
+  // Evidenzia @mention senza librerie esterne
+  const parts = body.split(/(@[a-z0-9_]{3,24})/gi);
+  return parts.map((p, i) =>
+    /^@[a-z0-9_]{3,24}$/i.test(p)
+      ? <strong key={i} className="text-orange-300">{p}</strong>
+      : <span key={i}>{p}</span>,
+  );
+}
+
 function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e: string) => void }) {
   return (
     <span className="flex flex-wrap gap-1 mt-1.5">
@@ -106,9 +119,16 @@ export default function ChatTab() {
   const [gifs, setGifs] = useState<string[]>([]);
   const [showGifs, setShowGifs] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [replyTo, setReplyTo] = useState<Msg | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [online, setOnline] = useState(1);
+  const [typing, setTyping] = useState(0);
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chanRef = useRef<{ track: (s: object) => void } | null>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -127,6 +147,30 @@ export default function ChatTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Presenza: online ora + "sta scrivendo" (solo conteggi, nessuna identità esposta)
+  useEffect(() => {
+    const chan = supabase.channel('room-chat', { config: { presence: { key: Math.random().toString(36).slice(2) } } });
+    const sync = () => {
+      const state = chan.presenceState() as Record<string, Array<{ typing?: boolean }>>;
+      const all = Object.values(state).flat();
+      setOnline(Math.max(1, all.length));
+      setTyping(all.filter((p) => p.typing).length);
+    };
+    chan.on('presence', { event: 'sync' }, sync).subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        chanRef.current = chan;
+        chan.track({ typing: false });
+      }
+    });
+    return () => { supabase.removeChannel(chan); chanRef.current = null; };
+  }, []);
+
+  const signalTyping = () => {
+    chanRef.current?.track({ typing: true });
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => chanRef.current?.track({ typing: false }), 2500);
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [msgs.length]);
@@ -135,12 +179,27 @@ export default function ChatTab() {
     if (!text.trim() && !extra?.gif_url && !extra?.audio_path) return;
     const r = await authed('/api/room/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: text, ...extra }),
+      body: JSON.stringify({ body: text, reply_to: replyTo?.id || null, ...extra }),
     });
     if (r.ok) {
       setText('');
       setShowGifs(false);
+      setReplyTo(null);
       load(true);
+    }
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editText.trim()) return;
+    const r = await authed(`/api/room/chat/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: editText }),
+    });
+    if (r.ok) {
+      setEditingId(null);
+      load(true);
+    } else {
+      alert('Modificabile solo entro 15 minuti.');
     }
   };
 
@@ -205,14 +264,19 @@ export default function ChatTab() {
 
   return (
     <div>
+      <p className="text-[11px] text-zinc-500 mb-2" role="status">
+        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" aria-hidden />
+        {online} online{typing > 0 ? ` · qualcuno sta scrivendo…` : ''}
+      </p>
       <ul className="space-y-2 mb-4 max-h-[50vh] overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && <li className="text-sm text-zinc-500 text-center py-8">Nessun messaggio negli ultimi 7 giorni. Rompi il ghiaccio 👇</li>}
         {msgs.map((m) => (
           <li key={m.id} className={`border rounded-2xl p-3 ${m.mine ? 'border-orange-500/40 bg-orange-600/5' : 'border-zinc-800 bg-black'}`}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold text-orange-300">{m.author}</span>
-              <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>
+              <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
               <span className="ml-auto flex gap-1">
+                <button onClick={() => setReplyTo(m)} aria-label={`Rispondi a ${m.author}`} className="p-1 text-zinc-600 hover:text-orange-400"><Reply size={12} /></button>
                 {!m.mine && (
                   <>
                     <button onClick={() => report(m.id)} aria-label="Segnala messaggio" className="p-1 text-zinc-600 hover:text-orange-400"><Flag size={12} /></button>
@@ -220,15 +284,34 @@ export default function ChatTab() {
                   </>
                 )}
                 {m.mine && (
-                  <button onClick={async () => {
-                    if (!window.confirm('Eliminare il messaggio?')) return;
-                    await authed(`/api/room/chat/${m.id}`, { method: 'DELETE' });
-                    load(true);
-                  }} aria-label="Elimina messaggio" className="p-1 text-zinc-600 hover:text-red-400"><Trash2 size={12} /></button>
+                  <>
+                    {m.body && !m.audio_path && (
+                      <button onClick={() => { setEditingId(m.id); setEditText(m.body); }} aria-label="Modifica messaggio" className="p-1 text-zinc-600 hover:text-orange-400"><Pencil size={12} /></button>
+                    )}
+                    <button onClick={async () => {
+                      if (!window.confirm('Eliminare il messaggio?')) return;
+                      await authed(`/api/room/chat/${m.id}`, { method: 'DELETE' });
+                      load(true);
+                    }} aria-label="Elimina messaggio" className="p-1 text-zinc-600 hover:text-red-400"><Trash2 size={12} /></button>
+                  </>
                 )}
               </span>
             </div>
-            {m.body && <p className="text-sm text-zinc-200 break-words">{m.body}</p>}
+            {m.reply && (
+              <div className="border-l-2 border-orange-600 pl-2 mb-1.5 text-xs text-zinc-400">
+                <span className="font-bold text-orange-300">{m.reply.author}</span>{' '}
+                {m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : m.reply.body || <em>allegato</em>}
+              </div>
+            )}
+            {editingId === m.id ? (
+              <div className="flex gap-2">
+                <input aria-label="Modifica messaggio" autoFocus className={input} value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={2000}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(m.id); if (e.key === 'Escape') setEditingId(null); }} />
+                <button onClick={() => saveEdit(m.id)} className="px-3 py-2 bg-orange-600 text-white text-xs font-bold rounded-xl">OK</button>
+              </div>
+            ) : (
+              m.body && <p className="text-sm text-zinc-200 break-words">{renderBody(m.body)}</p>
+            )}
             {m.gif_url && <img src={m.gif_url} alt="GIF" className="mt-2 rounded-xl max-h-48" loading="lazy" /* eslint-disable-line @next/next/no-img-element -- GIF esterne da domini arbitrari */ />}
             {m.audio_path && <div className="mt-2"><VoiceNote path={m.audio_path} seconds={m.audio_seconds} mine={m.mine} /></div>}
             <Reactions reactions={m.reactions} onReact={async (emoji) => {
@@ -257,8 +340,15 @@ export default function ChatTab() {
         </div>
       )}
 
+      {replyTo && (
+        <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-2 mb-2 text-xs text-zinc-400">
+          <span className="flex-1 truncate">Rispondi a <strong className="text-orange-300">{replyTo.author}</strong>: {replyTo.body.slice(0, 80) || 'allegato'}</span>
+          <button onClick={() => setReplyTo(null)} aria-label="Annulla risposta" className="font-bold text-zinc-500 hover:text-white">×</button>
+        </div>
+      )}
+
       <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
-        <input aria-label="Scrivi un messaggio" className={input} value={text} onChange={(e) => setText(e.target.value)} placeholder="Scrivi alla room..." maxLength={2000} />
+        <input aria-label="Scrivi un messaggio" className={input} value={text} onChange={(e) => { setText(e.target.value); signalTyping(); }} placeholder="Scrivi alla room... (usa @handle per menzionare)" maxLength={2000} />
         <button type="button" onClick={() => setShowGifs(!showGifs)} aria-label="Aggiungi GIF" aria-pressed={showGifs} className="px-3 py-2 bg-zinc-900 border border-zinc-700 text-xs font-bold rounded-xl">GIF</button>
         <button type="button" onClick={toggleRec} aria-label={recording ? 'Ferma registrazione' : 'Registra nota vocale'} aria-pressed={recording}
           className={`px-3 py-2 border text-xs font-bold rounded-xl ${recording ? 'bg-red-600 border-red-600 text-white animate-pulse' : 'bg-zinc-900 border-zinc-700'}`}>

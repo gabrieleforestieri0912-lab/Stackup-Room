@@ -26,8 +26,8 @@ import { motion } from 'framer-motion';
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      router.push('/');
+      const u = await login(email, password);
+      router.push(u?.onboardingCompleted === false ? '/onboarding' : '/room');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Email o password errate.');
     } finally {

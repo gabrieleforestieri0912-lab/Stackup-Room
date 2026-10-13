@@ -16,7 +16,7 @@ interface NavLink {
 }
 
 const Navbar = () => {
- const { user, logout } = useAuth();
+ const { user, logout, loading } = useAuth();
  const pathname = usePathname();
  const [scrolled, setScrolled] = useState(false);
  const [isOpen, setIsOpen] = useState(false);
@@ -74,6 +74,7 @@ const Navbar = () => {
     { name: 'Corsi', path: '/courses' },
     { name: 'Percorsi', path: '/paths' },
     { name: 'Guide', path: '/guide' },
+    ...(user ? [{ name: 'Room', path: '/room' }] : []),
     { name: 'Prezzi', path: '/#prezzi' },
    ];
 
@@ -138,6 +139,11 @@ const Navbar = () => {
           />
         )}
         {link.name}
+        {link.path === '/room' && (
+          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-600 text-white rounded">
+            Nuovo
+          </span>
+        )}
        </Link>
       );
      })}
@@ -194,11 +200,25 @@ const Navbar = () => {
             </div>
 
             <div className="p-1">
-             <Link href="/my-courses" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
+             <Link href="/room/corsi" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
              <UserIcon size={14} className="text-zinc-500" />
              I miei corsi
             </Link>
-             <Link href="/dashboard" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
+             <Link href="/room" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-orange-300 hover:text-orange-200 hover:bg-zinc-800 transition-all rounded-lg">
+              <BookOpen size={14} className="text-orange-400" />
+              La Room
+             </Link>
+             {(user as { handle?: string | null }).handle && (
+               <Link href={`/u/${(user as { handle?: string }).handle}`} role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
+                <UserIcon size={14} className="text-zinc-500" />
+                Il mio profilo pubblico
+               </Link>
+             )}
+             <Link href="/room/settings" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
+              <UserIcon size={14} className="text-zinc-500" />
+              Profilo e impostazioni
+             </Link>
+             <Link href="/room" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
             <BookOpen size={14} className="text-zinc-500" />
             Dashboard
            </Link>
@@ -218,6 +238,8 @@ const Navbar = () => {
         )}
        </AnimatePresence>
       </div>
+     ) : loading ? (
+         <span className="w-20 h-8 rounded-md bg-zinc-800 animate-pulse" aria-hidden />
      ) : (
          <Link
           href="/login"
@@ -247,6 +269,8 @@ const Navbar = () => {
         </div>
        )}
       </div>
+     ) : loading ? (
+      <span className="w-7 h-7 rounded-full bg-zinc-800 animate-pulse" aria-hidden />
      ) : (
       <Link
        href="/login"
@@ -317,6 +341,11 @@ const Navbar = () => {
            className={`text-sm font-bold ${pathname === link.path ? 'text-white' : 'text-white/70 hover:text-white'} transition-colors`}
           >
            {link.name}
+         {link.path === '/room' && (
+           <span className="ml-1.5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-600 text-white rounded">
+             Nuovo
+           </span>
+         )}
           </Link>
          </motion.div>
         ))}
@@ -328,6 +357,28 @@ const Navbar = () => {
          >
           Risorse
          </Link>
+         {user && (
+           <>
+             <Link
+               href="/room"
+               className="w-full py-2.5 rounded-md bg-orange-600 text-center text-xs font-bold text-white hover:bg-orange-500 transition-all"
+             >
+               La Room
+             </Link>
+             <Link
+               href="/room/settings"
+               className="w-full py-2.5 rounded-md border border-zinc-700 text-center text-xs font-bold text-white hover:border-orange-500 transition-all"
+             >
+               Profilo e impostazioni
+             </Link>
+             <button
+               onClick={logout}
+               className="w-full py-2.5 rounded-md border border-red-500/40 text-center text-xs font-bold text-red-400 transition-all"
+             >
+               Esci
+             </button>
+           </>
+         )}
       </motion.div>
      )}
     </AnimatePresence>

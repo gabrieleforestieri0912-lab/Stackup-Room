@@ -6,114 +6,29 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  CheckCircle, ArrowRight, Lock, Lightbulb, Code2, DollarSign, TrendingUp, Rocket, Target, Wrench, Brain, Clock, BookOpen, Star,
+  CheckCircle, ArrowRight, Lightbulb, Code2, DollarSign, TrendingUp, Rocket, Target, Wrench, Brain, Clock, BookOpen, Star, AlertTriangle, ListChecks, Zap,
 } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
+import { GUIDES_CONTENT } from '@/data/guidesContent';
 
-const SECTIONS_DATA: Record<string, { title: string; desc: string; steps: string[] }> = {
-  'validare-idea': {
-    title: "Validare un'idea",
-    desc: "Non serve l'idea del secolo. Serve un problema reale che puoi risolvere.",
-    steps: [
-      'Identifica un dolore concreto nel tuo lavoro o nella vita di tutti i giorni',
-      'Chiediti: "una AI può automatizzare o migliorare questo processo?"',
-      'Parla con 5 potenziali utenti prima di scrivere una riga di codice',
-      'Verifica che qualcuno sia disposto a pagare per la soluzione',
-      "Riduci l'idea a un singolo problema risolvibile in 2-4 settimane",
-    ],
-  },
-  'scegliere-stack': {
-    title: 'Scegliere lo stack',
-    desc: "Non serve un'architettura enterprise. Scegli strumenti che ti permettano di shipvare veloce.",
-    steps: [
-      'Frontend: Next.js + Tailwind CSS per un MVP rapido',
-      'AI/ML: OpenAI API, Anthropic Claude o modelli open-source via Replicate',
-      'Backend: Next.js API routes o Python FastAPI per task complessi',
-      'Database: Supabase (PostgreSQL) per dati strutturati + Vector store',
-      'Auth: NextAuth o Clerk per autenticazione in 10 minuti',
-      'Deploy: Vercel per frontend, Railway o Fly.io per backend',
-    ],
-  },
-  'pricing-gtm': {
-    title: 'Pricing & go-to-market',
-    desc: 'Non regalare il tuo prodotto. Il prezzo giusto è quello che il mercato sostiene.',
-    steps: [
-      'Modello freemium: tier gratuito limitato, tier Pro a €9-29/mese',
-      'Pay-per-use per API AI: fattura in base a crediti/token consumati',
-      'Offri prova gratuita di 7-14 giorni senza carta di credito',
-      'Prezzo annuale con 20-30% di sconto per revenue prevedibile',
-      'Aggiungi un tier Enterprise per customizzazione e SLA',
-    ],
-  },
-  'go-to-market': {
-    title: 'Go-to-market per solitari',
-    desc: 'Non hai un team di marketing. Usa strategie che funzionano per founder solitari.',
-    steps: [
-      'Launch su Product Hunt con una demo video di 60 secondi',
-      'Posta su Reddit e Hacker News con una storia autentica',
-      'Costruisci in pubblico su Twitter/X: mostra il progresso quotidianamente',
-      'Crea contenuti che risolvono il problema che il tuo prodotto affronta',
-      'Raggiungi creator e newsletter nel tuo nicchia con demo personalizzate',
-      'Chiedi feedback a ogni utente e iterazione rapida (48h max)',
-    ],
-  },
-  'ai-first-strategy': {
-    title: 'AI-first product strategy',
-    desc: 'Il prodotto non è un\'app con l\'AI aggiunta. L\'AI è il prodotto.',
-    steps: [
-      'Identifica task che oggi richiedono tempo umano e possono essere automatizzati',
-      'Scegli il modello giusto: GPT-4 per linguaggio, Claude per analisi, modelli open-source per economia',
-      'Progetta l\'UX attorno all\'AI: input utente → elaborazione AI → output strutturato',
-      'Gestisci fallimenti graceful: quando l\'AI sbaglia, l\'utente deve capire perché',
-      'Implementa feedback loop: ogni risposta può migliorare il modello con fine-tuning o RAG',
-      'Misura qualità: latenza, accuratezza, tasso di allucinazione e costo per richiesta',
-    ],
-  },
-  'tooling-automation': {
-    title: 'Tooling & automazione',
-    desc: 'Se lo fai più di due volte, automatizzalo.',
-    steps: [
-      'CI/CD: GitHub Actions per test, build e deploy automatico su Vercel/Railway',
-      'Monitoring: Sentry per errori, Logtail per log, Better Stack per uptime',
-      'Email: Resend o Loops.so per transazionali e marketing',
-      'Billing: Stripe con webhook per gestione abbonamenti e fatturazione',
-      'Customer support: Intercom o Crisp con chatbot AI per risposte immediate',
-      'Backup: automatico su S3 o Supabase per database e file upload',
-      'Scheduled job: Cron su GitHub Actions o Trigger.dev per task periodici',
-    ],
-  },
-  'debugging-mentale': {
-    title: 'Debugging mentale',
-    desc: 'Il founder solitario non combatte solo bug. Combatte anche la propria testa.',
-    steps: [
-      'Riconosci il pattern: procrastinazione quando il task è troppo grande o ambiguo',
-      'Spezza il problema: se un task richiede > 2 ore, dividilo in sotto-task da 30 minuti',
-      'Imposta un timer: 25 minuti di focus, 5 di pausa (Pomodoro) per uscire dal blocco',
-      'Accetta il "done is better than perfect": shipvare imperfetto batte non shipvare',
-      'Trova un accountability partner: qualcuno che controlli i tuoi progressi ogni settimana',
-      'Celebra le piccole vittorie: deploy, primo utente, primo feedback — ogni passo conta',
-    ],
-  },
-};
-
-const GUIDE_META: Record<string, { icon: React.ElementType; tag: string; color: string }> = {
-  'validare-idea': { icon: Lightbulb, tag: 'Ideazione', color: 'orange' },
-  'scegliere-stack': { icon: Code2, tag: 'Tecnologia', color: 'blue' },
-  'pricing-gtm': { icon: DollarSign, tag: 'Business', color: 'emerald' },
-  'go-to-market': { icon: TrendingUp, tag: 'Marketing', color: 'purple' },
-  'ai-first-strategy': { icon: Target, tag: 'Prodotto', color: 'red' },
-  'tooling-automation': { icon: Wrench, tag: 'Tooling', color: 'cyan' },
-  'debugging-mentale': { icon: Brain, tag: 'Mindset', color: 'yellow' },
+const GUIDE_META: Record<string, { icon: React.ElementType; tag: string }> = {
+  'validare-idea': { icon: Lightbulb, tag: 'Ideazione' },
+  'scegliere-stack': { icon: Code2, tag: 'Tecnologia' },
+  'pricing-gtm': { icon: DollarSign, tag: 'Business' },
+  'go-to-market': { icon: TrendingUp, tag: 'Marketing' },
+  'ai-first-strategy': { icon: Target, tag: 'Prodotto' },
+  'tooling-automation': { icon: Wrench, tag: 'Tooling' },
+  'debugging-mentale': { icon: Brain, tag: 'Mindset' },
 };
 
 const GuideSlugPage: React.FC = () => {
   const params = useParams();
   const slug = params?.slug as string;
 
-  const section = SECTIONS_DATA[slug];
+  const guide = GUIDES_CONTENT[slug];
   const meta = GUIDE_META[slug];
 
-  if (!section) {
+  if (!guide) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
         <h1 className="text-2xl font-black text-white mb-4">Guida non trovata</h1>
@@ -129,15 +44,6 @@ const GuideSlugPage: React.FC = () => {
   }
 
   const Icon = meta?.icon || Rocket;
-  const tag = meta?.tag || 'Guida';
-  const color = meta?.color || 'orange';
-
-  const benefits = [
-    { icon: Clock, text: `${section.steps.length} step pratici, azione immediata` },
-    { icon: CheckCircle, text: 'Strategia validata da founder reali' },
-    { icon: BookOpen, text: 'Nessuna teoria astratta, solo pratica' },
-    { icon: Star, text: 'Applicabile subito al tuo progetto' },
-  ];
 
   return (
     <motion.div
@@ -153,77 +59,103 @@ const GuideSlugPage: React.FC = () => {
         ← Torna alle guide
       </Link>
 
-      <section className="mb-12">
+      <section className="mb-10">
         <div className="flex items-center gap-3 mt-6 mb-4">
           <div className="w-10 h-10 bg-orange-500/10 text-orange-400 rounded-xl flex items-center justify-center">
             <Icon size={20} />
           </div>
-          <Badge small>{tag}</Badge>
+          <Badge small>{meta?.tag || 'Guida'}</Badge>
         </div>
-        <h1 className="max-w-5xl text-balance text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-7xl mb-4">
-          {section.title}
+        <h1 className="max-w-5xl text-balance text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl mb-4">
+          {guide.title}
         </h1>
         <p className="text-lg text-zinc-400 font-medium leading-relaxed max-w-2xl">
-          {section.desc}
+          {guide.desc}
         </p>
-
-        {/* Meta info */}
         <div className="flex flex-wrap items-center gap-4 mt-6 text-sm text-zinc-500 font-bold">
           <span className="flex items-center gap-1.5">
             <BookOpen size={16} />
-            {section.steps.length} step
+            {guide.steps.length} step operativi
           </span>
           <span className="flex items-center gap-1.5">
             <Clock size={16} />
-            5-10 min di lettura
+            10-15 min di lettura
           </span>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="mb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {benefits.map((benefit, i) => {
-            const BenIcon = benefit.icon;
-            return (
-              <div key={i} className="flex items-center gap-3 p-4 bg-black/40 border border-zinc-800 rounded-xl">
-                <div className="w-8 h-8 bg-orange-500/10 text-orange-400 rounded-lg flex items-center justify-center shrink-0">
-                  <BenIcon size={16} />
-                </div>
-                <span className="text-sm text-zinc-300 font-medium">{benefit.text}</span>
-              </div>
-            );
-          })}
-        </div>
+      <section className="mb-10 space-y-4">
+        {guide.intro.map((p, i) => (
+          <p key={i} className="text-base text-zinc-300 leading-relaxed">{p}</p>
+        ))}
       </section>
 
-      <section className="mb-16">
-        <div className="bg-black/40 border border-zinc-800 p-6 sm:p-8 rounded-2xl">
-          <h2 className="text-lg font-black text-white mb-6">Passi da seguire</h2>
-          <ul className="space-y-5">
-            {section.steps.map((step, i) => (
-              <li key={i} className="flex items-start gap-4">
-                <div className="w-7 h-7 bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0 mt-0.5 rounded-lg text-sm font-black">
+      <section className="mb-12">
+        <h2 className="text-xl font-black text-white mb-6">Cosa fare, passo passo</h2>
+        <ol className="space-y-4">
+          {guide.steps.map((step, i) => (
+            <li key={i} className="bg-black/40 border border-zinc-800 p-6 rounded-2xl">
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0 rounded-lg text-base font-black">
                   {i + 1}
                 </div>
-                <span className="text-sm text-zinc-300 font-medium leading-relaxed">{step}</span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-white mb-2">{step.title}</h3>
+                  <p className="text-sm text-zinc-300 leading-relaxed mb-3">{step.detail}</p>
+                  <p className="text-sm leading-relaxed flex items-start gap-2 bg-orange-500/5 border border-orange-500/20 rounded-xl px-3 py-2">
+                    <Zap size={14} className="text-orange-400 shrink-0 mt-0.5" />
+                    <span><strong className="text-orange-300">Azione: </strong><span className="text-zinc-200">{step.action}</span></span>
+                  </p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="mb-12">
+        <div className="bg-red-500/5 border border-red-500/20 p-6 sm:p-8 rounded-2xl">
+          <h2 className="text-lg font-black text-white mb-5 flex items-center gap-2">
+            <AlertTriangle size={18} className="text-red-400" /> Errori che vedo sempre
+          </h2>
+          <ul className="space-y-2.5">
+            {guide.mistakes.map((m, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
+                <span className="text-red-400 font-black shrink-0">×</span> {m}
               </li>
             ))}
           </ul>
         </div>
       </section>
 
+      <section className="mb-16">
+        <div className="bg-black/40 border border-zinc-800 p-6 sm:p-8 rounded-2xl">
+          <h2 className="text-lg font-black text-white mb-5 flex items-center gap-2">
+            <ListChecks size={18} className="text-emerald-400" /> Checklist: hai finito quando…
+          </h2>
+          <ul className="space-y-2.5">
+            {guide.checklist.map((c, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
+                <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" /> {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="mb-8 flex items-center gap-3 text-sm text-zinc-500 font-bold">
+        <Star size={14} className="text-orange-400" />
+        Guida completa e gratuita. Nella Room trovi planner, coach e community per metterla in pratica.
+      </section>
+
       <section className="bg-linear-to-br from-orange-500/10 to-transparent border border-orange-500/20 p-8 sm:p-10 text-center rounded-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-orange-500/8 blur-[100px] -z-10" />
         <div className="relative z-10 space-y-5">
-          <div className="w-14 h-14 mx-auto bg-orange-500/15 text-orange-400 rounded-2xl flex items-center justify-center">
-            <Lock size={24} />
-          </div>
           <h2 className="text-xl sm:text-2xl font-jakarta font-black text-white tracking-tight">
-            Questa &egrave; solo l'anteprima.
+            Mettila in pratica nella Room.
           </h2>
           <p className="text-zinc-400 font-medium text-base leading-relaxed max-w-lg mx-auto">
-            Entra in StackUp Room per accedere alla guida completa con esempi, template e mentoring 1:1.
+            Planner giornaliero, streak di shipping, coach AI e altri founder che stanno facendo lo stesso percorso.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link

@@ -164,11 +164,11 @@ const SettingsPage: React.FC = () => {
   </div>
 
   <nav className="space-y-1">
-   <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
+   <Link href="/room" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
   <Layout size={17} />
   <span>I miei corsi</span>
   </Link>
-   <Link href="/certificates" className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
+   <Link href="/room/certificati" className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
   <Trophy size={17} />
   <span>Certificati</span>
   </Link>
@@ -193,7 +193,7 @@ const SettingsPage: React.FC = () => {
   <main className="flex-1 pt-24 pb-20 px-6 sm:px-10 lg:px-16 overflow-y-auto">
   <div className="max-w-3xl mx-auto">
   <div className="mb-8">
-  <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors mb-4">
+  <Link href="/room" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-300 transition-colors mb-4">
   <ArrowLeft size={15} />
   <span>Torna alla dashboard</span>
   </Link>

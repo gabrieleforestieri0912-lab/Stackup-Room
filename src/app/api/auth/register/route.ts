@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
         email: profile.email,
         avatar: profile.avatar || undefined,
         authMethod: profile.auth_method,
+        handle: profile.handle || null,
+        onboardingCompleted: Boolean(profile.onboarding_completed),
         enrolledCourses: [] as string[],
         certificates: [] as { courseId: string; certificateId: string; completedAt: string }[],
         studyStreak: 0,

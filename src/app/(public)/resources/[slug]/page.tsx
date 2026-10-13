@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import { ALL_RESOURCES } from '@/data/landingData';
+import { RESOURCES_CONTENT } from '@/data/resourcesContent';
 
 const ResourceSlugPage: React.FC = () => {
   const params = useParams();
@@ -32,12 +33,15 @@ const ResourceSlugPage: React.FC = () => {
   }
 
   const Icon = resource.icon;
-  const steps = [
-    'Accedi alla risorsa completa',
-    'Segui la guida passo passo',
-    'Applica le conoscenze al tuo progetto',
-    'Ripeti e migliora',
-  ];
+  const content = RESOURCES_CONTENT[slug];
+  const steps = content
+    ? content.sections.flatMap((s) => s.points.map((p) => `${s.title}: ${p}`))
+    : [
+        'Accedi alla risorsa completa',
+        'Segui la guida passo passo',
+        'Applica le conoscenze al tuo progetto',
+        'Ripeti e migliora',
+      ];
 
   const benefits = [
     { icon: Clock, text: `${resource.minutes} minuti di lettura` },
@@ -119,6 +123,46 @@ const ResourceSlugPage: React.FC = () => {
           })}
         </div>
       </section>
+
+      {/* Contenuto esteso */}
+      {content && (
+        <>
+          <section className="mb-10 space-y-4">
+            {content.intro.map((p, i) => (
+              <p key={i} className="text-base text-zinc-300 leading-relaxed">{p}</p>
+            ))}
+          </section>
+
+          <section className="mb-12 space-y-4">
+            {content.sections.map((s, i) => (
+              <div key={i} className="bg-black/40 border border-zinc-800 p-6 rounded-2xl">
+                <h2 className="font-bold text-white mb-2">{i + 1}. {s.title}</h2>
+                <p className="text-sm text-zinc-300 leading-relaxed mb-3">{s.body}</p>
+                <ul className="space-y-1.5">
+                  {s.points.map((p, j) => (
+                    <li key={j} className="flex items-start gap-2.5 text-sm text-zinc-300">
+                      <CheckCircle size={14} className="text-orange-400 shrink-0 mt-0.5" /> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </section>
+
+          <section className="mb-16">
+            <div className="bg-black/40 border border-zinc-800 p-6 sm:p-8 rounded-2xl">
+              <h2 className="text-lg font-black text-white mb-5">Checklist</h2>
+              <ul className="space-y-2.5">
+                {content.checklist.map((c, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
+                    <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" /> {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Anteprima contenuto */}
       <section className="mb-16">

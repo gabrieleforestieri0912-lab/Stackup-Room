@@ -29,6 +29,7 @@ import {
   Search,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
+import { useAuth } from "@/context/AuthContext";
 import { FAQ, SHIP_RESOURCES, GUIDE_CARDS, PATHS, COURSES_PREVIEW } from "@/data/landingData";
 
 function highlightText(text: string) {
@@ -82,6 +83,11 @@ function coursesItemListJsonLd() {
 }
 
 const Home: React.FC = () => {
+  const { user } = useAuth();
+  // Utenti loggati: le CTA pricing portano al catalogo corsi (acquisto),
+  // non alla registrazione.
+  const pricingHref = user ? "/courses" : "/register";
+  const pricingLabel = user ? "Scegli un corso" : "Inizia Ora";
   return (
     <div className="bg-[#0a0a0a] min-h-screen overflow-x-hidden">
       {/* JSON-LD: FAQ (AEO/GEO) */}
@@ -563,10 +569,10 @@ const Home: React.FC = () => {
                 ))}
               </ul>
               <Link
-                href="/register"
+                href={pricingHref}
                 className="w-full py-4 bg-orange-300 text-black rounded-xl font-bold text-base hover:bg-orange-200 transition-all text-center block"
               >
-                Inizia Ora
+                {pricingLabel}
               </Link>
             </motion.div>
 
@@ -576,7 +582,8 @@ const Home: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.05 }}
-              className="p-12 bg-[#111] border border-zinc-800 rounded-2xl relative flex flex-col"
+              whileHover={{ scale: 1.02 }}
+              className="p-12 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
             >
               <h3 className="text-2xl font-black text-white mb-3">6 Mesi</h3>
               <div className="mb-5">
@@ -622,10 +629,10 @@ const Home: React.FC = () => {
                 ))}
               </ul>
               <Link
-                href="/register"
+                href={pricingHref}
                 className="w-full py-4 bg-white text-black rounded-xl font-bold text-base hover:bg-zinc-200 transition-all text-center block"
               >
-                Inizia Ora
+                {pricingLabel}
               </Link>
             </motion.div>
           </div>

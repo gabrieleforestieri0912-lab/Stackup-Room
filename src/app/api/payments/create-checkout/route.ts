@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items,
-      success_url: `${baseUrl}/dashboard?success=true`,
+      success_url: `${baseUrl}/room/corsi?success=true`,
       cancel_url: `${baseUrl}/courses?canceled=true`,
       customer_email: authUser.email,
       metadata: {

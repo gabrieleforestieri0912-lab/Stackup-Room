@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/dashboard', '/my-courses', '/orders', '/settings', '/certificates', '/cart', '/auth/'],
+        disallow: ['/api/', '/room', '/onboarding', '/orders', '/settings', '/cart', '/auth/'],
       },
       // Crawler AI: esplicitamente permessi (GEO — essere trovati dai chatbot)
       { userAgent: 'GPTBot', allow: '/' },

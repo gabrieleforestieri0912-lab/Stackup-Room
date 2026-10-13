@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
           email: existing.email,
           avatar: existing.avatar || undefined,
           authMethod: existing.auth_method,
+          handle: existing.handle || null,
+          onboardingCompleted: Boolean(existing.onboarding_completed),
           enrolledCourses: (enrollments || []).map((e: { course_id: string }) => e.course_id),
           certificates: (certs || []).map(
             (c: { course_id: string; certificate_id: string; completed_at: string }) => ({
@@ -119,6 +121,8 @@ export async function POST(req: NextRequest) {
         email: newProfile.email,
         avatar: newProfile.avatar || undefined,
         authMethod: newProfile.auth_method,
+        handle: newProfile.handle || null,
+        onboardingCompleted: false,
         enrolledCourses: [] as string[],
         certificates: [] as { courseId: string; certificateId: string; completedAt: string }[],
         studyStreak: 0,

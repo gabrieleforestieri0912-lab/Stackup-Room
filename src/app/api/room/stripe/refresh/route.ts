@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser } from '@/lib/room/api';
-import { fetchMrr, connectClientId } from '@/lib/room/stripe';
+import { fetchMrr, fetchMrrForKey, connectClientId } from '@/lib/room/stripe';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
@@ -17,11 +17,13 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';
-  const { data: link } = await supabaseAdmin.from('stripe_links').select('*').eq('startup_id', startupId).eq('user_id', user.id).eq('status', 'active').maybeSingle();
-  if (!link) return NextResponse.json({ message: 'Nessun account collegato' }, { status: 404 });
+  // Preferisce la chiave rk se presente, altrimenti il link Connect.
+  const { data: keyRow } = await supabaseAdmin.from('stripe_keys').select('secret').eq('startup_id', startupId).eq('user_id', user.id).eq('status', 'active').maybeSingle();
+  const { data: link } = keyRow ? { data: null } : await supabaseAdmin.from('stripe_links').select('*').eq('startup_id', startupId).eq('user_id', user.id).eq('status', 'active').maybeSingle();
+  if (!keyRow && !link) return NextResponse.json({ message: 'Nessun account collegato' }, { status: 404 });
 
   try {
-    const mrr = await fetchMrr(link.stripe_account_id);
+    const mrr = keyRow ? await fetchMrrForKey(keyRow.secret) : await fetchMrr(link.stripe_account_id);
     const { data } = await supabaseAdmin.from('revenue_snapshots').insert({
       startup_id: startupId, source: 'stripe', mrr_cents: mrr.mrr_cents, currency: mrr.currency, period: 'all',
     }).select().single();
@@ -32,6 +34,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ snapshot: data });
   } catch (e) {
     console.error('[stripe/refresh] error:', e);
+    if (keyRow && e instanceof Stripe.errors.StripeAuthenticationError) {
+      await supabaseAdmin.from('stripe_keys').update({ status: 'inactive' }).eq('startup_id', startupId).eq('user_id', user.id);
+      return NextResponse.json({ message: 'Chiave revocata o scaduta. Ricollegala.' }, { status: 401 });
+    }
     return NextResponse.json({ message: 'Lettura Stripe fallita' }, { status: 502 });
   }
 }
@@ -42,6 +48,17 @@ export async function DELETE(req: NextRequest) {
   if (error || !user) return error;
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const linkId = typeof body.link_id === 'string' ? body.link_id : '';
+  const keyId = typeof body.key_id === 'string' ? body.key_id : '';
+  if (keyId) {
+    const { data: k } = await supabaseAdmin.from('stripe_keys').select('startup_id').eq('id', keyId).eq('user_id', user.id).maybeSingle();
+    if (!k) return NextResponse.json({ message: 'Chiave non trovata' }, { status: 404 });
+    await supabaseAdmin.from('stripe_keys').delete().eq('id', keyId);
+    await supabaseAdmin.from('leaderboard_audit').insert({
+      user_id: user.id, action: 'stripe.key_unlink', meta: { startup_id: k.startup_id },
+      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+    });
+    return NextResponse.json({ message: 'Chiave rimossa. Revocala anche da Stripe → API keys se non la usi altrove.' });
+  }
   const { data: link } = await supabaseAdmin.from('stripe_links').select('*').eq('id', linkId).eq('user_id', user.id).maybeSingle();
   if (!link) return NextResponse.json({ message: 'Collegamento non trovato' }, { status: 404 });
 
