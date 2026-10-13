@@ -17,6 +17,14 @@ const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   transpilePackages: [],
+  async redirects() {
+    return [
+      // Area utente unificata nella Room (pagine legacy rimosse)
+      { source: '/dashboard', destination: '/room', permanent: false },
+      { source: '/my-courses', destination: '/room/corsi', permanent: false },
+      { source: '/certificates', destination: '/room/certificati', permanent: false },
+    ];
+  },
   async headers() {
     return [
       {
