@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, FormEvent, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -20,6 +20,49 @@ import { motion } from 'framer-motion';
  const [info, setInfo] = useState('');
  const { login, requestOtp, verifyOtp } = useAuth();
  const router = useRouter();
+
+ return (
+   <Suspense>
+     <LoginInner
+       email={email} setEmail={setEmail}
+       password={password} setPassword={setPassword}
+       showPw={showPw} setShowPw={setShowPw}
+       loading={loading} setLoading={setLoading}
+       error={error} setError={setError}
+       mode={mode} setMode={setMode}
+       otpSent={otpSent} setOtpSent={setOtpSent}
+       code={code} setCode={setCode}
+       info={info} setInfo={setInfo}
+       login={login} requestOtp={requestOtp} verifyOtp={verifyOtp}
+       router={router}
+     />
+   </Suspense>
+ );
+};
+
+type InnerProps = {
+ email: string; setEmail: (v: string) => void;
+ password: string; setPassword: (v: string) => void;
+ showPw: boolean; setShowPw: (v: boolean) => void;
+ loading: boolean; setLoading: (v: boolean) => void;
+ error: string; setError: (v: string) => void;
+ mode: 'password' | 'otp'; setMode: (v: 'password' | 'otp') => void;
+ otpSent: boolean; setOtpSent: (v: boolean) => void;
+ code: string; setCode: (v: string) => void;
+ info: string; setInfo: (v: string) => void;
+ login: (e: string, p: string) => Promise<{ onboardingCompleted?: boolean }>;
+ requestOtp: (e: string) => Promise<void>;
+ verifyOtp: (e: string, c: string) => Promise<{ onboardingCompleted?: boolean }>;
+ router: ReturnType<typeof useRouter>;
+};
+
+const LoginInner: React.FC<InnerProps> = ({
+ email, setEmail, password, setPassword, showPw, setShowPw, loading, setLoading,
+ error, setError, mode, setMode, otpSent, setOtpSent, code, setCode, info, setInfo,
+ login, requestOtp, verifyOtp, router,
+}) => {
+ const sp = useSearchParams();
+ const justRegistered = sp?.get('registered') === '1';
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -119,6 +162,12 @@ import { motion } from 'framer-motion';
               Password
             </button>
           </div>
+
+          {justRegistered && (
+            <div className="mb-5 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">
+              Account creato. Accedi per configurare la tua Room.
+            </div>
+          )}
 
           {info && (
             <div className="mb-5 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">

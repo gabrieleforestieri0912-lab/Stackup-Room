@@ -26,13 +26,13 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
         </nav>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:flex lg:gap-8">
+      <div className="px-4 lg:px-8 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:flex lg:gap-8">
         <aside className="hidden lg:block w-64 shrink-0">
           <div className="sticky top-6 h-[calc(100vh-3rem)] bg-zinc-950/60 border border-zinc-800/70 rounded-2xl p-3">
             <RoomSidebar />
           </div>
         </aside>
-        <main className="flex-1 min-w-0 max-w-2xl">{children}</main>
+        <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>
   );
