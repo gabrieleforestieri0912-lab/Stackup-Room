@@ -19,10 +19,11 @@ export function extractDomain(urlOrDomain: string): string | null {
   }
 }
 
-// Logo automatico dal dominio con fallback a iniziale (nessuna chiave richiesta).
+// Logo automatico dal dominio (Google favicons, senza chiave) con fallback a iniziale.
+// Nota: Clearbit ha chiuso il free tier, per questo i vecchi logo non si vedevano.
 export function logoUrlFor(domain: string | null, explicit: string | null): string | null {
   if (explicit) return explicit;
-  if (domain) return `https://logo.clearbit.com/${domain}`;
+  if (domain) return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   return null;
 }
 
