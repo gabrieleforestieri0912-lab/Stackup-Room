@@ -126,12 +126,11 @@ NEXT_PUBLIC_GA_ID                     # Google Analytics (opzionale)
 
 | Route | File | Auth | Contenuto |
 |-------|------|------|-----------|
-| `/dashboard` | `pages/dashboard.tsx` | Sì | Dashboard utente (stats, ordini) |
-| `/settings` | `pages/settings.tsx` | Sì | Profilo, password, collegamenti account |
-| `/my-courses` | `pages/my-courses.tsx` | Sì | Corsi acquistati |
-| `/orders` | `pages/orders.tsx` | Sì | Storico ordini |
-| `/certificates` | `pages/certificates/index.tsx` | Sì | Certificati ottenuti |
-| `/certificates/[id]` | `pages/certificates/[id].tsx` | Sì | Certificato / stampa PDF |
+| `/room` | `app/room/page.tsx` | Sì | Dashboard unificata: livello/EXP, streak, corsi, certificati, startup |
+| `/room/corsi` | `app/room/corsi/page.tsx` | Sì | Corsi acquistati (sostituisce `/my-courses`) |
+| `/room/certificati` | `app/room/certificati/page.tsx` | Sì | Certificati (sostituisce `/certificates`; stampa resta su `/certificates/[id]`) |
+| `/settings` | `pages/settings.tsx` | Sì | Profilo corso/password (legacy, resta) |
+| `/orders` | `pages/orders.tsx` | Sì | Storico ordini (legacy, resta) |
 | `/courses/preview/[slug]` | `pages/courses/preview/[slug].tsx` | No | Preview corso / upsell |
 | `/404` | `pages/404.tsx` | No | Pagina non trovata (legacy) |
 
@@ -287,8 +286,9 @@ Per popolare i corsi: `npx tsx src/scripts/seed-courses.ts` (usa `.env`).
 
 Moduli Room (`/room/*`, API `/api/room/*`, lib `src/lib/room/`): Auth OTP (M1), Startup+Planner+Streak (M2),
 Classifiche+Stripe/GitHub (M3), Community+moderazione+notifiche (M4), Coach AI+consenso (M5), Feedback+test (M6).
-Migrazioni `supabase/migrations/003_room_*.sql` → `008_room_feedback.sql` (nomi descrittivi, ordine numerico).
+Migrazioni `supabase/migrations/003_room_*.sql` → `012_room_course_images.sql` (nomi descrittivi, ordine numerico).
 Esclusi su richiesta: PWA, pannello admin (moderazione/feedback via SQL + email `ADMIN_EMAILS`).
+Pagine Room: planner, startups (con Stripe inline per-startup), tracker (streak+GitHub+metriche custom), leaderboard, verifiche, community, coach, notifiche, feedback, settings.
 
 **Provider AI coach: xKiro** (`https://api.xkiro.com/v1/messages`, formato Anthropic, header `x-api-key`).
 Env: `XKIRO_API_KEY` (configurata in `.env` locale + Vercel prod/preview/dev, ottobre 2026),
@@ -296,3 +296,4 @@ Env: `XKIRO_API_KEY` (configurata in `.env` locale + Vercel prod/preview/dev, ot
 `AI_DAILY_LIMIT` (default 50), `DEEPGRAM_API_KEY` (opz, STT vocali).
 STT: Claude non accetta audio → trascrizione solo via Deepgram, altrimenti fallback senza trascrizione.
 Altre env Room: `OTP_PEPPER`, `STRIPE_CONNECT_CLIENT_ID`, `TENOR_API_KEY`, `GITHUB_TOKEN` (tutte opz).
+Sito: `https://stackup-room.vercel.app` (Site URL Supabase + `NEXT_PUBLIC_APP_URL` in prod).

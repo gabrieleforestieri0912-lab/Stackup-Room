@@ -455,7 +455,7 @@ const CourseDetailPage = () => {
  <div className="relative">
  <div className="aspect-video bg-black overflow-hidden shadow-xl relative">
  <Image
- src={course.imageUrl ||'/course-placeholder.jpg'}
+ src={course.imageUrl}
  alt={course.title}
  fill
  className="object-cover"
