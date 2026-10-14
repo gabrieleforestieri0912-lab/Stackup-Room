@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Trophy } from 'lucide-react';
 
 type Profile = Record<string, unknown>;
+type Cert = { id: string; courseTitle: string; completedAt: string; finalScore: number };
 
 export default function RoomSettings() {
   const { user, loading, logout } = useAuth();
@@ -16,12 +18,17 @@ export default function RoomSettings() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [confirmDelete, setConfirmDelete] = useState('');
+  const [certs, setCerts] = useState<Cert[]>([]);
 
   const load = async () => {
     const token = await getAccessToken();
     if (!token) return;
-    const res = await fetch('/api/room/profile', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) setProfile(await res.json().then((d) => d.profile));
+    const [pr, ce] = await Promise.all([
+      fetch('/api/room/profile', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/certificates', { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({})),
+    ]);
+    if (pr.ok) setProfile(await pr.json().then((d) => d.profile));
+    if (ce.success) setCerts(ce.data || []);
   };
 
   useEffect(() => {
@@ -138,6 +145,27 @@ export default function RoomSettings() {
           {saving ? 'Salvataggio...' : 'Salva profilo'}
         </button>
       </form>
+
+      <section className="mt-8" aria-label="Certificati">
+        <h2 className="font-bold text-white mb-1">Certificati.</h2>
+        <p className="text-sm text-zinc-400 mb-3">{certs.length > 0 ? `${certs.length} certificati ottenuti.` : 'Completa un corso al 100% per ottenere il certificato.'}</p>
+        {certs.length > 0 && (
+          <ul className="space-y-2">
+            {certs.map((c) => (
+              <li key={c.id}>
+                <Link href={`/certificates/${c.id}`} className="flex items-center gap-3 bg-black border border-zinc-800 rounded-2xl p-4 hover:border-room/40 transition-all">
+                  <Trophy size={18} className="text-gold shrink-0" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-bold text-sm text-white truncate">{c.courseTitle || 'Corso'}</span>
+                    <span className="block text-[11px] text-zinc-500">{new Date(c.completedAt).toLocaleDateString('it-IT')} · {c.finalScore}%</span>
+                  </span>
+                  <ArrowRight size={16} className="text-zinc-600 shrink-0" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="mt-8 space-y-4">
         <button onClick={exportData} className="w-full py-3 bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold rounded-xl hover:border-room transition-all">

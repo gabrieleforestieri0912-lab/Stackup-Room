@@ -200,10 +200,6 @@ const Navbar = () => {
             </div>
 
             <div className="p-1">
-             <Link href="/room/corsi" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
-             <UserIcon size={14} className="text-zinc-500" />
-             I miei corsi
-            </Link>
              <Link href="/room" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-orange-300 hover:text-orange-200 hover:bg-zinc-800 transition-all rounded-lg">
               <BookOpen size={14} className="text-orange-400" />
               La Room

@@ -97,8 +97,8 @@ const CertificateView: React.FC = () => {
  <SEO title="Certificato - StackUp" description="Certificato di completamento StackUp." />
  <div className="min-h-screen flex flex-col items-center justify-center bg-black gap-6">
  <p className="text-red-500 font-bold">{error || 'Certificato non trovato'}</p>
- <Link href="/room/certificati" className="px-6 py-3 bg-black text-white font-bold hover:bg-orange-600 transition-all">
- Torna ai certificati
+ <Link href="/room/settings" className="px-6 py-3 bg-black text-white font-bold hover:bg-orange-600 transition-all">
+ Torna al profilo
  </Link>
  </div>
  </>
@@ -121,9 +121,9 @@ const CertificateView: React.FC = () => {
  />
 
  <div className="no-print bg-black border-b border-zinc-800 px-5 py-3 flex items-center justify-between">
- <Link href="/room/certificati" className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-zinc-200 transition-colors">
+ <Link href="/room/settings" className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-zinc-200 transition-colors">
  <ArrowLeft size={16} />
- <span>Torna ai certificati</span>
+ <span>Torna al profilo</span>
  </Link>
  <button
  onClick={handlePrint}

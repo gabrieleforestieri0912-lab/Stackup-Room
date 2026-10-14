@@ -20,15 +20,12 @@ const RANKS = [
   { min: 4000, title: 'StackUp Elite' },
 ];
 
-type Enrolled = { _id: string; title: string; slug: string; progress?: number; duration?: number };
-type Cert = { id: string; courseTitle: string };
 
 export default function RoomHome() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [courses, setCourses] = useState<Enrolled[]>([]);
-  const [certs, setCerts] = useState<Cert[]>([]);
   const [startupCount, setStartupCount] = useState(0);
+  const [unread, setUnread] = useState(0);
   const [streak, setStreak] = useState<{ current: number; todayDone: boolean } | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -41,16 +38,14 @@ export default function RoomHome() {
       const token = await getAccessToken();
       if (!token) return;
       const h = { Authorization: `Bearer ${token}` };
-      const [c, ce, s, st, p] = await Promise.all([
-        fetch('/api/courses/enrolled', { headers: h }).then((r) => r.json()).catch(() => ({})),
-        fetch('/api/certificates', { headers: h }).then((r) => r.json()).catch(() => ({})),
+      const [s, st, p, n] = await Promise.all([
         fetch('/api/room/startups', { headers: h }).then((r) => r.json()).catch(() => ({})),
         fetch('/api/room/streak', { headers: h }).then((r) => r.json()).catch(() => null),
         fetch('/api/room/profile', { headers: h }).then((r) => r.json()).catch(() => ({})),
+        fetch('/api/room/notifications', { headers: h }).then((r) => r.json()).catch(() => ({})),
       ]);
-      if (c.success) setCourses(c.data || []);
-      if (ce.success) setCerts(ce.data || []);
       setStartupCount((s.startups || []).length);
+      setUnread(((n.notifications || []) as Array<{ read: boolean }>).filter((x) => !x.read).length);
       if (st) setStreak(st);
       if (p.profile && !p.profile.onboarding_completed) router.push('/onboarding');
       setReady(true);
@@ -97,34 +92,11 @@ export default function RoomHome() {
       </RoomCard>
 
       {/* Statistiche */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <StatCard icon={Flame} value={streak?.current ?? user.studyStreak ?? 0} label={`gg streak${streak && !streak.todayDone ? ' · oggi da fare' : ''}`} accent="ember" />
-        <StatCard icon={BookOpen} value={courses.length} label="Corsi" href="/room/corsi" />
-        <StatCard icon={Trophy} value={certs.length} label="Certificati" href="/room/certificati" accent="gold" />
         <StatCard icon={Rocket} value={startupCount} label="Startup" href="/room/startups" />
+        <StatCard icon={MessageSquare} value={unread} label="Activity da leggere" href="/room/notifiche" />
       </div>
-
-      {courses.length > 0 && (
-        <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-white">Continua a studiare</h2>
-            <Link href="/room/corsi" className="text-xs font-bold text-room flex items-center gap-1 hover:text-room-bright">Tutti <ArrowRight size={14} /></Link>
-          </div>
-          <div className="space-y-2">
-            {courses.slice(0, 2).map((c) => (
-              <Link key={c._id} href={`/courses/${c.slug}`} className="bg-room-bg border border-zinc-800 rounded-2xl p-4 flex items-center gap-3 hover:border-room/40 transition-all">
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-white truncate">{c.title}</p>
-                  <div className="w-full h-1.5 bg-zinc-900 rounded-full mt-2 overflow-hidden">
-                    <div className="h-full bg-room rounded-full" style={{ width: `${c.progress || 0}%` }} />
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-zinc-400 shrink-0">{c.progress || 0}%</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* La tua Room — stessa IA della sidebar */}
       {[
