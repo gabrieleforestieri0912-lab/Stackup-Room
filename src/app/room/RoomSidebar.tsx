@@ -9,7 +9,7 @@ import {
   User, BarChart3, Rocket, Activity, BadgeCheck,
   MessageSquare, MessagesSquare, Trophy, Users, CalendarDays,
   Sparkles, CalendarClock, ListChecks, Sunrise,
-  LogOut, Globe,
+  LogOut, Settings,
 } from 'lucide-react';
 
 type Item = { href: string; label: string; icon: typeof User; match: { path: string; tab?: string; hash?: string } };
@@ -140,13 +140,25 @@ export default function RoomSidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-zinc-800 pt-2 space-y-1">
-        <Link href="/" className="flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold text-zinc-500 hover:text-white rounded-xl">
-          <Globe size={17} /> Sito
-        </Link>
-        <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold text-red-400 hover:bg-red-500/10 rounded-xl">
-          <LogOut size={17} /> Esci
-        </button>
+      <div className="border-t border-zinc-800 pt-3">
+        <p className="px-3 mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600">Account</p>
+        <div className="flex items-center gap-1 rounded-xl p-1.5 hover:bg-room/5 transition-colors">
+          <Link href="/room/settings" className="flex flex-1 min-w-0 items-center gap-2.5 rounded-lg px-1.5 py-1" title="Gestisci account">
+            <Settings size={17} className="text-zinc-500 shrink-0" />
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-bold text-zinc-200">Gestisci account</span>
+              <span className="block truncate text-[11px] text-zinc-500">Profilo, privacy, dati</span>
+            </span>
+          </Link>
+          <button
+            onClick={logout}
+            title="Esci"
+            aria-label="Esci"
+            className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
