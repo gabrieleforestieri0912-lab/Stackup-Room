@@ -2,54 +2,69 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
 import {
-  LayoutDashboard, CalendarCheck, Rocket, BookOpen, Trophy, Users, Sparkles,
-  Bell, Flame, BarChart3, BadgeCheck, MessageSquare, Settings, LogOut, Globe,
+  User, BarChart3, Rocket, Activity, BadgeCheck,
+  MessageSquare, MessagesSquare, Trophy, Users, CalendarDays,
+  Sparkles, CalendarClock, ListChecks, Sunrise,
+  LogOut, Globe,
 } from 'lucide-react';
 
-const GROUPS = [
+type Item = { href: string; label: string; icon: typeof User; match: { path: string; tab?: string; hash?: string } };
+
+const GROUPS: { title: string; items: Item[] }[] = [
   {
-    title: 'Momentum',
+    title: 'Today',
     items: [
-      { href: '/room', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-      { href: '/room/planner', label: 'Planner', icon: CalendarCheck },
-      { href: '/room/tracker', label: 'Tracker', icon: Flame },
+      { href: '/room/planner#schedule', label: 'Schedule', icon: CalendarClock, match: { path: '/room/planner', hash: '#schedule' } },
+      { href: '/room/planner#task', label: 'Tasks', icon: ListChecks, match: { path: '/room/planner', hash: '#task' } },
+      { href: '/room/planner#standup', label: 'Daily Standup', icon: Sunrise, match: { path: '/room/planner', hash: '#standup' } },
     ],
   },
   {
-    title: 'Build',
+    title: 'You',
     items: [
-      { href: '/room/startups', label: 'Startup', icon: Rocket },
-      { href: '/room/corsi', label: 'Corsi', icon: BookOpen },
-      { href: '/room/verifiche', label: 'Verifiche', icon: BadgeCheck },
-      { href: '/room/certificati', label: 'Certificati', icon: Trophy },
+      { href: '/room/settings', label: 'Profile', icon: User, match: { path: '/room/settings' } },
+      { href: '/room/tracker', label: 'Stats', icon: BarChart3, match: { path: '/room/tracker' } },
+      { href: '/room/startups', label: 'Your Startup', icon: Rocket, match: { path: '/room/startups' } },
+      { href: '/room/notifiche', label: 'Activity', icon: Activity, match: { path: '/room/notifiche' } },
+      { href: '/room/verifiche', label: 'Contributions', icon: BadgeCheck, match: { path: '/room/verifiche' } },
     ],
   },
   {
-    title: 'Club',
+    title: 'Room',
     items: [
-      { href: '/room/community', label: 'Community', icon: Users },
-      { href: '/room/leaderboard', label: 'Classifiche', icon: BarChart3 },
-      { href: '/room/coach', label: 'Coach AI', icon: Sparkles },
-      { href: '/room/notifiche', label: 'Notifiche', icon: Bell },
-      { href: '/room/feedback', label: 'Feedback', icon: MessageSquare },
+      { href: '/room/community?tab=chat', label: 'Chat', icon: MessageSquare, match: { path: '/room/community', tab: 'chat' } },
+      { href: '/room/community?tab=forum', label: 'Rooms', icon: MessagesSquare, match: { path: '/room/community', tab: 'forum' } },
+      { href: '/room/leaderboard', label: 'Ranks', icon: Trophy, match: { path: '/room/leaderboard' } },
+      { href: '/room/community?tab=network', label: 'Network', icon: Users, match: { path: '/room/community', tab: 'network' } },
+      { href: '/room/community?tab=eventi', label: 'Events', icon: CalendarDays, match: { path: '/room/community', tab: 'eventi' } },
     ],
   },
   {
-    title: 'Account',
-    items: [{ href: '/room/settings', label: 'Impostazioni', icon: Settings }],
+    title: 'Coach',
+    items: [
+      { href: '/room/coach', label: 'Coach AI', icon: Sparkles, match: { path: '/room/coach' } },
+    ],
   },
 ];
 
 export default function RoomSidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
   const [imgErr, setImgErr] = useState(false);
+  const [hash, setHash] = useState(() => (typeof window !== 'undefined' ? window.location.hash : ''));
+
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -68,6 +83,14 @@ export default function RoomSidebar() {
   const name = String(profile?.name || user?.name || '');
   const handle = profile?.handle as string | null;
   const avatar = !imgErr ? String((profile?.avatar_url as string) || (profile?.avatar as string) || user?.avatar || '') : '';
+  const activeTab = searchParams?.get('tab') || 'chat';
+
+  const isActive = (m: Item['match']) => {
+    if ((pathname || '') !== m.path) return false;
+    if (m.tab) return activeTab === m.tab;
+    if (m.hash) return (hash || '#task') === m.hash;
+    return true;
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -95,10 +118,10 @@ export default function RoomSidebar() {
             <p className="px-3 mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600">{g.title}</p>
             <div className="space-y-1">
               {g.items.map((n) => {
-                const active = n.exact ? pathname === n.href : pathname === n.href || (pathname || '').startsWith(`${n.href}/`);
+                const active = isActive(n.match);
                 return (
                   <Link
-                    key={n.href}
+                    key={n.label}
                     href={n.href}
                     aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold rounded-xl transition-all ${

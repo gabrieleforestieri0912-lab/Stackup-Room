@@ -164,7 +164,7 @@ export default function PlannerPage() {
         </div>
       )}
 
-      <div className={section}>
+      <div id="task" className={`${section} scroll-mt-20`}>
         <h2 className={h2}>Task</h2>
         <form onSubmit={addTask} className="flex gap-2 mb-3">
           <input aria-label="Nuovo task" className={input} value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Nuovo task..." maxLength={200} />
@@ -190,7 +190,7 @@ export default function PlannerPage() {
         )}
       </div>
 
-      <form onSubmit={saveStandup} className={section}>
+      <form onSubmit={saveStandup} id="standup" className={`${section} scroll-mt-20`}>
         <h2 className={h2}>Standup di oggi</h2>
         <div className="space-y-2">
           <textarea aria-label="Fatto" rows={2} className={input} placeholder="Fatto" value={standup.done} onChange={(e) => setStandup({ ...standup, done: e.target.value })} maxLength={2000} />
@@ -200,7 +200,7 @@ export default function PlannerPage() {
         <button className="mt-3 w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Salva standup</button>
       </form>
 
-      <div className={section}>
+      <div id="schedule" className={`${section} scroll-mt-20`}>
         <h2 className={h2}>Time-blocking</h2>
         <form onSubmit={addBlock} className="grid grid-cols-3 gap-2 mb-3">
           <input aria-label="Inizio" type="time" className={input} value={newBlock.start} onChange={(e) => setNewBlock({ ...newBlock, start: e.target.value })} />

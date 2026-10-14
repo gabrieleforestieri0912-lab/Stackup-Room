@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import { Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Sparkles, BarChart3 } from 'lucide-react';
+import { Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Sparkles, BarChart3, MessageSquare, MessagesSquare } from 'lucide-react';
 import { RoomLoader, RoomHeader, RoomCard, StatCard } from './ui';
 
 const RANKS = [
@@ -126,29 +126,58 @@ export default function RoomHome() {
         </section>
       )}
 
-      {/* La tua Room */}
-      <section>
-        <h2 className="font-bold text-white mb-3">La tua Room</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            { href: '/room/planner', title: 'Planner giornaliero', desc: 'Task, standup, time-blocking, obiettivi.', icon: Target },
-            { href: '/room/tracker', title: 'Tracker', desc: 'Streak, GitHub, metriche custom.', icon: Flame },
-            { href: '/room/startups', title: 'Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
-            { href: '/room/community', title: 'Community', desc: 'Chat, forum, network, eventi.', icon: BarChart3 },
+      {/* La tua Room — stessa IA della sidebar */}
+      {[
+        {
+          group: 'You',
+          items: [
+            { href: '/room/tracker', title: 'Stats', desc: 'Streak, GitHub, metriche custom.', icon: BarChart3 },
+            { href: '/room/startups', title: 'Your Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
+            { href: '/room/notifiche', title: 'Activity', desc: 'Le tue notifiche e menzioni.', icon: MessageSquare },
+            { href: '/room/verifiche', title: 'Contributions', desc: 'Fonti verificate per i rank.', icon: Trophy },
+          ],
+        },
+        {
+          group: 'Room',
+          items: [
+            { href: '/room/community?tab=chat', title: 'Chat', desc: 'La chat del club, ultimi 7 giorni.', icon: MessageSquare },
+            { href: '/room/community?tab=forum', title: 'Rooms', desc: 'Stanze di discussione per topic.', icon: MessagesSquare },
+            { href: '/room/leaderboard', title: 'Ranks', desc: 'Leaderboard verificate del club.', icon: Trophy },
+            { href: '/room/community?tab=network', title: 'Network', desc: 'Bacheca offerte e richieste.', icon: BarChart3 },
+            { href: '/room/community?tab=eventi', title: 'Events', desc: 'Eventi e ritrovi del club.', icon: Rocket },
+          ],
+        },
+        {
+          group: 'Today',
+          items: [
+            { href: '/room/planner#task', title: 'Tasks', desc: 'I task di oggi, per startup.', icon: Target },
+            { href: '/room/planner#standup', title: 'Daily Standup', desc: 'Fatto, da fare, blocchi.', icon: Flame },
+            { href: '/room/planner#schedule', title: 'Schedule', desc: 'Time-blocking della giornata.', icon: BookOpen },
+          ],
+        },
+        {
+          group: 'Coach',
+          items: [
             { href: '/room/coach', title: 'Coach AI', desc: 'Standup, day plan, advisor.', icon: Sparkles },
-            { href: '/room/leaderboard', title: 'Classifiche', desc: 'Leaderboard verificate del club.', icon: Trophy },
-          ].map((c) => (
-            <Link key={c.href} href={c.href} className="bg-room-bg border border-zinc-800 rounded-2xl p-4 flex items-center gap-3 hover:border-room/40 transition-all">
-              <c.icon size={18} className="text-room shrink-0" />
-              <span className="min-w-0">
-                <span className="block font-bold text-sm text-white">{c.title}</span>
-                <span className="block text-xs text-zinc-500 truncate">{c.desc}</span>
-              </span>
-              <ArrowRight size={16} className="ml-auto text-zinc-600 shrink-0" />
-            </Link>
-          ))}
-        </div>
-      </section>
+          ],
+        },
+      ].map((s) => (
+        <section key={s.group} className="mb-6">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600 mb-2">{s.group}</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {s.items.map((c) => (
+              <Link key={c.href + c.title} href={c.href} className="bg-room-bg border border-zinc-800 rounded-2xl p-4 flex items-center gap-3 hover:border-room/40 transition-all">
+                <c.icon size={18} className="text-room shrink-0" />
+                <span className="min-w-0">
+                  <span className="block font-bold text-sm text-white">{c.title}</span>
+                  <span className="block text-xs text-zinc-500 truncate">{c.desc}</span>
+                </span>
+                <ArrowRight size={16} className="ml-auto text-zinc-600 shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

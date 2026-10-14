@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { PanelLeftClose, PanelLeftOpen, Menu, X } from 'lucide-react';
 import RoomSidebar from './RoomSidebar';
+import Starfield from './Starfield';
 
 const TOP_LINKS = [
-  ['Planner', '/room/planner'],
-  ['Startup', '/room/startups'],
-  ['Community', '/room/community'],
+  ['Tasks', '/room/planner#task'],
+  ['Standup', '/room/planner#standup'],
+  ['Chat', '/room/community?tab=chat'],
+  ['Ranks', '/room/leaderboard'],
+  ['Network', '/room/community?tab=network'],
   ['Coach', '/room/coach'],
-  ['Tracker', '/room/tracker'],
-  ['Classifiche', '/room/leaderboard'],
 ] as const;
 
 const STORAGE_KEY = 'room-sidebar-open';
@@ -39,7 +40,24 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <div className="room-scope min-h-screen bg-room-bg text-zinc-100">
+    <div className="room-scope min-h-screen bg-[#05070b] text-zinc-100">
+      {/* Cielo notturno stellato dietro tutti i contenuti Room */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute inset-0" style={{ background: '#05070b' }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(900px 500px at 15% -5%, rgba(77,224,201,0.08), transparent 60%), radial-gradient(1000px 600px at 85% 110%, rgba(79,70,229,0.10), transparent 60%), radial-gradient(600px 400px at 80% 0%, rgba(255,138,61,0.05), transparent 60%)',
+          }}
+        />
+        <Starfield />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(120% 90% at 50% 50%, transparent 60%, rgba(0,0,0,0.5) 100%)' }}
+        />
+      </div>
+
       {/* Overlay mobile quando aperta */}
       {open && (
         <button
@@ -71,12 +89,14 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
           </button>
         </div>
         <div className="flex-1 min-h-0 p-3">
-          <RoomSidebar />
+          <Suspense>
+            <RoomSidebar />
+          </Suspense>
         </div>
       </aside>
 
       {/* Colonna contenuto: lascia spazio alla sidebar fissa su desktop */}
-      <div className={`transition-[padding] duration-300 ease-in-out ${open ? 'lg:pl-64' : 'lg:pl-0'}`}>
+      <div className={`relative z-10 transition-[padding] duration-300 ease-in-out ${open ? 'lg:pl-64' : 'lg:pl-0'}`}>
         {/* Barra mobile */}
         <header className="lg:hidden sticky top-0 z-30 bg-room-bg/90 backdrop-blur border-b border-zinc-800">
           <nav className="flex items-center gap-1 px-4 h-14 overflow-x-auto" aria-label="Room">
