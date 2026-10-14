@@ -11,7 +11,7 @@ type Goal = { id: string; title: string; status: string; proof_url: string | nul
 
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
 const today = () => new Date().toISOString().slice(0, 10);
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function PlannerPage() {
   const [startups, setStartups] = useState<Startup[]>([]);
@@ -60,12 +60,12 @@ export default function PlannerPage() {
     })();
   }, [sid]);
 
-  if (loading) return <div className="flex justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="flex justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
   if (startups.length === 0) {
     return (
       <div className="border border-dashed border-zinc-800 rounded-2xl p-10 text-center">
         <p className="font-bold text-white">Crea prima una startup.</p>
-        <a href="/room/startups" className="text-sm text-orange-400 font-bold">Vai al portfolio →</a>
+        <a href="/room/startups" className="text-sm text-room font-bold">Vai al portfolio →</a>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function PlannerPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Planner · privato</p>
+        <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Planner · privato</p>
         <h1 className="text-2xl font-extrabold tracking-tight mb-3">La tua giornata.</h1>
         <select aria-label="Startup attiva" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
           {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -137,7 +137,7 @@ export default function PlannerPage() {
 
       {streak && (
         <div className={`${section} flex items-center gap-4`} role="status" aria-label="Streak">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${streak.todayDone ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-500'}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${streak.todayDone ? 'bg-ember text-[#0B0D12]' : 'bg-zinc-900 text-zinc-500'}`}>
             <Flame size={22} />
           </div>
           <div className="flex-1">
@@ -149,7 +149,7 @@ export default function PlannerPage() {
               await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ startup_id: sid }) });
               const s = await fetch('/api/room/streak', { headers: await auth() });
               if (s.ok) setStreak(await s.json());
-            }} className="px-3 py-2 bg-orange-600 text-white text-xs font-bold rounded-xl">Shippato oggi</button>
+            }} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">Shippato oggi</button>
           )}
         </div>
       )}
@@ -158,7 +158,7 @@ export default function PlannerPage() {
           <h2 className={h2}>Heatmap</h2>
           <div className="flex flex-wrap gap-1.5">
             {streak.heatmap.slice(0, 60).map((d) => (
-              <div key={d} title={d} className="w-4 h-4 rounded bg-orange-600" />
+              <div key={d} title={d} className="w-4 h-4 rounded bg-room" />
             ))}
           </div>
         </div>
@@ -168,14 +168,14 @@ export default function PlannerPage() {
         <h2 className={h2}>Task</h2>
         <form onSubmit={addTask} className="flex gap-2 mb-3">
           <input aria-label="Nuovo task" className={input} value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Nuovo task..." maxLength={200} />
-          <button aria-label="Aggiungi task" className="px-4 bg-orange-600 text-white rounded-xl font-bold"><Plus size={16} /></button>
+          <button aria-label="Aggiungi task" className="px-4 bg-room text-[#0B0D12] rounded-xl font-bold"><Plus size={16} /></button>
         </form>
         {tasks.length === 0 ? <p className="text-sm text-zinc-500">Nessun task. Aggiungi il primo sopra.</p> : (
           <ul className="space-y-2">
             {tasks.map((t) => (
               <li key={t.id} className="flex items-center gap-2 text-sm">
                 <button onClick={() => setTaskStatus(t.id, t.status === 'done' ? 'todo' : 'done')} aria-label={t.status === 'done' ? 'Riapri task' : 'Completa task'}
-                  className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${t.status === 'done' ? 'bg-orange-600 border-orange-600 text-white' : 'border-zinc-700 text-transparent'}`}>
+                  className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${t.status === 'done' ? 'bg-room border-room text-white' : 'border-zinc-700 text-transparent'}`}>
                   <Check size={14} />
                 </button>
                 <span className={`flex-1 ${t.status === 'done' ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>{t.title}</span>
@@ -197,7 +197,7 @@ export default function PlannerPage() {
           <textarea aria-label="Da fare" rows={2} className={input} placeholder="Da fare" value={standup.todo} onChange={(e) => setStandup({ ...standup, todo: e.target.value })} maxLength={2000} />
           <textarea aria-label="Blocchi" rows={2} className={input} placeholder="Blocchi" value={standup.blockers} onChange={(e) => setStandup({ ...standup, blockers: e.target.value })} maxLength={2000} />
         </div>
-        <button className="mt-3 w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-orange-500">Salva standup</button>
+        <button className="mt-3 w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Salva standup</button>
       </form>
 
       <div className={section}>
@@ -206,13 +206,13 @@ export default function PlannerPage() {
           <input aria-label="Inizio" type="time" className={input} value={newBlock.start} onChange={(e) => setNewBlock({ ...newBlock, start: e.target.value })} />
           <input aria-label="Fine" type="time" className={input} value={newBlock.end} onChange={(e) => setNewBlock({ ...newBlock, end: e.target.value })} />
           <input aria-label="Etichetta blocco" className={input} placeholder="Focus" value={newBlock.label} onChange={(e) => setNewBlock({ ...newBlock, label: e.target.value })} maxLength={200} />
-          <button className="col-span-3 py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-orange-500">Aggiungi blocco</button>
+          <button className="col-span-3 py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Aggiungi blocco</button>
         </form>
         {blocks.length === 0 ? <p className="text-sm text-zinc-500">Nessun blocco oggi.</p> : (
           <ul className="space-y-1.5 text-sm">
             {blocks.map((b) => (
               <li key={b.id} className="flex items-center gap-2 text-zinc-300">
-                <span className="font-mono text-xs text-orange-400">{b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)}</span>
+                <span className="font-mono text-xs text-room">{b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)}</span>
                 <span className="flex-1 truncate">{b.label || '—'}</span>
                 <button onClick={async () => {
                   await fetch(`/api/room/blocks/${b.id}`, { method: 'DELETE', headers: await auth() });
@@ -228,7 +228,7 @@ export default function PlannerPage() {
         <h2 className={h2}>Obiettivi + prova</h2>
         <form onSubmit={addGoal} className="flex gap-2 mb-3">
           <input aria-label="Nuovo obiettivo" className={input} value={newGoal} onChange={(e) => setNewGoal(e.target.value)} placeholder="Nuovo obiettivo..." maxLength={200} />
-          <button aria-label="Aggiungi obiettivo" className="px-4 bg-orange-600 text-white rounded-xl font-bold"><Plus size={16} /></button>
+          <button aria-label="Aggiungi obiettivo" className="px-4 bg-room text-[#0B0D12] rounded-xl font-bold"><Plus size={16} /></button>
         </form>
         {goals.length === 0 ? <p className="text-sm text-zinc-500">Nessun obiettivo.</p> : (
           <ul className="space-y-2">
@@ -243,7 +243,7 @@ export default function PlannerPage() {
                         body: JSON.stringify({ status: 'done' }),
                       });
                       if (r.ok) setGoals((p) => p.map((x) => (x.id === g.id ? { ...x, status: 'done' } : x)));
-                    }} className="text-[11px] font-bold text-orange-400">Fatto ✓</button>
+                    }} className="text-[11px] font-bold text-room">Fatto ✓</button>
                   )}
                 </div>
                 <div className="flex gap-2 mt-2">
@@ -256,7 +256,7 @@ export default function PlannerPage() {
                       });
                     }} />
                 </div>
-                <label className="block mt-2 text-[11px] font-bold text-zinc-500 cursor-pointer hover:text-orange-400">
+                <label className="block mt-2 text-[11px] font-bold text-zinc-500 cursor-pointer hover:text-room">
                   {g.screenshot_path ? '✓ Prova allegata · sostituisci' : '+ Allega screenshot prova'}
                   <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                     const f = e.target.files?.[0];

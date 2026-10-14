@@ -85,10 +85,10 @@ export default function RoomSettings() {
   };
 
   if (loading || !profile) {
-    return <div className="flex items-center justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>;
+    return <div className="flex items-center justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
   }
 
-  const input = 'w-full px-4 py-3 bg-black border border-zinc-800 focus:border-orange-500 outline-none transition-all text-zinc-100 text-sm rounded-xl';
+  const input = 'w-full px-4 py-3 bg-black border border-zinc-800 focus:border-room outline-none transition-all text-zinc-100 text-sm rounded-xl';
   const label = 'block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1.5';
   const socials = (profile.socials as Record<string, string>) || {};
 
@@ -97,7 +97,7 @@ export default function RoomSettings() {
       <h1 className="text-2xl font-extrabold tracking-tight mb-1">Impostazioni.</h1>
       <p className="text-sm text-zinc-400 mb-6">Profilo, privacy, consenso AI, export ed eliminazione.</p>
       {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
-      {msg && <div className="mb-4 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">{msg}</div>}
+      {msg && <div className="mb-4 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}
 
       <form onSubmit={save} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
@@ -121,26 +121,26 @@ export default function RoomSettings() {
         </fieldset>
         <div className="space-y-3 bg-zinc-950 border border-zinc-800 rounded-xl p-4">
           <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" checked={Boolean(profile.anonymous_mode)} onChange={(e) => set('anonymous_mode', e.target.checked)} className="mt-1 accent-orange-600" />
+            <input type="checkbox" checked={Boolean(profile.anonymous_mode)} onChange={(e) => set('anonymous_mode', e.target.checked)} className="mt-1 accent-room" />
             <span><strong className="text-white">Anonymous Mode</strong><br /><span className="text-zinc-400 text-xs">Maschera identità su classifiche e community, stats mantenute.</span></span>
           </label>
           <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" checked={Boolean(profile.show_revenue)} onChange={(e) => set('show_revenue', e.target.checked)} className="mt-1 accent-orange-600" />
+            <input type="checkbox" checked={Boolean(profile.show_revenue)} onChange={(e) => set('show_revenue', e.target.checked)} className="mt-1 accent-room" />
             <span><strong className="text-white">Mostra revenue verificata</strong><br /><span className="text-zinc-400 text-xs">Solo numeri da fonti collegate, mai auto-dichiarati come verificati.</span></span>
           </label>
           <label className="flex items-start gap-3 text-sm">
-            <input type="checkbox" checked={Boolean(profile.ai_consent)} onChange={(e) => set('ai_consent', e.target.checked)} className="mt-1 accent-orange-600" />
+            <input type="checkbox" checked={Boolean(profile.ai_consent)} onChange={(e) => set('ai_consent', e.target.checked)} className="mt-1 accent-room" />
             <span><strong className="text-white">Funzioni AI (xKiro · Claude)</strong><br /><span className="text-zinc-400 text-xs">Consenso esplicito e revocabile. Invia startup, task, standup e background al provider AI. La community non è mai inviata. Senza consenso: coach offline e vocali senza trascrizione.</span></span>
           </label>
         </div>
-        <button type="submit" disabled={saving} className="w-full py-3.5 bg-orange-600 text-white font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-60 rounded-xl flex items-center justify-center gap-2">
+        <button type="submit" disabled={saving} className="w-full py-3.5 bg-room text-[#0B0D12] font-bold hover:bg-room-bright transition-all shadow-lg shadow-room/20 disabled:opacity-60 rounded-xl flex items-center justify-center gap-2">
           {saving && <Loader2 size={18} className="animate-spin" />}
           {saving ? 'Salvataggio...' : 'Salva profilo'}
         </button>
       </form>
 
       <div className="mt-8 space-y-4">
-        <button onClick={exportData} className="w-full py-3 bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold rounded-xl hover:border-orange-500 transition-all">
+        <button onClick={exportData} className="w-full py-3 bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold rounded-xl hover:border-room transition-all">
           Esporta i miei dati (JSON)
         </button>
         <div className="border border-red-500/30 rounded-xl p-4">

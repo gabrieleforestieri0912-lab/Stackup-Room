@@ -7,7 +7,7 @@ import { Loader2, Trash2, Flag } from 'lucide-react';
 
 type Topic = { id: string; title: string; body: string; tag: string; created_at: string; author: string; mine: boolean; replies: number };
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function ForumTab() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -41,7 +41,7 @@ export default function ForumTab() {
         {(['', 'ask', 'show', 'discussione'] as const).map((t) => (
           <button key={t} role="tab" aria-selected={filter === t}
             onClick={() => { setFilter(t); load(t); }}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl ${filter === t ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`px-3 py-1.5 text-xs font-bold rounded-xl ${filter === t ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {t === '' ? 'Tutti' : t === 'ask' ? 'Ask the club' : t === 'show' ? 'Show' : 'Discussioni'}
           </button>
         ))}
@@ -57,21 +57,21 @@ export default function ForumTab() {
           </select>
         </div>
         <textarea aria-label="Dettaglio" rows={2} className={input} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Dettagli (facoltativo)..." maxLength={5000} />
-        <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-orange-500">Pubblica</button>
+        <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Pubblica</button>
         <p className="text-[11px] text-zinc-600">Ask the club: la bozza assistita da AI arriva con la M5. Ora scrivi pure a mano.</p>
       </form>
 
-      {loading ? <div className="flex justify-center py-10" role="status"><Loader2 className="animate-spin text-orange-500" /></div> :
+      {loading ? <div className="flex justify-center py-10" role="status"><Loader2 className="animate-spin text-room" /></div> :
         topics.length === 0 ? <p className="text-sm text-zinc-500 text-center py-8">Nessun topic. Aprine uno sopra 👆</p> : (
           <ul className="space-y-2">
             {topics.map((t) => (
               <li key={t.id} className="border border-zinc-800 bg-black rounded-2xl p-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-zinc-900 text-orange-300">{t.tag === 'ask' ? 'ask' : t.tag}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-zinc-900 text-room-bright">{t.tag === 'ask' ? 'ask' : t.tag}</span>
                   <span className="text-[11px] text-zinc-500">{t.author} · {t.replies} risposte</span>
                   <span className="ml-auto flex gap-1">
                     {!t.mine && (
-                      <button aria-label="Segnala topic" className="p-1 text-zinc-600 hover:text-orange-400" onClick={async () => {
+                      <button aria-label="Segnala topic" className="p-1 text-zinc-600 hover:text-room" onClick={async () => {
                         const reason = window.prompt('Motivo (spam, odio, nsfw, altro)?', 'spam');
                         if (!reason || !['spam', 'odio', 'nsfw', 'altro'].includes(reason)) return;
                         await fetch('/api/room/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ target_type: 'topic', target_id: t.id, reason }) });
@@ -87,7 +87,7 @@ export default function ForumTab() {
                     )}
                   </span>
                 </div>
-                <Link href={`/room/community/forum/${t.id}`} className="block font-bold text-white mt-1 hover:text-orange-300">{t.title}</Link>
+                <Link href={`/room/community/forum/${t.id}`} className="block font-bold text-white mt-1 hover:text-room-bright">{t.title}</Link>
                 {t.body && <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{t.body}</p>}
               </li>
             ))}

@@ -10,20 +10,38 @@ import {
   Bell, Flame, BarChart3, BadgeCheck, MessageSquare, Settings, LogOut, Globe,
 } from 'lucide-react';
 
-const NAV = [
-  { href: '/room', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/room/planner', label: 'Planner', icon: CalendarCheck },
-  { href: '/room/tracker', label: 'Tracker', icon: Flame },
-  { href: '/room/startups', label: 'Startup', icon: Rocket },
-  { href: '/room/leaderboard', label: 'Classifiche', icon: BarChart3 },
-  { href: '/room/verifiche', label: 'Verifiche', icon: BadgeCheck },
-  { href: '/room/community', label: 'Community', icon: Users },
-  { href: '/room/coach', label: 'Coach AI', icon: Sparkles },
-  { href: '/room/corsi', label: 'Corsi', icon: BookOpen },
-  { href: '/room/certificati', label: 'Certificati', icon: Trophy },
-  { href: '/room/notifiche', label: 'Notifiche', icon: Bell },
-  { href: '/room/feedback', label: 'Feedback', icon: MessageSquare },
-  { href: '/room/settings', label: 'Impostazioni', icon: Settings },
+const GROUPS = [
+  {
+    title: 'Momentum',
+    items: [
+      { href: '/room', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+      { href: '/room/planner', label: 'Planner', icon: CalendarCheck },
+      { href: '/room/tracker', label: 'Tracker', icon: Flame },
+    ],
+  },
+  {
+    title: 'Build',
+    items: [
+      { href: '/room/startups', label: 'Startup', icon: Rocket },
+      { href: '/room/corsi', label: 'Corsi', icon: BookOpen },
+      { href: '/room/verifiche', label: 'Verifiche', icon: BadgeCheck },
+      { href: '/room/certificati', label: 'Certificati', icon: Trophy },
+    ],
+  },
+  {
+    title: 'Club',
+    items: [
+      { href: '/room/community', label: 'Community', icon: Users },
+      { href: '/room/leaderboard', label: 'Classifiche', icon: BarChart3 },
+      { href: '/room/coach', label: 'Coach AI', icon: Sparkles },
+      { href: '/room/notifiche', label: 'Notifiche', icon: Bell },
+      { href: '/room/feedback', label: 'Feedback', icon: MessageSquare },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [{ href: '/room/settings', label: 'Impostazioni', icon: Settings }],
+  },
 ];
 
 export default function RoomSidebar() {
@@ -53,12 +71,12 @@ export default function RoomSidebar() {
 
   return (
     <div className="flex flex-col h-full">
-      <Link href={handle ? `/u/${handle}` : '/room/settings'} className="flex items-center gap-3 px-2 py-4 hover:bg-zinc-900/60 rounded-xl transition-colors">
+      <Link href={handle ? `/u/${handle}` : '/room/settings'} className="flex items-center gap-3 px-2 py-4 hover:bg-room/5 rounded-xl transition-colors">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
-          <img src={avatar} alt={name} onError={() => setImgErr(true)} className="w-11 h-11 rounded-full object-cover border border-orange-400/30 shrink-0" />
+          <img src={avatar} alt={name} onError={() => setImgErr(true)} className="w-11 h-11 rounded-full object-cover border border-room/40 shrink-0" />
         ) : (
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center text-white font-black shrink-0" aria-hidden>
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-room to-room-deep flex items-center justify-center text-[#0B0D12] font-black shrink-0" aria-hidden>
             {name.charAt(0).toUpperCase() || 'U'}
           </div>
         )}
@@ -66,30 +84,37 @@ export default function RoomSidebar() {
           <p className="font-bold text-sm text-white truncate">{name || '…'}</p>
           <p className="text-[11px] text-zinc-500 truncate">{handle ? `@${handle}` : 'Completa il profilo'}</p>
           {streak != null && (
-            <p className="text-[11px] font-bold text-orange-300 mt-0.5">🔥 {streak} giorni</p>
+            <p className="text-[11px] font-bold text-ember mt-0.5">🔥 {streak} giorni</p>
           )}
         </div>
       </Link>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto py-2" aria-label="Room">
-        {NAV.map((n) => {
-          const active = n.exact ? pathname === n.href : pathname === n.href || (pathname || '').startsWith(`${n.href}/`);
-          return (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={active ? 'page' : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold rounded-xl transition-all ${
-                active
-                  ? 'bg-orange-500/10 text-orange-300 border border-orange-500/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent'
-              }`}
-            >
-              <n.icon size={17} className={active ? 'text-orange-400' : 'text-zinc-500'} />
-              {n.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto py-2" aria-label="Room">
+        {GROUPS.map((g) => (
+          <div key={g.title}>
+            <p className="px-3 mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600">{g.title}</p>
+            <div className="space-y-1">
+              {g.items.map((n) => {
+                const active = n.exact ? pathname === n.href : pathname === n.href || (pathname || '').startsWith(`${n.href}/`);
+                return (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold rounded-xl transition-all ${
+                      active
+                        ? 'bg-room/10 text-room-bright border border-room/30'
+                        : 'text-zinc-400 hover:text-white hover:bg-room/5 border border-transparent'
+                    }`}
+                  >
+                    <n.icon size={17} className={active ? 'text-room' : 'text-zinc-500'} />
+                    {n.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="border-t border-zinc-800 pt-2 space-y-1">

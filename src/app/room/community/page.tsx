@@ -17,12 +17,12 @@ export default function CommunityPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('chat');
   return (
     <div>
-      <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">La Room</p>
+      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">La Room</p>
       <h1 className="text-2xl font-extrabold tracking-tight mb-4">Community.</h1>
       <div className="flex gap-2 mb-5 overflow-x-auto" role="tablist" aria-label="Sezioni community">
         {TABS.map((t) => (
           <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${tab === t.id ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`px-4 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${tab === t.id ? 'bg-room text-[#0B0D12] shadow-lg shadow-room/20' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {t.label}
           </button>
         ))}

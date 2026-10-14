@@ -15,7 +15,7 @@ const STAGES = ['idea', 'building', 'launched', 'scaling', 'exit'] as const;
 function Logo({ s }: { s: Startup }) {
   const [err, setErr] = useState(false);
   if (!s.logo_url || err) {
-    return <div aria-hidden className="w-10 h-10 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center font-extrabold">{s.name.charAt(0).toUpperCase()}</div>;
+    return <div aria-hidden className="w-10 h-10 rounded-xl bg-room/20 text-room flex items-center justify-center font-extrabold">{s.name.charAt(0).toUpperCase()}</div>;
   }
   // Loghi esterni da domini arbitrari: next/image richiederebbe remotePatterns dinamici
   // eslint-disable-next-line @next/next/no-img-element
@@ -138,17 +138,17 @@ export default function StartupsPage() {
     load();
   };
 
-  const input = 'w-full px-4 py-3 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+  const input = 'w-full px-4 py-3 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
-  if (loading) return <div className="flex justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="flex justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
     <div>
-      <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Portfolio</p>
+      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Portfolio</p>
       <h1 className="text-2xl font-extrabold tracking-tight mb-1">Le tue startup.</h1>
       <p className="text-sm text-zinc-400 mb-6">Revenue sotto = auto-dichiarata. Collega Stripe per quella verificata (✓), ben distinta.</p>
       {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
-      {msg && <div className="mb-4 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">{msg}</div>}
+      {msg && <div className="mb-4 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}
 
       <form onSubmit={create} className="bg-black border border-zinc-800 rounded-2xl p-5 space-y-3 mb-6">
         <div className="grid sm:grid-cols-2 gap-3">
@@ -156,7 +156,7 @@ export default function StartupsPage() {
           <input aria-label="Link sito" className={input} placeholder="https://... (logo auto dal dominio)" value={url} onChange={(e) => setUrl(e.target.value)} />
         </div>
         <input aria-label="Tagline" className={input} placeholder="Tagline (una riga)" value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={200} />
-        <button className="w-full py-3 bg-orange-600 text-white text-sm font-bold rounded-xl hover:bg-orange-500 flex items-center justify-center gap-2">
+        <button className="w-full py-3 bg-room text-[#0B0D12] text-sm font-bold rounded-xl hover:bg-room-bright flex items-center justify-center gap-2">
           <Plus size={16} /> Aggiungi startup
         </button>
       </form>
@@ -175,7 +175,7 @@ export default function StartupsPage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="font-bold text-white truncate">{s.name}</h2>
                   {s.tagline && <p className="text-xs text-zinc-400 truncate">{s.tagline}</p>}
-                  {s.url && <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] text-orange-400 font-bold">{s.domain || s.url}</a>}
+                  {s.url && <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] text-room font-bold">{s.domain || s.url}</a>}
                 </div>
                 <button onClick={() => remove(s.id)} aria-label={`Elimina ${s.name}`} className="p-2 text-zinc-600 hover:text-red-400"><Trash2 size={16} /></button>
               </div>
@@ -207,7 +207,7 @@ export default function StartupsPage() {
                       return (
                         <div className="flex items-center gap-2 text-xs">
                           <span className="flex-1 text-zinc-300">
-                            ✓ Verificata: <strong className="text-orange-300">{v ? `€${(v.mrr_cents / 100).toLocaleString('it-IT')}/mese` : '…'}</strong>
+                            ✓ Verificata: <strong className="text-room-bright">{v ? `€${(v.mrr_cents / 100).toLocaleString('it-IT')}/mese` : '…'}</strong>
                             <span className="text-zinc-600"> ···{link.stripe_account_id.slice(-6)}{link.livemode ? '' : ' (test)'}</span>
                           </span>
                           <button onClick={() => refreshStripe(s.id)} className="px-2.5 py-1.5 font-bold bg-zinc-900 border border-zinc-700 rounded-lg">Aggiorna</button>
@@ -219,7 +219,7 @@ export default function StartupsPage() {
                       return (
                         <div className="flex items-center gap-2 text-xs">
                           <span className="flex-1 text-zinc-300">
-                            ✓ Verificata: <strong className="text-orange-300">{v ? `€${(v.mrr_cents / 100).toLocaleString('it-IT')}/mese` : '…'}</strong>
+                            ✓ Verificata: <strong className="text-room-bright">{v ? `€${(v.mrr_cents / 100).toLocaleString('it-IT')}/mese` : '…'}</strong>
                             <span className="text-zinc-600"> rk_···{key.key_last4}{key.livemode ? '' : ' (test)'}</span>
                           </span>
                           <button onClick={() => refreshStripe(s.id)} className="px-2.5 py-1.5 font-bold bg-zinc-900 border border-zinc-700 rounded-lg">Aggiorna</button>
@@ -229,17 +229,17 @@ export default function StartupsPage() {
                     }
                     return (
                       <div className="space-y-2">
-                        <button onClick={() => connectStripe(s.id)} className="w-full py-2 text-xs font-bold bg-zinc-900 border border-zinc-700 rounded-lg hover:border-orange-500">
+                        <button onClick={() => connectStripe(s.id)} className="w-full py-2 text-xs font-bold bg-zinc-900 border border-zinc-700 rounded-lg hover:border-room">
                           Collega con Stripe (OAuth)
                         </button>
                         {rkFor === s.id ? (
                           <div className="flex gap-2">
-                            <input aria-label="Chiave ristretta Stripe" type="password" autoComplete="off" placeholder="rk_live_… (sola lettura)" value={rkValue} onChange={(e) => setRkValue(e.target.value.trim())} className="flex-1 px-3 py-2 bg-black border border-zinc-700 focus:border-orange-500 outline-none text-zinc-100 text-xs rounded-lg" />
-                            <button onClick={() => saveRk(s.id)} className="px-3 py-2 text-xs font-bold bg-orange-600 text-white rounded-lg">Salva</button>
+                            <input aria-label="Chiave ristretta Stripe" type="password" autoComplete="off" placeholder="rk_live_… (sola lettura)" value={rkValue} onChange={(e) => setRkValue(e.target.value.trim())} className="flex-1 px-3 py-2 bg-black border border-zinc-700 focus:border-room outline-none text-zinc-100 text-xs rounded-lg" />
+                            <button onClick={() => saveRk(s.id)} className="px-3 py-2 text-xs font-bold bg-room text-[#0B0D12] rounded-lg">Salva</button>
                             <button onClick={() => { setRkFor(null); setRkValue(''); }} className="px-2 text-xs text-zinc-500">×</button>
                           </div>
                         ) : (
-                          <button onClick={() => setRkFor(s.id)} className="w-full text-[11px] font-bold text-zinc-500 hover:text-orange-400">
+                          <button onClick={() => setRkFor(s.id)} className="w-full text-[11px] font-bold text-zinc-500 hover:text-room">
                             oppure incolla una chiave ristretta rk_
                           </button>
                         )}

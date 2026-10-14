@@ -16,6 +16,23 @@
   --color-orange-300: oklch(.837 .128 66.29);
 }
 
+/* Room theme — stesso sistema di startupclub.app:
+   teal primario (azioni, nav, progress), orange/ember solo per streak & gamification */
+@theme {
+  --color-room: #4de0c9;
+  --color-room-bright: #8ff0de;
+  --color-room-deep: #0e7c6b;
+  --color-room-bg: #0a0b0e;
+  --color-ember: #ff8a3d;
+  --color-gold: #ffc94d;
+}
+
+/* Focus ring teal dentro la Room (il sito resta orange) */
+.room-scope a:focus-visible,
+.room-scope button:focus-visible {
+  box-shadow: 0 0 0 2px #4de0c9, 0 0 20px rgba(77, 224, 201, 0.15);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

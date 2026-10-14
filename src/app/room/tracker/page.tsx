@@ -9,7 +9,7 @@ type Tracker = { id: string; startup_id: string; name: string; kind: string; uni
 type GhDay = { day: string; count: number };
 
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 const section = 'bg-black border border-zinc-800 rounded-2xl p-5';
 
 export default function TrackerPage() {
@@ -95,7 +95,7 @@ export default function TrackerPage() {
     void kind;
   };
 
-  if (loading) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-room" /></div>;
 
   const ghTotal = gh.slice(0, 30).reduce((a, d) => a + d.count, 0);
   const today = new Date().toISOString().slice(0, 10);
@@ -103,7 +103,7 @@ export default function TrackerPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Tracker</p>
+        <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Tracker</p>
         <h1 className="text-2xl font-extrabold tracking-tight mb-3">I tuoi numeri.</h1>
         {startups.length > 0 && (
           <select aria-label="Startup attiva" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
@@ -114,7 +114,7 @@ export default function TrackerPage() {
 
       {streak && (
         <div className={`${section} flex items-center gap-4`} role="status" aria-label="Streak giorni">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${streak.todayDone ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-500'}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${streak.todayDone ? 'bg-ember text-[#0B0D12]' : 'bg-zinc-900 text-zinc-500'}`}>
             <Flame size={22} />
           </div>
           <div className="flex-1">
@@ -125,7 +125,7 @@ export default function TrackerPage() {
             <button onClick={async () => {
               await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ startup_id: sid || null }) });
               loadStreak();
-            }} className="px-3 py-2 bg-orange-600 text-white text-xs font-bold rounded-xl">Shippato oggi</button>
+            }} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">Shippato oggi</button>
           )}
         </div>
       )}
@@ -134,7 +134,7 @@ export default function TrackerPage() {
           <h2 className="font-bold text-white mb-3">Streak · ultimi 60 giorni</h2>
           <div className="flex flex-wrap gap-1.5">
             {streak.heatmap.slice(0, 60).map((d) => (
-              <div key={d} title={d} className="w-4 h-4 rounded bg-orange-600" />
+              <div key={d} title={d} className="w-4 h-4 rounded bg-room" />
             ))}
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function TrackerPage() {
         ) : (
           <div className="flex items-end gap-1 h-16" role="img" aria-label="Contributi GitHub">
             {gh.slice(0, 60).reverse().map((d) => (
-              <div key={d.day} title={`${d.day}: ${d.count}`} className="flex-1 rounded-sm bg-orange-600/70" style={{ height: `${Math.min(100, d.count * 20 + 8)}%`, opacity: d.count > 0 ? 1 : 0.2 }} />
+              <div key={d.day} title={`${d.day}: ${d.count}`} className="flex-1 rounded-sm bg-room/70" style={{ height: `${Math.min(100, d.count * 20 + 8)}%`, opacity: d.count > 0 ? 1 : 0.2 }} />
             ))}
           </div>
         )}
@@ -161,7 +161,7 @@ export default function TrackerPage() {
         <h2 className="font-bold text-white mb-1">Tracker personalizzati</h2>
         <p className="text-xs text-zinc-500 mb-3">Metriche tue (ore deep work, chiamate, contenuti…). Loggare conta come giorno shippato.</p>
         {startups.length === 0 ? (
-          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/startups" className="text-orange-400 font-bold">Vai al portfolio →</a></p>
+          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/startups" className="text-room font-bold">Vai al portfolio →</a></p>
         ) : (
           <>
             <form onSubmit={createTracker} className="flex gap-2 mb-4">
@@ -171,7 +171,7 @@ export default function TrackerPage() {
                 <option value="boolean">Sì/No</option>
               </select>
               <input aria-label="Unità" className={`${input} !w-20`} value={tUnit} onChange={(e) => setTUnit(e.target.value)} placeholder="h" maxLength={20} />
-              <button aria-label="Crea tracker" className="px-4 bg-orange-600 text-white rounded-xl font-bold shrink-0"><Plus size={16} /></button>
+              <button aria-label="Crea tracker" className="px-4 bg-room text-[#0B0D12] rounded-xl font-bold shrink-0"><Plus size={16} /></button>
             </form>
             {trackers.length === 0 ? <p className="text-sm text-zinc-500">Nessun tracker per questa startup.</p> : (
               <ul className="space-y-3">
@@ -191,14 +191,14 @@ export default function TrackerPage() {
                       </div>
                       <div className="flex items-end gap-1 h-10 mt-2" aria-label={`Storico ${t.name}`}>
                         {hist.map((h) => (
-                          <div key={h.day} title={`${h.day}: ${h.value_num}`} className={`flex-1 rounded-sm ${h.day === today ? 'bg-orange-500' : 'bg-orange-600/50'}`} style={{ height: `${Math.max(8, (h.value_num / max) * 100)}%` }} />
+                          <div key={h.day} title={`${h.day}: ${h.value_num}`} className={`flex-1 rounded-sm ${h.day === today ? 'bg-room' : 'bg-room/50'}`} style={{ height: `${Math.max(8, (h.value_num / max) * 100)}%` }} />
                         ))}
                         {hist.length === 0 && <p className="text-[11px] text-zinc-600">Nessun dato — registra oggi 👇</p>}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         {t.kind === 'boolean' ? (
                           <button onClick={() => logToday(t.id, t.kind, todayVal ? 0 : 1)} aria-pressed={Boolean(todayVal)}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${todayVal ? 'border-orange-500 bg-orange-600/20 text-orange-300' : 'border-zinc-700 text-zinc-300'}`}>
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${todayVal ? 'border-room bg-room/20 text-room-bright' : 'border-zinc-700 text-zinc-300'}`}>
                             {todayVal ? 'Oggi fatto ✓ (tocca per annullare)' : 'Segna oggi'}
                           </button>
                         ) : (

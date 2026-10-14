@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 type F = { id: string; kind: string; body: string; status: string; created_at: string };
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function FeedbackPage() {
   const [items, setItems] = useState<F[]>([]);
@@ -42,10 +42,10 @@ export default function FeedbackPage() {
 
   return (
     <div>
-      <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Supporto</p>
+      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Supporto</p>
       <h1 className="text-2xl font-extrabold tracking-tight mb-4">Feedback.</h1>
       {err && <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
-      {msg && <div className="mb-3 p-3 bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-bold rounded-xl" role="status">{msg}</div>}
+      {msg && <div className="mb-3 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}
 
       <form onSubmit={send} className="border border-zinc-800 rounded-2xl p-4 mb-5 space-y-2">
         <div className="flex gap-2">
@@ -59,14 +59,14 @@ export default function FeedbackPage() {
           </label>
         </div>
         <textarea aria-label="Descrizione" required rows={4} className={input} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Cosa è successo? Cosa ti aspettavi? Passi per riprodurlo..." maxLength={5000} />
-        <button className="w-full py-2.5 bg-orange-600 text-white text-sm font-bold rounded-xl hover:bg-orange-500">Invia feedback</button>
+        <button className="w-full py-2.5 bg-room text-[#0B0D12] text-sm font-bold rounded-xl hover:bg-room-bright">Invia feedback</button>
       </form>
 
-      {loading ? <div className="flex justify-center py-8" role="status"><Loader2 className="animate-spin text-orange-500" /></div> : (
+      {loading ? <div className="flex justify-center py-8" role="status"><Loader2 className="animate-spin text-room" /></div> : (
         <ul className="space-y-2">
           {items.map((f) => (
             <li key={f.id} className="border border-zinc-800 rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-orange-300">{f.kind} · {f.status}</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-room-bright">{f.kind} · {f.status}</p>
               <p className="text-sm text-zinc-300 mt-1">{f.body}</p>
             </li>
           ))}

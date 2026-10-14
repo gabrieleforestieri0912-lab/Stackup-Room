@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import { Loader2, Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Clock } from 'lucide-react';
+import { Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Sparkles, BarChart3 } from 'lucide-react';
+import { RoomLoader, RoomHeader, RoomCard, StatCard } from './ui';
 
 const RANKS = [
   { min: 0, title: 'Novizio' },
@@ -57,64 +58,65 @@ export default function RoomHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading || !user || !ready) {
-    return <div className="flex items-center justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>;
-  }
+  if (loading || !user || !ready) return <RoomLoader />;
 
   const exp = user.exp || 0;
   const level = Math.floor(exp / 100) + 1;
   const rank = [...RANKS].reverse().find((r) => exp >= r.min) || RANKS[0];
   const expProgress = Math.min(100, ((exp - (level - 1) * 100) / 100) * 100);
   const firstName = user.name.split(' ')[0];
-
-  const card = 'bg-black border border-zinc-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all';
+  const todayDone = streak?.todayDone ?? false;
 
   return (
     <div>
-      <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Dashboard</p>
-      <h1 className="text-3xl font-extrabold tracking-tight mb-1">Bentornato, {firstName}.</h1>
-      <p className="text-sm text-zinc-400 mb-8">Livello {level} · {rank.title} · {exp} EXP</p>
+      <RoomHeader
+        eyebrow="Dashboard"
+        title={<>Bentornato, {firstName}.</>}
+        sub={`Livello ${level} · ${rank.title} · ${exp} EXP`}
+      />
 
-      <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden mb-8" role="progressbar" aria-valuenow={Math.round(expProgress)} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso livello">
-        <div className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full" style={{ width: `${expProgress}%` }} />
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-black border border-zinc-800 rounded-2xl p-4">
-          <Flame size={18} className="text-orange-400 mb-2" />
-          <p className="text-2xl font-black text-white">{streak?.current ?? user.studyStreak ?? 0}</p>
-          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">gg streak{streak && !streak.todayDone ? ' · oggi da fare' : ''}</p>
+      {/* Momentum giornaliero — stile Startup Club: streak + azione di oggi */}
+      <RoomCard className="mb-6 border-room/25 bg-gradient-to-br from-room/10 via-transparent to-transparent">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${todayDone ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-500'}`}>
+            <Flame size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-white">
+              {streak?.current ?? user.studyStreak ?? 0} giorni di streak{' '}
+              <span className="text-zinc-500 font-bold">· {todayDone ? 'obiettivo di oggi completato ✓' : 'obiettivo di oggi da fare'}</span>
+            </p>
+            <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden mt-2" role="progressbar" aria-valuenow={Math.round(expProgress)} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso livello">
+              <div className="h-full bg-gradient-to-r from-room-deep to-room rounded-full" style={{ width: `${expProgress}%` }} />
+            </div>
+          </div>
+          <Link href="/room/planner" className="px-5 py-2.5 bg-room text-[#0B0D12] text-sm font-bold rounded-xl hover:bg-room-bright transition-colors shrink-0">
+            {todayDone ? 'Apri planner' : 'Shippa oggi →'}
+          </Link>
         </div>
-        <Link href="/room/corsi" className="bg-black border border-zinc-800 rounded-2xl p-4 hover:border-orange-500/50">
-          <BookOpen size={18} className="text-orange-400 mb-2" />
-          <p className="text-2xl font-black text-white">{courses.length}</p>
-          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Corsi</p>
-        </Link>
-        <Link href="/room/certificati" className="bg-black border border-zinc-800 rounded-2xl p-4 hover:border-orange-500/50">
-          <Trophy size={18} className="text-yellow-400 mb-2" />
-          <p className="text-2xl font-black text-white">{certs.length}</p>
-          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Certificati</p>
-        </Link>
-        <Link href="/room/startups" className="bg-black border border-zinc-800 rounded-2xl p-4 hover:border-orange-500/50">
-          <Rocket size={18} className="text-orange-400 mb-2" />
-          <p className="text-2xl font-black text-white">{startupCount}</p>
-          <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Startup</p>
-        </Link>
+      </RoomCard>
+
+      {/* Statistiche */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatCard icon={Flame} value={streak?.current ?? user.studyStreak ?? 0} label={`gg streak${streak && !streak.todayDone ? ' · oggi da fare' : ''}`} accent="ember" />
+        <StatCard icon={BookOpen} value={courses.length} label="Corsi" href="/room/corsi" />
+        <StatCard icon={Trophy} value={certs.length} label="Certificati" href="/room/certificati" accent="gold" />
+        <StatCard icon={Rocket} value={startupCount} label="Startup" href="/room/startups" />
       </div>
 
       {courses.length > 0 && (
         <section className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-white">Continua a studiare</h2>
-            <Link href="/room/corsi" className="text-xs font-bold text-orange-400 flex items-center gap-1">Tutti <ArrowRight size={14} /></Link>
+            <Link href="/room/corsi" className="text-xs font-bold text-room flex items-center gap-1 hover:text-room-bright">Tutti <ArrowRight size={14} /></Link>
           </div>
           <div className="space-y-2">
             {courses.slice(0, 2).map((c) => (
-              <Link key={c._id} href={`/courses/${c.slug}`} className={`${card} !p-4 flex items-center gap-3`}>
+              <Link key={c._id} href={`/courses/${c.slug}`} className="bg-room-bg border border-zinc-800 rounded-2xl p-4 flex items-center gap-3 hover:border-room/40 transition-all">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm text-white truncate">{c.title}</p>
                   <div className="w-full h-1.5 bg-zinc-900 rounded-full mt-2 overflow-hidden">
-                    <div className="h-full bg-orange-500 rounded-full" style={{ width: `${c.progress || 0}%` }} />
+                    <div className="h-full bg-room rounded-full" style={{ width: `${c.progress || 0}%` }} />
                   </div>
                 </div>
                 <span className="text-xs font-bold text-zinc-400 shrink-0">{c.progress || 0}%</span>
@@ -124,20 +126,23 @@ export default function RoomHome() {
         </section>
       )}
 
+      {/* La tua Room */}
       <section>
         <h2 className="font-bold text-white mb-3">La tua Room</h2>
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {[
             { href: '/room/planner', title: 'Planner giornaliero', desc: 'Task, standup, time-blocking, obiettivi.', icon: Target },
             { href: '/room/tracker', title: 'Tracker', desc: 'Streak, GitHub, metriche custom.', icon: Flame },
-            { href: '/room/community', title: 'Community', desc: 'Chat, forum, network, eventi.', icon: Clock },
-            { href: '/room/coach', title: 'Coach AI', desc: 'Standup, day plan, advisor.', icon: BookOpen },
+            { href: '/room/startups', title: 'Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
+            { href: '/room/community', title: 'Community', desc: 'Chat, forum, network, eventi.', icon: BarChart3 },
+            { href: '/room/coach', title: 'Coach AI', desc: 'Standup, day plan, advisor.', icon: Sparkles },
+            { href: '/room/leaderboard', title: 'Classifiche', desc: 'Leaderboard verificate del club.', icon: Trophy },
           ].map((c) => (
-            <Link key={c.href} href={c.href} className={`${card} !p-4 flex items-center gap-3`}>
-              <c.icon size={18} className="text-orange-400 shrink-0" />
-              <span>
+            <Link key={c.href} href={c.href} className="bg-room-bg border border-zinc-800 rounded-2xl p-4 flex items-center gap-3 hover:border-room/40 transition-all">
+              <c.icon size={18} className="text-room shrink-0" />
+              <span className="min-w-0">
                 <span className="block font-bold text-sm text-white">{c.title}</span>
-                <span className="block text-xs text-zinc-500">{c.desc}</span>
+                <span className="block text-xs text-zinc-500 truncate">{c.desc}</span>
               </span>
               <ArrowRight size={16} className="ml-auto text-zinc-600 shrink-0" />
             </Link>

@@ -6,7 +6,7 @@ import { Loader2, Trash2 } from 'lucide-react';
 
 type Ev = { id: string; title: string; description: string; starts_at: string; link: string | null; author: string; mine: boolean; rsvps: number; attending: boolean };
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function EventsTab() {
   const [events, setEvents] = useState<Ev[]>([]);
@@ -54,10 +54,10 @@ export default function EventsTab() {
           <input aria-label="Data e ora" required type="datetime-local" className={input} value={when} onChange={(e) => setWhen(e.target.value)} />
           <input aria-label="Link evento" className={input} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://..." />
         </div>
-        <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-orange-500">Crea evento</button>
+        <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Crea evento</button>
       </form>
 
-      {loading ? <div className="flex justify-center py-10" role="status"><Loader2 className="animate-spin text-orange-500" /></div> :
+      {loading ? <div className="flex justify-center py-10" role="status"><Loader2 className="animate-spin text-room" /></div> :
         events.length === 0 ? <p className="text-sm text-zinc-500 text-center py-8">Nessun evento in programma.</p> : (
           <ul className="space-y-2">
             {events.map((e) => (
@@ -72,14 +72,14 @@ export default function EventsTab() {
                     }}><Trash2 size={12} /></button>
                   )}
                 </div>
-                <p className="text-[11px] text-orange-300 font-bold mt-0.5">
+                <p className="text-[11px] text-room-bright font-bold mt-0.5">
                   {new Date(e.starts_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · {e.author} · {e.rsvps} partecipanti
                 </p>
                 {e.description && <p className="text-xs text-zinc-400 mt-1">{e.description}</p>}
                 <div className="flex gap-2 mt-2">
-                  {e.link && <a href={e.link} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-orange-400">Apri link →</a>}
+                  {e.link && <a href={e.link} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-room">Apri link →</a>}
                   <button onClick={() => toggle(e.id)} aria-pressed={e.attending}
-                    className={`ml-auto px-3 py-1.5 text-[11px] font-bold rounded-lg border ${e.attending ? 'border-orange-500 bg-orange-600/20 text-orange-300' : 'border-zinc-700 text-zinc-300'}`}>
+                    className={`ml-auto px-3 py-1.5 text-[11px] font-bold rounded-lg border ${e.attending ? 'border-room bg-room/20 text-room-bright' : 'border-zinc-700 text-zinc-300'}`}>
                     {e.attending ? 'Partecipo ✓' : 'Partecipa'}
                   </button>
                 </div>

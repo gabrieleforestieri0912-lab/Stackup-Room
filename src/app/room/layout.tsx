@@ -1,4 +1,8 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { PanelLeftClose, PanelLeftOpen, Menu, X } from 'lucide-react';
 import RoomSidebar from './RoomSidebar';
 
 const TOP_LINKS = [
@@ -10,29 +14,107 @@ const TOP_LINKS = [
   ['Classifiche', '/room/leaderboard'],
 ] as const;
 
-export default function RoomLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-black text-zinc-100">
-      {/* Barra mobile: scorciatoie + sito */}
-      <header className="lg:hidden sticky top-0 z-40 bg-black/90 backdrop-blur border-b border-zinc-800">
-        <nav className="flex items-center gap-1 px-4 h-14 overflow-x-auto" aria-label="Room">
-          <Link href="/room" className="px-3 py-1.5 text-xs font-bold text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">Room</Link>
-          {TOP_LINKS.map(([label, href]) => (
-            <Link key={href} href={href} className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-lg whitespace-nowrap">
-              {label}
-            </Link>
-          ))}
-          <Link href="/" className="ml-auto px-3 py-1.5 text-xs font-bold text-zinc-500 hover:text-orange-400 whitespace-nowrap">← Sito</Link>
-        </nav>
-      </header>
+const STORAGE_KEY = 'room-sidebar-open';
 
-      <div className="px-4 lg:px-8 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:flex lg:gap-8">
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-6 h-[calc(100vh-3rem)] bg-zinc-950/60 border border-zinc-800/70 rounded-2xl p-3">
-            <RoomSidebar />
-          </div>
-        </aside>
-        <main className="flex-1 min-w-0">{children}</main>
+export default function RoomLayout({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved !== null) return saved === '1';
+      }
+    } catch { /* ignore */ }
+    return true;
+  });
+
+  const toggle = () => {
+    setOpen((v) => {
+      try { localStorage.setItem(STORAGE_KEY, v ? '0' : '1'); } catch { /* ignore */ }
+      return !v;
+    });
+  };
+  const close = () => {
+    setOpen(false);
+    try { localStorage.setItem(STORAGE_KEY, '0'); } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="room-scope min-h-screen bg-room-bg text-zinc-100">
+      {/* Overlay mobile quando aperta */}
+      {open && (
+        <button
+          aria-label="Chiudi menu"
+          onClick={close}
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+        />
+      )}
+
+      {/* Sidebar FISSA: ancorata a sinistra, altezza piena, non fluttuante */}
+      <aside
+        aria-label="Navigazione Room"
+        aria-hidden={!open}
+        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-room-bg border-r border-zinc-800 flex flex-col transition-transform duration-300 ease-in-out ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-3 pt-3">
+          <Link href="/room" className="px-2 text-sm font-black tracking-tight text-white">
+            STACKUP <span className="text-room">ROOM</span>
+          </Link>
+          <button
+            onClick={close}
+            aria-label="Chiudi sidebar"
+            title="Chiudi sidebar"
+            className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-room/10 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex-1 min-h-0 p-3">
+          <RoomSidebar />
+        </div>
+      </aside>
+
+      {/* Colonna contenuto: lascia spazio alla sidebar fissa su desktop */}
+      <div className={`transition-[padding] duration-300 ease-in-out ${open ? 'lg:pl-64' : 'lg:pl-0'}`}>
+        {/* Barra mobile */}
+        <header className="lg:hidden sticky top-0 z-30 bg-room-bg/90 backdrop-blur border-b border-zinc-800">
+          <nav className="flex items-center gap-1 px-4 h-14 overflow-x-auto" aria-label="Room">
+            <button
+              onClick={toggle}
+              aria-label={open ? 'Chiudi menu' : 'Apri menu'}
+              className="p-2 -ml-2 rounded-lg text-zinc-300 hover:text-white hover:bg-room/10 shrink-0"
+            >
+              <Menu size={20} />
+            </button>
+            <Link href="/room" className="px-3 py-1.5 text-xs font-bold text-white hover:bg-room/10 rounded-lg whitespace-nowrap">Room</Link>
+            {TOP_LINKS.map(([label, href]) => (
+              <Link key={href} href={href} className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-room/10 rounded-lg whitespace-nowrap">
+                {label}
+              </Link>
+            ))}
+            <Link href="/" className="ml-auto px-3 py-1.5 text-xs font-bold text-zinc-500 hover:text-room whitespace-nowrap">← Sito</Link>
+          </nav>
+        </header>
+
+        {/* Barra desktop con pulsante apri/chiudi (sempre visibile) */}
+        <header className="hidden lg:flex sticky top-0 z-30 items-center gap-2 h-14 px-6 bg-room-bg/80 backdrop-blur border-b border-zinc-800/70">
+          <button
+            onClick={toggle}
+            aria-label={open ? 'Chiudi sidebar' : 'Apri sidebar'}
+            title={open ? 'Chiudi sidebar' : 'Apri sidebar'}
+            className="p-2 -ml-2 rounded-lg text-zinc-400 hover:text-room hover:bg-room/10 transition-colors"
+          >
+            {open ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+          </button>
+          <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            {open ? 'Nascondi menu' : 'Mostra menu'}
+          </span>
+        </header>
+
+        <main className="flex-1 min-w-0 px-4 lg:px-8 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+          {children}
+        </main>
       </div>
     </div>
   );

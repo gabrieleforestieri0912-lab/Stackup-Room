@@ -31,11 +31,11 @@ export default function LeaderboardPage() {
   const isMine = (o: string) => !!myHandle && o === `@${myHandle}`;
 
   const tab = (active: boolean) =>
-    `px-4 py-2 text-xs font-bold rounded-xl transition-all ${active ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`;
+    `px-4 py-2 text-xs font-bold rounded-xl transition-all ${active ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`;
 
   return (
     <div>
-      <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Classifiche</p>
+      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Classifiche</p>
       <h1 className="text-2xl font-extrabold tracking-tight mb-4">Chi shippa.</h1>
 
       <div className="flex gap-2 mb-3" role="tablist" aria-label="Tipo classifica">
@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>
+        <div className="flex justify-center py-16" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>
       ) : rows.length === 0 ? (
         <div className="border border-dashed border-zinc-800 rounded-2xl p-10 text-center">
           <p className="font-bold text-white">Nessun dato.</p>
@@ -62,16 +62,16 @@ export default function LeaderboardPage() {
       ) : (
         <ol className="space-y-2">
           {rows.map((r) => (
-            <li key={`${r.rank}-${r.owner}-${type}`} className={`flex items-center gap-3 border rounded-2xl p-4 ${isMine(r.owner) ? 'border-orange-500/60 bg-orange-600/5' : 'border-zinc-800 bg-black'}`}>
+            <li key={`${r.rank}-${r.owner}-${type}`} className={`flex items-center gap-3 border rounded-2xl p-4 ${isMine(r.owner) ? 'border-room/60 bg-room/5' : 'border-zinc-800 bg-black'}`}>
               <span className="font-mono font-extrabold text-zinc-500 w-8">#{r.rank}</span>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-white truncate">{r.owner} {isMine(r.owner) && <span className="text-orange-400">(tu)</span>}</p>
+                <p className="font-bold text-sm text-white truncate">{r.owner} {isMine(r.owner) && <span className="text-room">(tu)</span>}</p>
                 {type === 'revenue' && <p className="text-xs text-zinc-500 truncate">{r.name}</p>}
               </div>
               {type === 'revenue' ? (
                 <p className="text-sm font-extrabold text-white whitespace-nowrap">
                   €{((r.mrr_cents || 0) / 100).toLocaleString('it-IT')}
-                  {r.verified ? <span className="ml-2 text-[11px] text-orange-300 bg-orange-600/20 px-2 py-0.5 rounded-lg">✓ verificato</span>
+                  {r.verified ? <span className="ml-2 text-[11px] text-room-bright bg-room/20 px-2 py-0.5 rounded-lg">✓ verificato</span>
                     : <span className="ml-2 text-[11px] text-zinc-500">dichiarato</span>}
                 </p>
               ) : (

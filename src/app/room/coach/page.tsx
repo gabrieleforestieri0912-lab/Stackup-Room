@@ -16,7 +16,7 @@ const MODES: Array<{ id: Mode; label: string; hint: string }> = [
 ];
 
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function CoachPage() {
   const [ctx, setCtx] = useState<{ consent: boolean; startups: Array<{ id: string; name: string }>; openTasks: number; todayStandup: boolean; usage: { used: number; limit: number } } | null>(null);
@@ -126,15 +126,15 @@ export default function CoachPage() {
     else alert('Pubblicazione fallita.');
   };
 
-  if (!ctx) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (!ctx) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-room" /></div>;
 
   // Senza consenso: schermata esplicita + fallback offline (nessun AI coinvolto).
   if (!ctx.consent) {
     return (
       <div>
-        <p className="text-orange-300 text-xs font-semibold uppercase tracking-[0.12em] mb-2">Coach AI</p>
+        <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Coach AI</p>
         <h1 className="text-2xl font-extrabold tracking-tight mb-4">Prima il consenso.</h1>
-        <div className="border border-orange-500/40 bg-orange-600/5 rounded-2xl p-5 text-sm space-y-3">
+        <div className="border border-room/40 bg-room/5 rounded-2xl p-5 text-sm space-y-3">
           <p className="font-bold text-white">Cosa viene inviato e a chi:</p>
           <ul className="list-disc pl-5 text-zinc-300 space-y-1">
             <li>Tutte le startup attive, task aperti, standup, obiettivi e founder background.</li>
@@ -142,7 +142,7 @@ export default function CoachPage() {
             <li>La community (chat, forum, annunci, eventi) non viene MAI inviata. Solo l&apos;audio di una nota vocale, se tocchi “Trascrivi”.</li>
             <li>Limite: {ctx.usage.limit} messaggi/giorno. Revocabile in Impostazioni → Funzioni AI.</li>
           </ul>
-          <button onClick={giveConsent} className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-500">
+          <button onClick={giveConsent} className="w-full py-3 bg-room text-[#0B0D12] font-bold rounded-xl hover:bg-room-bright">
             Ho capito, attiva il coach
           </button>
           {err && <p className="text-red-400 text-xs font-bold" role="alert">{err}</p>}
@@ -152,7 +152,7 @@ export default function CoachPage() {
           <h2 className="font-bold text-white mb-2">Fallback offline (senza AI)</h2>
           <p className="text-sm text-zinc-400">Task aperti: <strong className="text-white">{ctx.openTasks}</strong> · Standup oggi: <strong className="text-white">{ctx.todayStandup ? 'fatto ✓' : 'da fare'}</strong></p>
           <p className="text-xs text-zinc-500 mt-2">Regola del giorno: un task importante al mattino, standup entro le 10, un obiettivo con prova entro sera. Le note vocali restano inviabili senza trascrizione.</p>
-          <a href="/room/planner" className="inline-block mt-3 text-xs font-bold text-orange-400">Apri il Planner →</a>
+          <a href="/room/planner" className="inline-block mt-3 text-xs font-bold text-room">Apri il Planner →</a>
         </div>
       </div>
     );
@@ -173,7 +173,7 @@ export default function CoachPage() {
           <button key={m.id} role="tab" aria-selected={mode === m.id}
             onClick={() => { setMode(m.id); setSessionId(null); setMsgs([]); setErr(''); }}
             title={m.hint}
-            className={`px-3 py-2 text-xs font-bold rounded-xl whitespace-nowrap ${mode === m.id ? 'bg-orange-600 text-white' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`px-3 py-2 text-xs font-bold rounded-xl whitespace-nowrap ${mode === m.id ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {m.label}
           </button>
         ))}
@@ -184,7 +184,7 @@ export default function CoachPage() {
           {sessions.filter((s) => s.mode === mode).slice(0, 10).map((s) => (
             <span key={s.id} className="flex items-center gap-1 shrink-0">
               <button onClick={() => openSession(s.id, s.mode)}
-                className={`px-2.5 py-1.5 text-[11px] rounded-lg border ${sessionId === s.id ? 'border-orange-500 text-orange-300' : 'border-zinc-800 text-zinc-500'}`}>
+                className={`px-2.5 py-1.5 text-[11px] rounded-lg border ${sessionId === s.id ? 'border-room text-room-bright' : 'border-zinc-800 text-zinc-500'}`}>
                 {new Date(s.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}
               </button>
               <button aria-label="Elimina sessione" className="text-zinc-700 hover:text-red-400" onClick={async () => {
@@ -209,7 +209,7 @@ export default function CoachPage() {
           <div key={i} className={`rounded-2xl p-4 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100 ml-8' : 'bg-black border border-zinc-800 text-zinc-200 mr-8'}`}>
             {m.content || (streaming ? '…' : '')}
             {mode === 'ask' && m.role === 'assistant' && m.content && (
-              <button onClick={() => publishAsk(m.content)} className="block mt-3 px-3 py-1.5 text-xs font-bold bg-orange-600 text-white rounded-lg">
+              <button onClick={() => publishAsk(m.content)} className="block mt-3 px-3 py-1.5 text-xs font-bold bg-room text-[#0B0D12] rounded-lg">
                 Pubblica in Ask the club
               </button>
             )}
@@ -220,7 +220,7 @@ export default function CoachPage() {
 
       <form onSubmit={send} className="flex gap-2">
         <input aria-label="Messaggio al coach" className={input} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Scrivi al coach..." maxLength={4000} disabled={streaming} />
-        <button aria-label="Invia" disabled={streaming} className="px-4 py-2 bg-orange-600 text-white rounded-xl font-bold disabled:opacity-60">
+        <button aria-label="Invia" disabled={streaming} className="px-4 py-2 bg-room text-[#0B0D12] rounded-xl font-bold disabled:opacity-60">
           {streaming ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </button>
       </form>

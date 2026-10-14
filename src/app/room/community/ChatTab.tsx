@@ -14,7 +14,7 @@ type Msg = {
 };
 
 const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 outline-none text-zinc-100 text-sm rounded-xl';
+const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 const EMOJI = ['🔥', '🚀', '💡', '🙌'];
 
 async function authed(path: string, init?: RequestInit) {
@@ -67,20 +67,20 @@ function VoiceNote({ path, seconds, mine }: { path: string; seconds: number | nu
             const u = await load();
             if (u) new Audio(u).play().catch(() => {});
           }}
-          className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-bold hover:border-orange-500"
+          className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-bold hover:border-room"
           aria-label={`Riproduci nota vocale${seconds ? ` di ${seconds} secondi` : ''}`}
         >
           ▶ {seconds ? `${seconds}s` : 'Audio'}
         </button>
         {mine && !transcript && (
-          <button onClick={transcribe} disabled={transcribing} className="px-3 py-1.5 border border-zinc-700 rounded-lg text-xs font-bold hover:border-orange-500 disabled:opacity-60">
+          <button onClick={transcribe} disabled={transcribing} className="px-3 py-1.5 border border-zinc-700 rounded-lg text-xs font-bold hover:border-room disabled:opacity-60">
             {transcribing ? 'Trascrivo...' : 'Trascrivi'}
           </button>
         )}
       </span>
       {url && <audio controls src={url} className="h-8 max-w-[220px]" />}
       {sttErr && <span className="text-[11px] text-zinc-500">{sttErr}</span>}
-      {transcript && <span className="text-xs text-zinc-300 border-l-2 border-orange-600 pl-2 italic">{transcript}</span>}
+      {transcript && <span className="text-xs text-zinc-300 border-l-2 border-room pl-2 italic">{transcript}</span>}
     </span>
   );
 }
@@ -90,7 +90,7 @@ function renderBody(body: string) {
   const parts = body.split(/(@[a-z0-9_]{3,24})/gi);
   return parts.map((p, i) =>
     /^@[a-z0-9_]{3,24}$/i.test(p)
-      ? <strong key={i} className="text-orange-300">{p}</strong>
+      ? <strong key={i} className="text-room-bright">{p}</strong>
       : <span key={i}>{p}</span>,
   );
 }
@@ -100,7 +100,7 @@ function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e:
     <span className="flex flex-wrap gap-1 mt-1.5">
       {reactions.map((r) => (
         <button key={r.emoji} onClick={() => onReact(r.emoji)} aria-pressed={r.mine}
-          className={`px-2 py-0.5 text-xs rounded-lg border ${r.mine ? 'border-orange-500 bg-orange-600/20' : 'border-zinc-800 bg-zinc-950'}`}>
+          className={`px-2 py-0.5 text-xs rounded-lg border ${r.mine ? 'border-room bg-room/20' : 'border-zinc-800 bg-zinc-950'}`}>
           {r.emoji} {r.count}
         </button>
       ))}
@@ -260,7 +260,7 @@ export default function ChatTab() {
     load(true);
   };
 
-  if (loading) return <div className="flex justify-center py-16" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="flex justify-center py-16" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
     <div>
@@ -271,22 +271,22 @@ export default function ChatTab() {
       <ul className="space-y-2 mb-4 max-h-[50vh] overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && <li className="text-sm text-zinc-500 text-center py-8">Nessun messaggio negli ultimi 7 giorni. Rompi il ghiaccio 👇</li>}
         {msgs.map((m) => (
-          <li key={m.id} className={`border rounded-2xl p-3 ${m.mine ? 'border-orange-500/40 bg-orange-600/5' : 'border-zinc-800 bg-black'}`}>
+          <li key={m.id} className={`border rounded-2xl p-3 ${m.mine ? 'border-room/40 bg-room/5' : 'border-zinc-800 bg-black'}`}>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold text-orange-300">{m.author}</span>
+              <span className="text-[11px] font-bold text-room-bright">{m.author}</span>
               <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
               <span className="ml-auto flex gap-1">
-                <button onClick={() => setReplyTo(m)} aria-label={`Rispondi a ${m.author}`} className="p-1 text-zinc-600 hover:text-orange-400"><Reply size={12} /></button>
+                <button onClick={() => setReplyTo(m)} aria-label={`Rispondi a ${m.author}`} className="p-1 text-zinc-600 hover:text-room"><Reply size={12} /></button>
                 {!m.mine && (
                   <>
-                    <button onClick={() => report(m.id)} aria-label="Segnala messaggio" className="p-1 text-zinc-600 hover:text-orange-400"><Flag size={12} /></button>
+                    <button onClick={() => report(m.id)} aria-label="Segnala messaggio" className="p-1 text-zinc-600 hover:text-room"><Flag size={12} /></button>
                     <button onClick={() => block(m.author)} aria-label="Blocca autore" className="px-1.5 text-[10px] font-bold text-zinc-600 hover:text-red-400">Blocca</button>
                   </>
                 )}
                 {m.mine && (
                   <>
                     {m.body && !m.audio_path && (
-                      <button onClick={() => { setEditingId(m.id); setEditText(m.body); }} aria-label="Modifica messaggio" className="p-1 text-zinc-600 hover:text-orange-400"><Pencil size={12} /></button>
+                      <button onClick={() => { setEditingId(m.id); setEditText(m.body); }} aria-label="Modifica messaggio" className="p-1 text-zinc-600 hover:text-room"><Pencil size={12} /></button>
                     )}
                     <button onClick={async () => {
                       if (!window.confirm('Eliminare il messaggio?')) return;
@@ -298,8 +298,8 @@ export default function ChatTab() {
               </span>
             </div>
             {m.reply && (
-              <div className="border-l-2 border-orange-600 pl-2 mb-1.5 text-xs text-zinc-400">
-                <span className="font-bold text-orange-300">{m.reply.author}</span>{' '}
+              <div className="border-l-2 border-room pl-2 mb-1.5 text-xs text-zinc-400">
+                <span className="font-bold text-room-bright">{m.reply.author}</span>{' '}
                 {m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : m.reply.body || <em>allegato</em>}
               </div>
             )}
@@ -307,7 +307,7 @@ export default function ChatTab() {
               <div className="flex gap-2">
                 <input aria-label="Modifica messaggio" autoFocus className={input} value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={2000}
                   onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(m.id); if (e.key === 'Escape') setEditingId(null); }} />
-                <button onClick={() => saveEdit(m.id)} className="px-3 py-2 bg-orange-600 text-white text-xs font-bold rounded-xl">OK</button>
+                <button onClick={() => saveEdit(m.id)} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">OK</button>
               </div>
             ) : (
               m.body && <p className="text-sm text-zinc-200 break-words">{renderBody(m.body)}</p>
@@ -342,7 +342,7 @@ export default function ChatTab() {
 
       {replyTo && (
         <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-2 mb-2 text-xs text-zinc-400">
-          <span className="flex-1 truncate">Rispondi a <strong className="text-orange-300">{replyTo.author}</strong>: {replyTo.body.slice(0, 80) || 'allegato'}</span>
+          <span className="flex-1 truncate">Rispondi a <strong className="text-room-bright">{replyTo.author}</strong>: {replyTo.body.slice(0, 80) || 'allegato'}</span>
           <button onClick={() => setReplyTo(null)} aria-label="Annulla risposta" className="font-bold text-zinc-500 hover:text-white">×</button>
         </div>
       )}
@@ -354,7 +354,7 @@ export default function ChatTab() {
           className={`px-3 py-2 border text-xs font-bold rounded-xl ${recording ? 'bg-red-600 border-red-600 text-white animate-pulse' : 'bg-zinc-900 border-zinc-700'}`}>
           <Mic size={14} />
         </button>
-        <button aria-label="Invia" className="px-4 py-2 bg-orange-600 text-white rounded-xl font-bold"><Send size={16} /></button>
+        <button aria-label="Invia" className="px-4 py-2 bg-room text-[#0B0D12] rounded-xl font-bold"><Send size={16} /></button>
       </form>
     </div>
   );

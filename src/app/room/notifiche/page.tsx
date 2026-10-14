@@ -24,7 +24,7 @@ export default function NotifichePage() {
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
     <div>
@@ -41,7 +41,7 @@ export default function NotifichePage() {
                   await fetch('/api/room/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ id: n.id }) });
                   load();
                 }}
-                className={`w-full text-left border rounded-2xl p-4 ${n.read ? 'border-zinc-800 text-zinc-400' : 'border-orange-500/50 bg-orange-600/5 text-white'}`}>
+                className={`w-full text-left border rounded-2xl p-4 ${n.read ? 'border-zinc-800 text-zinc-400' : 'border-room/50 bg-room/5 text-white'}`}>
                 <p className="text-sm font-semibold">{n.text}</p>
                 <p className="text-[11px] text-zinc-600 mt-1">{new Date(n.created_at).toLocaleString('it-IT')}</p>
               </button>
