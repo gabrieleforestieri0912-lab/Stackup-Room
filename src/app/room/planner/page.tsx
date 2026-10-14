@@ -1,17 +1,16 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Plus, Trash2, Flame, Check } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Startup = { id: string; name: string };
 type Task = { id: string; title: string; priority: string; status: string; due_date: string | null };
 type Block = { id: string; start_time: string; end_time: string; label: string };
 type Goal = { id: string; title: string; status: string; proof_url: string | null; proof_note: string | null; screenshot_path?: string | null };
 
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
 const today = () => new Date().toISOString().slice(0, 10);
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function PlannerPage() {
   const [startups, setStartups] = useState<Startup[]>([]);
@@ -28,11 +27,11 @@ export default function PlannerPage() {
 
   useEffect(() => {
     (async () => {
-      const r = await fetch('/api/room/startups', { headers: await auth() });
+      const r = await fetch('/api/room/startups', { headers: await roomAuthHeaders() });
       const list: Startup[] = r.ok ? await r.json().then((d) => d.startups) : [];
       setStartups(list);
       if (list[0]) setSid(list[0].id);
-      const s = await fetch('/api/room/streak', { headers: await auth() });
+      const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
       if (s.ok) setStreak(await s.json());
       setLoading(false);
     })();
@@ -41,7 +40,7 @@ export default function PlannerPage() {
   useEffect(() => {
     if (!sid) return;
     (async () => {
-      const h = await auth();
+      const h = await roomAuthHeaders();
       const [t, b, g] = await Promise.all([
         fetch(`/api/room/tasks?startup_id=${sid}`, { headers: h }).then((r) => r.json()),
         fetch(`/api/room/blocks?day=${today()}`, { headers: h }).then((r) => r.json()),
@@ -74,7 +73,7 @@ export default function PlannerPage() {
     e.preventDefault();
     if (!newTask.trim()) return;
     const r = await fetch('/api/room/tasks', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, title: newTask }),
     });
     if (r.ok) { const t = await r.json().then((d) => d.task); setTasks((p) => [...p, t]); setNewTask(''); }
@@ -82,13 +81,13 @@ export default function PlannerPage() {
 
   const setTaskStatus = async (id: string, status: string) => {
     const r = await fetch(`/api/room/tasks/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ status }),
     });
     if (r.ok) {
       const t = await r.json().then((d) => d.task);
       setTasks((p) => p.map((x) => (x.id === id ? t : x)));
-      const s = await fetch('/api/room/streak', { headers: await auth() });
+      const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
       if (s.ok) setStreak(await s.json());
     }
   };
@@ -96,17 +95,17 @@ export default function PlannerPage() {
   const saveStandup = async (e: FormEvent) => {
     e.preventDefault();
     await fetch('/api/room/standups', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, day: today(), ...standup }),
     });
-    const s = await fetch('/api/room/streak', { headers: await auth() });
+    const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
     if (s.ok) setStreak(await s.json());
   };
 
   const addBlock = async (e: FormEvent) => {
     e.preventDefault();
     const r = await fetch('/api/room/blocks', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ day: today(), start_time: newBlock.start, end_time: newBlock.end, label: newBlock.label, startup_id: sid }),
     });
     if (r.ok) { const b = await r.json().then((d) => d.block); setBlocks((p) => [...p, b].sort((a, c) => a.start_time.localeCompare(c.start_time))); }
@@ -116,7 +115,7 @@ export default function PlannerPage() {
     e.preventDefault();
     if (!newGoal.trim()) return;
     const r = await fetch('/api/room/goals', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, title: newGoal }),
     });
     if (r.ok) { const g = await r.json().then((d) => d.goal); setGoals((p) => [g, ...p]); setNewGoal(''); }
@@ -146,8 +145,8 @@ export default function PlannerPage() {
           </div>
           {!streak.todayDone && (
             <button onClick={async () => {
-              await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ startup_id: sid }) });
-              const s = await fetch('/api/room/streak', { headers: await auth() });
+              await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) }, body: JSON.stringify({ startup_id: sid }) });
+              const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
               if (s.ok) setStreak(await s.json());
             }} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">Shippato oggi</button>
           )}
@@ -181,7 +180,7 @@ export default function PlannerPage() {
                 <span className={`flex-1 ${t.status === 'done' ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>{t.title}</span>
                 {t.status !== 'done' && t.status !== 'todo' ? null : null}
                 <button onClick={async () => {
-                  await fetch(`/api/room/tasks/${t.id}`, { method: 'DELETE', headers: await auth() });
+                  await fetch(`/api/room/tasks/${t.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                   setTasks((p) => p.filter((x) => x.id !== t.id));
                 }} aria-label="Elimina task" className="p-1.5 text-zinc-600 hover:text-red-400"><Trash2 size={14} /></button>
               </li>
@@ -215,7 +214,7 @@ export default function PlannerPage() {
                 <span className="font-mono text-xs text-room">{b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)}</span>
                 <span className="flex-1 truncate">{b.label || '—'}</span>
                 <button onClick={async () => {
-                  await fetch(`/api/room/blocks/${b.id}`, { method: 'DELETE', headers: await auth() });
+                  await fetch(`/api/room/blocks/${b.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                   setBlocks((p) => p.filter((x) => x.id !== b.id));
                 }} aria-label="Elimina blocco" className="p-1.5 text-zinc-600 hover:text-red-400"><Trash2 size={14} /></button>
               </li>
@@ -239,7 +238,7 @@ export default function PlannerPage() {
                   {g.status !== 'done' && (
                     <button onClick={async () => {
                       const r = await fetch(`/api/room/goals/${g.id}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
                         body: JSON.stringify({ status: 'done' }),
                       });
                       if (r.ok) setGoals((p) => p.map((x) => (x.id === g.id ? { ...x, status: 'done' } : x)));
@@ -251,7 +250,7 @@ export default function PlannerPage() {
                     onBlur={async (e) => {
                       if (e.target.value === (g.proof_url || '')) return;
                       await fetch(`/api/room/goals/${g.id}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
                         body: JSON.stringify({ proof_url: e.target.value || null }),
                       });
                     }} />
@@ -264,7 +263,7 @@ export default function PlannerPage() {
                     const fd = new FormData();
                     fd.append('goal_id', g.id);
                     fd.append('screenshot', f);
-                    const r = await fetch('/api/room/proofs', { method: 'POST', headers: await auth(), body: fd });
+                    const r = await fetch('/api/room/proofs', { method: 'POST', headers: await roomAuthHeaders(), body: fd });
                     if (r.ok) setGoals((p) => p.map((x) => (x.id === g.id ? { ...x, screenshot_path: 'ok' } : x)));
                   }} />
                 </label>

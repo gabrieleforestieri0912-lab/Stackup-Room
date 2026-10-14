@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, FormEvent, useRef } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Send, Trash2 } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Mode = 'standup' | 'planner' | 'advisor' | 'ask';
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
@@ -15,8 +16,6 @@ const MODES: Array<{ id: Mode; label: string; hint: string }> = [
   { id: 'ask', label: 'Ask the club', hint: 'Bozza pronta da pubblicare nel forum.' },
 ];
 
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function CoachPage() {
   const [ctx, setCtx] = useState<{ consent: boolean; startups: Array<{ id: string; name: string }>; openTasks: number; todayStandup: boolean; usage: { used: number; limit: number } } | null>(null);
@@ -30,7 +29,7 @@ export default function CoachPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
-    const h = await auth();
+    const h = await roomAuthHeaders();
     const [c, s] = await Promise.all([
       fetch('/api/room/coach/context', { headers: h }).then((r) => r.json()),
       fetch('/api/room/coach', { headers: h }).then((r) => r.json()),
@@ -44,7 +43,7 @@ export default function CoachPage() {
   const giveConsent = async () => {
     setErr('');
     const r = await fetch('/api/room/profile', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ ai_consent: true }),
     });
     if (!r.ok) { setErr('Errore salvataggio consenso'); return; }
@@ -52,7 +51,7 @@ export default function CoachPage() {
   };
 
   const openSession = async (id: string, m: Mode) => {
-    const r = await fetch(`/api/room/coach/sessions/${id}`, { headers: await auth() });
+    const r = await fetch(`/api/room/coach/sessions/${id}`, { headers: await roomAuthHeaders() });
     if (!r.ok) return;
     const d = await r.json();
     setSessionId(id);
@@ -71,7 +70,7 @@ export default function CoachPage() {
     setStreaming(true);
     try {
       const r = await fetch('/api/room/coach', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
         body: JSON.stringify({ session_id: sessionId, mode, message: text }),
       });
       if (!r.ok || !r.body) throw new Error('HTTP');
@@ -92,7 +91,7 @@ export default function CoachPage() {
           const d = JSON.parse(line.slice(6));
           if (d.session_id && !sessionId) {
             setSessionId(d.session_id);
-            fetch('/api/room/coach', { headers: await auth() }).then((x) => x.json()).then((s) => setSessions(s.sessions || []));
+            fetch('/api/room/coach', { headers: await roomAuthHeaders() }).then((x) => x.json()).then((s) => setSessions(s.sessions || []));
           }
           if (d.error) {
             if (d.error === 'NEED_CONSENT') { setErr('Serve il consenso AI.'); load(); }
@@ -119,7 +118,7 @@ export default function CoachPage() {
     const title = window.prompt('Titolo per il forum:', text.split('\n')[0].slice(0, 120));
     if (!title) return;
     const r = await fetch('/api/room/forum', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ title, body: text, tag: 'ask' }),
     });
     if (r.ok) alert('Pubblicato in Ask the club.');
@@ -188,7 +187,7 @@ export default function CoachPage() {
                 {new Date(s.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}
               </button>
               <button aria-label="Elimina sessione" className="text-zinc-700 hover:text-red-400" onClick={async () => {
-                await fetch(`/api/room/coach?id=${s.id}`, { method: 'DELETE', headers: await auth() });
+                await fetch(`/api/room/coach?id=${s.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                 setSessions((p) => p.filter((x) => x.id !== s.id));
                 if (sessionId === s.id) { setSessionId(null); setMsgs([]); }
               }}><Trash2 size={12} /></button>

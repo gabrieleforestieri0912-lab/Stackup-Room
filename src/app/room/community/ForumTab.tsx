@@ -2,12 +2,11 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Trash2, Flag } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Topic = { id: string; title: string; body: string; tag: string; created_at: string; author: string; mine: boolean; replies: number };
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function ForumTab() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -19,7 +18,7 @@ export default function ForumTab() {
 
   const load = async (f = filter) => {
     setLoading(true);
-    const r = await fetch(`/api/room/forum${f ? `?tag=${f}` : ''}`, { headers: await auth() });
+    const r = await fetch(`/api/room/forum${f ? `?tag=${f}` : ''}`, { headers: await roomAuthHeaders() });
     if (r.ok) setTopics(await r.json().then((d) => d.topics));
     setLoading(false);
   };
@@ -29,7 +28,7 @@ export default function ForumTab() {
   const create = async (e: FormEvent) => {
     e.preventDefault();
     const r = await fetch('/api/room/forum', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ title, body, tag }),
     });
     if (r.ok) { setTitle(''); setBody(''); load(); }
@@ -74,14 +73,14 @@ export default function ForumTab() {
                       <button aria-label="Segnala topic" className="p-1 text-zinc-600 hover:text-room" onClick={async () => {
                         const reason = window.prompt('Motivo (spam, odio, nsfw, altro)?', 'spam');
                         if (!reason || !['spam', 'odio', 'nsfw', 'altro'].includes(reason)) return;
-                        await fetch('/api/room/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ target_type: 'topic', target_id: t.id, reason }) });
+                        await fetch('/api/room/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) }, body: JSON.stringify({ target_type: 'topic', target_id: t.id, reason }) });
                         alert('Segnalazione inviata.');
                       }}><Flag size={12} /></button>
                     )}
                     {t.mine && (
                       <button aria-label="Elimina topic" className="p-1 text-zinc-600 hover:text-red-400" onClick={async () => {
                         if (!window.confirm('Eliminare il topic?')) return;
-                        await fetch(`/api/room/forum?id=${t.id}`, { method: 'DELETE', headers: await auth() });
+                        await fetch(`/api/room/forum?id=${t.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                         load();
                       }}><Trash2 size={12} /></button>
                     )}

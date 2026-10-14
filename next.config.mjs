@@ -21,8 +21,8 @@ const nextConfig = {
     return [
       // Area utente unificata nella Room (pagine legacy rimosse)
       { source: '/dashboard', destination: '/room', permanent: false },
-      { source: '/my-courses', destination: '/room/corsi', permanent: false },
-      { source: '/certificates', destination: '/room/certificati', permanent: false },
+      { source: '/my-courses', destination: '/courses', permanent: false },
+      { source: '/certificates', destination: '/room/settings', permanent: false },
     ];
   },
   async headers() {

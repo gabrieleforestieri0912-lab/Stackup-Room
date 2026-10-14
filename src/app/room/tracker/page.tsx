@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Flame, Plus, Trash2 } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Startup = { id: string; name: string };
 type Tracker = { id: string; startup_id: string; name: string; kind: string; unit: string | null };
 type GhDay = { day: string; count: number };
 
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 const section = 'bg-black border border-zinc-800 rounded-2xl p-5';
 
 export default function TrackerPage() {
@@ -26,13 +25,13 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(true);
 
   const loadStreak = async () => {
-    const s = await fetch('/api/room/streak', { headers: await auth() });
+    const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
     if (s.ok) setStreak(await s.json());
   };
 
   useEffect(() => {
     (async () => {
-      const h = await auth();
+      const h = await roomAuthHeaders();
       const [s, g] = await Promise.all([
         fetch('/api/room/startups', { headers: h }).then((r) => r.json()),
         fetch('/api/room/github', { headers: h }).then((r) => r.json()),
@@ -43,13 +42,12 @@ export default function TrackerPage() {
       await loadStreak();
       setLoading(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!sid) return;
     (async () => {
-      const r = await fetch(`/api/room/trackers?startup_id=${sid}&days=14`, { headers: await auth() });
+      const r = await fetch(`/api/room/trackers?startup_id=${sid}&days=14`, { headers: await roomAuthHeaders() });
       if (r.ok) {
         const d = await r.json();
         setTrackers(d.trackers || []);
@@ -60,10 +58,10 @@ export default function TrackerPage() {
 
   const syncGh = async () => {
     setGhMsg('');
-    const r = await fetch('/api/room/github', { method: 'POST', headers: await auth() });
+    const r = await fetch('/api/room/github', { method: 'POST', headers: await roomAuthHeaders() });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { setGhMsg(d.message || 'Errore'); return; }
-    const g = await fetch('/api/room/github', { headers: await auth() }).then((x) => x.json());
+    const g = await fetch('/api/room/github', { headers: await roomAuthHeaders() }).then((x) => x.json());
     setGh(g.series || []);
   };
 
@@ -71,7 +69,7 @@ export default function TrackerPage() {
     e.preventDefault();
     if (!tName.trim() || !sid) return;
     const r = await fetch('/api/room/trackers', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, name: tName, kind: tKind, unit: tUnit }),
     });
     if (r.ok) {
@@ -83,10 +81,10 @@ export default function TrackerPage() {
 
   const logToday = async (trackerId: string, kind: string, value: number) => {
     await fetch('/api/room/trackers', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ tracker_id: trackerId, value }),
     });
-    const r = await fetch(`/api/room/trackers?startup_id=${sid}&days=14`, { headers: await auth() });
+    const r = await fetch(`/api/room/trackers?startup_id=${sid}&days=14`, { headers: await roomAuthHeaders() });
     if (r.ok) {
       const d = await r.json();
       setEntries(d.entries || {});
@@ -123,7 +121,7 @@ export default function TrackerPage() {
           </div>
           {!streak.todayDone && (
             <button onClick={async () => {
-              await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ startup_id: sid || null }) });
+              await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) }, body: JSON.stringify({ startup_id: sid || null }) });
               loadStreak();
             }} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">Shippato oggi</button>
           )}
@@ -185,7 +183,7 @@ export default function TrackerPage() {
                         <p className="font-bold text-sm text-white flex-1">{t.name} {t.unit && <span className="text-zinc-500 font-normal">({t.unit})</span>}</p>
                         <button aria-label={`Elimina ${t.name}`} className="p-1 text-zinc-600 hover:text-red-400" onClick={async () => {
                           if (!window.confirm('Eliminare tracker e storico?')) return;
-                          await fetch(`/api/room/trackers?id=${t.id}`, { method: 'DELETE', headers: await auth() });
+                          await fetch(`/api/room/trackers?id=${t.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                           setTrackers((p) => p.filter((x) => x.id !== t.id));
                         }}><Trash2 size={14} /></button>
                       </div>

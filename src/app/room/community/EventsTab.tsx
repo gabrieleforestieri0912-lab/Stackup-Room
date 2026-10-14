@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Trash2 } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Ev = { id: string; title: string; description: string; starts_at: string; link: string | null; author: string; mine: boolean; rsvps: number; attending: boolean };
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function EventsTab() {
   const [events, setEvents] = useState<Ev[]>([]);
@@ -18,7 +17,7 @@ export default function EventsTab() {
 
   const load = async () => {
     setLoading(true);
-    const r = await fetch('/api/room/events', { headers: await auth() });
+    const r = await fetch('/api/room/events', { headers: await roomAuthHeaders() });
     if (r.ok) setEvents(await r.json().then((d) => d.events));
     setLoading(false);
   };
@@ -28,7 +27,7 @@ export default function EventsTab() {
   const create = async (e: FormEvent) => {
     e.preventDefault();
     const r = await fetch('/api/room/events', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ title, description: desc, starts_at: when, link }),
     });
     if (r.ok) { setTitle(''); setDesc(''); setWhen(''); setLink(''); load(); }
@@ -36,7 +35,7 @@ export default function EventsTab() {
 
   const toggle = async (id: string) => {
     const r = await fetch('/api/room/events', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ event_id: id }),
     });
     if (r.ok) {
@@ -67,7 +66,7 @@ export default function EventsTab() {
                   {e.mine && (
                     <button aria-label="Elimina evento" className="p-1 text-zinc-600 hover:text-red-400" onClick={async () => {
                       if (!window.confirm('Eliminare l\u2019evento?')) return;
-                      await fetch(`/api/room/events?id=${e.id}`, { method: 'DELETE', headers: await auth() });
+                      await fetch(`/api/room/events?id=${e.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                       load();
                     }}><Trash2 size={12} /></button>
                   )}

@@ -2,14 +2,13 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2 } from 'lucide-react';
+import { roomInput as input } from '../../../ui';
 
 type Reaction = { emoji: string; count: number; mine: boolean };
 type Post = { id: string; body: string; created_at: string; author: string; mine: boolean; reactions: Reaction[] };
 const EMOJI = ['🔥', '🚀', '💡', '🙌'];
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const [id, setId] = useState<string | null>(null);
@@ -22,7 +21,7 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const r = await fetch(`/api/room/forum/${id}`, { headers: await auth() });
+      const r = await fetch(`/api/room/forum/${id}`, { headers: await roomAuthHeaders() });
       if (r.ok) {
         const d = await r.json();
         setTopic(d.topic);
@@ -34,10 +33,10 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
 
   const react = async (target: string, targetId: string, emoji: string) => {
     await fetch(`/api/room/forum/${id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ target_type: target, target_id: targetId, emoji }),
     });
-    const r = await fetch(`/api/room/forum/${id}`, { headers: await auth() });
+    const r = await fetch(`/api/room/forum/${id}`, { headers: await roomAuthHeaders() });
     if (r.ok) {
       const d = await r.json();
       setTopic(d.topic);
@@ -49,12 +48,12 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
     e.preventDefault();
     if (!reply.trim()) return;
     const r = await fetch('/api/room/forum', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ topic_id: id, body: reply }),
     });
     if (r.ok) {
       setReply('');
-      const d = await fetch(`/api/room/forum/${id}`, { headers: await auth() }).then((x) => x.json());
+      const d = await fetch(`/api/room/forum/${id}`, { headers: await roomAuthHeaders() }).then((x) => x.json());
       setPosts(d.posts);
     }
   };

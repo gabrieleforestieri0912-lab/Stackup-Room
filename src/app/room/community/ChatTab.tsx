@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, Mic, Trash2, Flag, Reply, Pencil } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Reaction = { emoji: string; count: number; mine: boolean };
 type Msg = {
@@ -13,12 +14,10 @@ type Msg = {
   reply: { author: string; body: string; hidden: boolean } | null;
 };
 
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 const EMOJI = ['🔥', '🚀', '💡', '🙌'];
 
 async function authed(path: string, init?: RequestInit) {
-  return fetch(path, { ...init, headers: { ...(init?.headers || {}), ...(await auth()) } });
+  return fetch(path, { ...init, headers: { ...(init?.headers || {}), ...(await roomAuthHeaders()) } });
 }
 
 function useAudioPlayer(path: string | null) {
@@ -228,7 +227,7 @@ export default function ChatTab() {
         if (blob.size === 0) return;
         const fd = new FormData();
         fd.append('audio', blob, 'voce.webm');
-        const r = await authed('/api/room/chat/voice', { method: 'POST', body: fd });
+        const r = await authed('/api/room/voice', { method: 'POST', body: fd });
         const d = await r.json().catch(() => ({}));
         if (r.ok) send({ audio_path: d.audio_path, audio_seconds: Math.round(blob.size / 16000) });
       };

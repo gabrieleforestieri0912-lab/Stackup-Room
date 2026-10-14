@@ -38,9 +38,15 @@ describe('rankRevenue', () => {
 
 describe('rankStreak', () => {
   it('all = serie corrente, week/month = giorni distinti', () => {
+    // Date relative a oggi: il test non deve rompersi col passare del tempo
+    const day = (offset: number) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - offset);
+      return d.toISOString().slice(0, 10);
+    };
     const per = new Map([
-      ['u1', ['2026-10-12', '2026-10-11']],
-      ['u2', ['2026-10-01']],
+      ['u1', [day(0), day(1)]],
+      ['u2', [day(13)]],
     ]);
     const all = rankStreak(per, 'all');
     expect(all[0]).toMatchObject({ user_id: 'u1', value: 2, rank: 1 });

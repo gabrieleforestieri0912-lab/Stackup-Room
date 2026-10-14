@@ -21,3 +21,12 @@ export async function getAccessToken(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Header Authorization pronto per le chiamate API Room.
+ * Centralizza il pattern ripetuto nei client della Room.
+ */
+export async function roomAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}

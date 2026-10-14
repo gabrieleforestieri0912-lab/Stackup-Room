@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Trash2, Flag } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type NPost = { id: string; kind: string; title: string; body: string; contact: string | null; created_at: string; author: string; mine: boolean };
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 export default function NetworkTab() {
   const [posts, setPosts] = useState<NPost[]>([]);
@@ -18,7 +17,7 @@ export default function NetworkTab() {
 
   const load = async () => {
     setLoading(true);
-    const r = await fetch('/api/room/network', { headers: await auth() });
+    const r = await fetch('/api/room/network', { headers: await roomAuthHeaders() });
     if (r.ok) setPosts(await r.json().then((d) => d.posts));
     setLoading(false);
   };
@@ -28,7 +27,7 @@ export default function NetworkTab() {
   const create = async (e: FormEvent) => {
     e.preventDefault();
     const r = await fetch('/api/room/network', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ kind, title, body, contact }),
     });
     if (r.ok) { setTitle(''); setBody(''); setContact(''); load(); }
@@ -62,13 +61,13 @@ export default function NetworkTab() {
                       <button aria-label="Segnala annuncio" className="p-1 text-zinc-600 hover:text-room" onClick={async () => {
                         const reason = window.prompt('Motivo (spam, odio, nsfw, altro)?', 'spam');
                         if (!reason || !['spam', 'odio', 'nsfw', 'altro'].includes(reason)) return;
-                        await fetch('/api/room/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ target_type: 'network', target_id: p.id, reason }) });
+                        await fetch('/api/room/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) }, body: JSON.stringify({ target_type: 'network', target_id: p.id, reason }) });
                         alert('Segnalazione inviata.');
                       }}><Flag size={12} /></button>
                     )}
                     {p.mine && (
                       <button aria-label="Elimina annuncio" className="p-1 text-zinc-600 hover:text-red-400" onClick={async () => {
-                        await fetch(`/api/room/network?id=${p.id}`, { method: 'DELETE', headers: await auth() });
+                        await fetch(`/api/room/network?id=${p.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
                         load();
                       }}><Trash2 size={12} /></button>
                     )}

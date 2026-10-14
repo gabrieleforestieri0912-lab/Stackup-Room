@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2 } from 'lucide-react';
+import { roomInput as input } from '../ui';
 
 type Link = { id: string; startup_id: string; stripe_account_id: string; livemode: boolean; status: string };
 type Startup = { id: string; name: string };
 
-const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
-const input = 'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 function VerificheInner() {
   const sp = useSearchParams();
@@ -27,7 +26,7 @@ function VerificheInner() {
   const [ghUser, setGhUser] = useState('');
 
   const load = async () => {
-    const h = await auth();
+    const h = await roomAuthHeaders();
     const [s, l, g, p] = await Promise.all([
       fetch('/api/room/startups', { headers: h }).then((r) => r.json()),
       fetch('/api/room/stripe/links', { headers: h }).then((r) => r.json()),
@@ -49,7 +48,7 @@ function VerificheInner() {
   const connect = async () => {
     setErr(''); setMsg('');
     const r = await fetch('/api/room/stripe/connect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid }),
     });
     const d = await r.json().catch(() => ({}));
@@ -60,7 +59,7 @@ function VerificheInner() {
   const refresh = async (startupId: string) => {
     setErr(''); setMsg('');
     const r = await fetch('/api/room/stripe/refresh', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: startupId }),
     });
     const d = await r.json().catch(() => ({}));
@@ -72,7 +71,7 @@ function VerificheInner() {
   const unlink = async (opts: { linkId?: string; keyId?: string }) => {
     if (!window.confirm('Scollegare Stripe?')) return;
     await fetch('/api/room/stripe/refresh', {
-      method: 'DELETE', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'DELETE', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ link_id: opts.linkId, key_id: opts.keyId }),
     });
     load();
@@ -82,7 +81,7 @@ function VerificheInner() {
     setErr(''); setMsg('');
     if (!sid) { setErr('Seleziona una startup.'); return; }
     const r = await fetch('/api/room/stripe/key', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, key: rkValue.trim() }),
     });
     const d = await r.json().catch(() => ({}));
@@ -94,7 +93,7 @@ function VerificheInner() {
 
   const syncGh = async () => {
     setErr(''); setMsg('');
-    const r = await fetch('/api/room/github', { method: 'POST', headers: await auth() });
+    const r = await fetch('/api/room/github', { method: 'POST', headers: await roomAuthHeaders() });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { setErr(d.message || 'Errore'); return; }
     setMsg(`GitHub sincronizzato (${d.days} giorni con attività).`);
@@ -172,7 +171,7 @@ function VerificheInner() {
           <button onClick={async () => {
             setErr(''); setMsg('');
             const r = await fetch('/api/room/profile', {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+              method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
               body: JSON.stringify({ github_username: ghUser }),
             });
             const d = await r.json().catch(() => ({}));

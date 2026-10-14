@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { getAccessToken } from '@/lib/auth-token';
+import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 type Startup = {
@@ -37,11 +37,10 @@ export default function StartupsPage() {
   const [rkFor, setRkFor] = useState<string | null>(null);
   const [rkValue, setRkValue] = useState('');
 
-  const auth = async () => ({ Authorization: `Bearer ${await getAccessToken()}` });
 
   const load = async () => {
     setLoading(true);
-    const h = await auth();
+    const h = await roomAuthHeaders();
     const res = await fetch('/api/room/startups', { headers: h });
     if (res.ok) setItems(await res.json().then((d) => d.startups));
     const sl = await fetch('/api/room/stripe/links', { headers: h });
@@ -62,7 +61,7 @@ export default function StartupsPage() {
     e.preventDefault();
     setErr(''); setMsg('');
     const res = await fetch('/api/room/startups', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ name, url, tagline }),
     });
     const data = await res.json().catch(() => ({}));
@@ -74,7 +73,7 @@ export default function StartupsPage() {
 
   const update = async (id: string, patch: Record<string, unknown>) => {
     const res = await fetch(`/api/room/startups/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify(patch),
     });
     const data = await res.json().catch(() => ({}));
@@ -84,14 +83,14 @@ export default function StartupsPage() {
 
   const remove = async (id: string) => {
     if (!window.confirm('Eliminare la startup e tutti i suoi dati planner?')) return;
-    await fetch(`/api/room/startups/${id}`, { method: 'DELETE', headers: await auth() });
+    await fetch(`/api/room/startups/${id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
     setItems((p) => p.filter((s) => s.id !== id));
   };
 
   const connectStripe = async (startupId: string) => {
     setErr('');
     const res = await fetch('/api/room/stripe/connect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: startupId }),
     });
     const d = await res.json().catch(() => ({}));
@@ -102,7 +101,7 @@ export default function StartupsPage() {
   const refreshStripe = async (startupId: string) => {
     setErr(''); setMsg('');
     const res = await fetch('/api/room/stripe/refresh', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: startupId }),
     });
     const d = await res.json().catch(() => ({}));
@@ -114,7 +113,7 @@ export default function StartupsPage() {
   const unlinkStripe = async (opts: { linkId?: string; keyId?: string }) => {
     if (!window.confirm('Scollegare Stripe da questa startup?')) return;
     await fetch('/api/room/stripe/refresh', {
-      method: 'DELETE', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'DELETE', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ link_id: opts.linkId, key_id: opts.keyId }),
     });
     load();
@@ -127,7 +126,7 @@ export default function StartupsPage() {
       return;
     }
     const res = await fetch('/api/room/stripe/key', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: startupId, key: rkValue }),
     });
     const d = await res.json().catch(() => ({}));
