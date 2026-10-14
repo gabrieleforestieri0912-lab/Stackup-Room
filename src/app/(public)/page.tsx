@@ -637,6 +637,66 @@ const Home: React.FC = () => {
             </motion.div>
           </div>
 
+          {/* Piano 3 Mesi */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            whileHover={{ scale: 1.02 }}
+            className="max-w-xl mx-auto mt-8 p-12 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
+          >
+            <h3 className="text-2xl font-black text-white mb-3">3 Mesi</h3>
+            <div className="mb-5">
+              <span className="text-5xl font-black text-white">€74</span>
+              <span className="text-zinc-400 text-base font-medium ml-2">
+                / 3 mesi
+              </span>
+              <div className="text-base text-zinc-500 font-medium mt-1">
+                €24/mese
+              </div>
+            </div>
+            <p className="text-lg text-zinc-400 font-medium mb-3">
+              Il primo passo
+            </p>
+            <p className="text-base text-zinc-500 leading-relaxed mb-8">
+              Il piano ideale per provare il metodo StackUp Room con un
+              impegno minimo. Accesso completo a tutte le risorse e
+              mentorship 1:1.
+            </p>
+            <ul className="space-y-2 mb-6 flex-1">
+              {[
+                "Accesso completo a tutti i corsi",
+                "Mentorship 1:1 settimanale",
+                "Community Discord privata",
+                "Risorse, template ed esempi per membri",
+                "AI workflows e skill training",
+                "Feedback su progetti reali",
+                "Check-in di accountability",
+                "Sessioni di co-working virtuale",
+                "Progetti reali in produzione",
+                "Career support & coaching",
+              ].map((f, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-zinc-300 font-medium"
+                >
+                  <Check
+                    size={14}
+                    className="text-emerald-400 shrink-0 mt-0.5"
+                  />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href={pricingHref}
+              className="w-full py-4 bg-white text-black rounded-xl font-bold text-base hover:bg-zinc-200 transition-all text-center block"
+            >
+              {pricingLabel}
+            </Link>
+          </motion.div>
+
           <p className="text-center text-zinc-500 text-sm font-medium mt-8 max-w-lg mx-auto">
             Puoi annullare il rinnovo in qualsiasi momento. L'accesso rimarrà attivo per tutto il periodo per cui hai già pagato.
           </p>
