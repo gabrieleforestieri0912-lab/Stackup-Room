@@ -24,6 +24,12 @@ function VerificheInner() {
   const [err, setErr] = useState(sp?.get('stripe') === 'error' ? (sp?.get('msg') || 'Collegamento fallito') : '');
   const [gh, setGh] = useState<Array<{ day: string; count: number }>>([]);
   const [ghUser, setGhUser] = useState('');
+  const [ghPreview, setGhPreview] = useState<null | {
+    profile: { login: string; name: string | null; bio: string | null; avatar_url: string; html_url: string; public_repos: number; followers: number; following: number };
+    repos: Array<{ name: string; html_url: string; description: string | null; stargazers_count: number; language: string | null; updated_at: string }>;
+  }>(null);
+  const [ghPreviewState, setGhPreviewState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [ghPreviewErr, setGhPreviewErr] = useState('');
 
   const load = async () => {
     const h = await roomAuthHeaders();
@@ -44,6 +50,43 @@ function VerificheInner() {
   };
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
+
+  const ghQuery = ghUser.trim().replace(/^@/, '');
+  const ghTyping = ghQuery.length >= 2;
+
+  useEffect(() => {
+    const query = ghUser.trim().replace(/^@/, '');
+    if (query.length < 2) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      setGhPreviewState('loading');
+      try {
+        const r = await fetch(`/api/room/github/profile?username=${encodeURIComponent(query)}`, {
+          headers: await roomAuthHeaders(),
+          signal: ctrl.signal,
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          setGhPreview(null);
+          setGhPreviewErr(d.message || 'Errore');
+          setGhPreviewState('error');
+          return;
+        }
+        setGhPreview(d);
+        setGhPreviewState('ok');
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
+          setGhPreview(null);
+          setGhPreviewErr('GitHub non raggiungibile');
+          setGhPreviewState('error');
+        }
+      }
+    }, 500);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [ghUser]);
 
   const connect = async () => {
     setErr(''); setMsg('');
@@ -180,6 +223,63 @@ function VerificheInner() {
           }} className="px-4 py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room whitespace-nowrap">Salva</button>
         </div>
         <button onClick={syncGh} className="px-4 py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room mb-4">Sincronizza ora</button>
+        {ghTyping && ghPreviewState === 'loading' && (
+          <div className="flex items-center gap-3 border border-zinc-800 rounded-2xl p-4 mb-4" role="status" aria-label="Caricamento profilo GitHub">
+            <div className="skeleton w-12 h-12 !rounded-full shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-3 w-2/3" />
+              <div className="skeleton h-3 w-1/3" />
+            </div>
+          </div>
+        )}
+        {ghTyping && ghPreviewState === 'error' && (
+          <p className="text-xs font-bold text-red-400 mb-4" role="alert">⚠ {ghPreviewErr} — controlla lo username.</p>
+        )}
+        {ghTyping && ghPreviewState === 'ok' && ghPreview && ghPreview.profile.login.toLowerCase() === ghQuery.toLowerCase() && (
+          <div className="border border-room/30 bg-room/5 rounded-2xl p-4 mb-4">
+            <div className="flex items-center gap-3">
+              {ghPreview.profile.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
+                <img src={ghPreview.profile.avatar_url} alt={`Avatar GitHub di ${ghPreview.profile.login}`} className="w-12 h-12 rounded-full object-cover border border-room/40 shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-room/20 flex items-center justify-center text-room font-black shrink-0" aria-hidden>
+                  {ghPreview.profile.login.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-sm text-white truncate">
+                  {ghPreview.profile.name || ghPreview.profile.login}{' '}
+                  <span className="text-room-bright font-semibold">✓ connesso</span>
+                </p>
+                <a href={ghPreview.profile.html_url} target="_blank" rel="noreferrer" className="text-xs text-zinc-400 hover:text-room truncate block">
+                  @{ghPreview.profile.login}
+                </a>
+                {ghPreview.profile.bio && <p className="text-xs text-zinc-500 truncate mt-0.5">{ghPreview.profile.bio}</p>}
+              </div>
+            </div>
+            <div className="flex gap-4 mt-3 text-xs">
+              <span className="text-zinc-400"><strong className="text-white">{ghPreview.profile.public_repos}</strong> repo</span>
+              <span className="text-zinc-400"><strong className="text-white">{ghPreview.profile.followers}</strong> follower</span>
+              <span className="text-zinc-400"><strong className="text-white">{ghPreview.profile.following}</strong> seguiti</span>
+            </div>
+            {ghPreview.repos.length > 0 && (
+              <ul className="mt-3 space-y-1.5">
+                {ghPreview.repos.map((r) => (
+                  <li key={r.html_url || r.name}>
+                    <a href={r.html_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm border border-zinc-800 bg-black/40 rounded-xl px-3 py-2 hover:border-room/40 transition-colors">
+                      <span className="flex-1 min-w-0">
+                        <span className="block font-bold text-[13px] text-zinc-100 truncate">{r.name}</span>
+                        {r.description && <span className="block text-[11px] text-zinc-500 truncate">{r.description}</span>}
+                      </span>
+                      {r.language && <span className="text-[10px] font-bold text-zinc-400 shrink-0">{r.language}</span>}
+                      <span className="text-[11px] font-bold text-gold shrink-0">★ {r.stargazers_count}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         {gh.length === 0 ? (
           <p className="text-sm text-zinc-500">Nessun dato. Premi Sincronizza.</p>
         ) : (
