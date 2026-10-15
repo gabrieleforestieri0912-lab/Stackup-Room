@@ -93,7 +93,7 @@ export default function RoomSidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="room-sidebar flex flex-col h-full">
       <Link href={handle ? `/u/${handle}` : '/room/settings'} className="flex items-center gap-3 px-2 py-4 hover:bg-room/5 rounded-xl transition-colors">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario

@@ -33,6 +33,11 @@
   box-shadow: 0 0 0 2px #4de0c9, 0 0 20px rgba(77, 224, 201, 0.15);
 }
 
+/* Sidebar Room: dimensioni fisse di disegno, escluse dal boost globale dei testi piccoli */
+.room-sidebar .text-\[10px\] { font-size: 10px; }
+.room-sidebar .text-\[11px\] { font-size: 11px; }
+.room-sidebar .text-\[13px\] { font-size: 13px; }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

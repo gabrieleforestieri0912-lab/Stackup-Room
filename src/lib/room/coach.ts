@@ -52,16 +52,16 @@ export async function buildContext(userId: string): Promise<string> {
 }
 
 export function systemPrompt(mode: CoachMode): string {
-  const base = 'Sei lo StackUp coach: diretto, pratico, italiano, risposte brevi con al massimo 3 azioni concrete. Niente frasi motivazionali vuote.';
+  const base = 'Sei un consulente startup senior (StackUp coach). Italiano, tono professionale e diretto. Regole ferree: niente saluti, niente frasi motivazionali, niente domande di cortesia. Struttura ogni risposta così: 1) verdetto o risposta in 1-2 righe, 2) al massimo 3 azioni numerate con priorità e criterio di done, 3) cita i dati del contesto (startup, numeri, scadenze) quando rilevanti. Massimo ~180 parole. Se manca un dato chiave per decidere, fai UNA sola domanda mirata invece di rispondere.';
   switch (mode) {
     case 'standup':
-      return `${base} Ruolo: standup coach. Leggi standup di oggi e task, evidenzia il collo di bottiglia e proponi le 3 priorità di domani.`;
+      return `${base} Modalità standup: confronta standup di oggi e task aperti, indica il collo di bottiglia e le 3 priorità, con cosa tagliare.`;
     case 'planner':
-      return `${base} Ruolo: day planner. Dai task aperti e standup costruisci il piano della giornata in blocchi orari (deep work al mattino), con stima e cosa TAGLIARE.`;
+      return `${base} Modalità day planner: da task e standup costruisci il piano in blocchi orari (deep work al mattino) con stime e cosa tagliare.`;
     case 'ask':
-      return `${base} Ruolo: redattore Ask the club. Trasforma l'input in una domanda da forum: titolo chiaro, contesto in 3 righe, cosa ha già provato, domanda finale precisa. Solo la bozza, niente altro.`;
+      return `${base} Modalità redattore forum: trasforma l'input in bozza domanda (titolo, contesto in 3 righe, tentativi fatti, domanda precisa). Solo la bozza.`;
     default:
-      return `${base} Ruolo: startup advisor (validazione idea, marketing, pricing, launch planning). Fai UNA domanda chiarificatrice prima di consigliare, se manca un dato chiave.`;
+      return `${base} Modalità advisor (validazione, marketing, pricing, launch): diagnosi basata sui dati del contesto, poi azioni. Una domanda chiarificatrice solo se bloccante.`;
   }
 }
 
@@ -75,7 +75,7 @@ export async function streamCoach(system: string, messages: ClaudeMsg[], onText:
   const res = await fetch('https://api.xkiro.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: coachModel(), max_tokens: 1024, system, messages, stream: true }),
+    body: JSON.stringify({ model: coachModel(), max_tokens: 700, system, messages, stream: true }),
   });
   if (!res.ok || !res.body) {
     if (res.status === 429) throw new Error('COACH_RATE_LIMITED');

@@ -10,10 +10,10 @@ type ChatMsg = { role: 'user' | 'assistant'; content: string };
 type Session = { id: string; mode: Mode; created_at: string };
 
 const MODES: Array<{ id: Mode; label: string; hint: string }> = [
-  { id: 'standup', label: 'Standup coach', hint: 'Revisiona lo standup di oggi: colli di bottiglia + 3 priorità.' },
-  { id: 'planner', label: 'Day planner', hint: 'Piano della giornata dai tuoi task, in blocchi orari.' },
-  { id: 'advisor', label: 'Advisor', hint: 'Validazione idea, marketing, pricing, launch planning.' },
-  { id: 'ask', label: 'Ask the club', hint: 'Bozza pronta da pubblicare nel forum.' },
+  { id: 'standup', label: 'Standup', hint: 'Collo di bottiglia + 3 priorità dallo standup di oggi.' },
+  { id: 'planner', label: 'Day planner', hint: 'Piano in blocchi orari dai task aperti, con tagli.' },
+  { id: 'advisor', label: 'Advisor', hint: 'Diagnosi e azioni su validazione, pricing, launch.' },
+  { id: 'ask', label: 'Ask the club', hint: 'Bozza domanda forum pronta da pubblicare.' },
 ];
 
 
@@ -165,7 +165,7 @@ export default function CoachPage() {
         <h1 className="text-2xl font-extrabold tracking-tight flex-1">Coach.</h1>
         <span className="text-[11px] text-zinc-500 font-mono">{ctx.usage.used}/{ctx.usage.limit} oggi</span>
       </div>
-      <p className="text-xs text-zinc-500 mb-4">Conosce già startup, task, standup e background: non rispiegare tutto.</p>
+      <p className="text-xs text-zinc-500 mb-4">Legge già startup, task, standup e background: vai dritto al punto.</p>
 
       <div className="flex gap-2 mb-3 overflow-x-auto" role="tablist" aria-label="Modalità coach">
         {MODES.map((m) => (
@@ -218,7 +218,7 @@ export default function CoachPage() {
       </div>
 
       <form onSubmit={send} className="flex gap-2">
-        <input aria-label="Messaggio al coach" className={input} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Scrivi al coach..." maxLength={4000} disabled={streaming} />
+        <input aria-label="Messaggio al coach" className={input} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Chiedi una decisione, una diagnosi o un piano…" maxLength={4000} disabled={streaming} />
         <button aria-label="Invia" disabled={streaming} className="px-4 py-2 bg-room text-[#0B0D12] rounded-xl font-bold disabled:opacity-60">
           {streaming ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </button>
