@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import { Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Sparkles, BarChart3, MessageSquare, MessagesSquare } from 'lucide-react';
+import { Flame, BookOpen, Trophy, Rocket, ArrowRight, Target, Sparkles, BarChart3, MessageSquare, MessagesSquare, User } from 'lucide-react';
 import { RoomLoader, RoomHeader, RoomCard, StatCard } from './ui';
 
 const RANKS = [
@@ -94,8 +94,8 @@ export default function RoomHome() {
       {/* Statistiche */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <StatCard icon={Flame} value={streak?.current ?? user.studyStreak ?? 0} label={`gg streak${streak && !streak.todayDone ? ' · oggi da fare' : ''}`} accent="ember" />
-        <StatCard icon={Rocket} value={startupCount} label="Startup" href="/room/startups" />
-        <StatCard icon={MessageSquare} value={unread} label="Activity da leggere" href="/room/notifiche" />
+        <StatCard icon={Rocket} value={startupCount} label="Startup" href="/room/you?tab=startup" />
+        <StatCard icon={MessageSquare} value={unread} label="Activity da leggere" href="/room/you?tab=activity" />
       </div>
 
       {/* La tua Room — stessa IA della sidebar */}
@@ -103,10 +103,11 @@ export default function RoomHome() {
         {
           group: 'You',
           items: [
-            { href: '/room/tracker', title: 'Stats', desc: 'Streak, GitHub, metriche custom.', icon: BarChart3 },
-            { href: '/room/startups', title: 'Your Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
-            { href: '/room/notifiche', title: 'Activity', desc: 'Le tue notifiche e menzioni.', icon: MessageSquare },
-            { href: '/room/verifiche', title: 'Contributions', desc: 'Fonti verificate per i rank.', icon: Trophy },
+            { href: '/room/you?tab=stats', title: 'Stats', desc: 'Streak, GitHub, metriche custom.', icon: BarChart3 },
+            { href: '/room/you?tab=startup', title: 'Your Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
+            { href: '/room/you?tab=activity', title: 'Activity', desc: 'Le tue notifiche e menzioni.', icon: MessageSquare },
+            { href: '/room/you?tab=contributions', title: 'Contributions', desc: 'Fonti verificate per i rank.', icon: Trophy },
+            { href: '/room/you?tab=profile', title: 'Profile', desc: 'Profilo, privacy, certificati.', icon: User },
           ],
         },
         {
@@ -114,7 +115,7 @@ export default function RoomHome() {
           items: [
             { href: '/room/community?tab=chat', title: 'Chat', desc: 'La chat del club, ultimi 7 giorni.', icon: MessageSquare },
             { href: '/room/community?tab=forum', title: 'Rooms', desc: 'Stanze di discussione per topic.', icon: MessagesSquare },
-            { href: '/room/leaderboard', title: 'Ranks', desc: 'Leaderboard verificate del club.', icon: Trophy },
+            { href: '/room/community?tab=ranks', title: 'Ranks', desc: 'Leaderboard verificate del club.', icon: Trophy },
             { href: '/room/community?tab=network', title: 'Network', desc: 'Bacheca offerte e richieste.', icon: BarChart3 },
             { href: '/room/community?tab=eventi', title: 'Events', desc: 'Eventi e ritrovi del club.', icon: Rocket },
           ],

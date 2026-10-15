@@ -7,12 +7,11 @@ import RoomSidebar from './RoomSidebar';
 import Starfield from './Starfield';
 
 const TOP_LINKS = [
-  ['Tasks', '/room/planner#task'],
-  ['Standup', '/room/planner#standup'],
+  ['Today', '/room/planner'],
   ['Chat', '/room/community?tab=chat'],
-  ['Ranks', '/room/leaderboard'],
-  ['Network', '/room/community?tab=network'],
+  ['Ranks', '/room/community?tab=ranks'],
   ['Coach', '/room/coach'],
+  ['You', '/room/you'],
 ] as const;
 
 const STORAGE_KEY = 'room-sidebar-open';

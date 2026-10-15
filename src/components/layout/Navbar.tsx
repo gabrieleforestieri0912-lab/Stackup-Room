@@ -210,7 +210,7 @@ const Navbar = () => {
                 Il mio profilo pubblico
                </Link>
              )}
-             <Link href="/room/settings" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
+             <Link href="/room/you?tab=profile" role="menuitem" className="flex items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all rounded-lg">
               <UserIcon size={14} className="text-zinc-500" />
               Profilo e impostazioni
              </Link>
@@ -362,7 +362,7 @@ const Navbar = () => {
                La Room
              </Link>
              <Link
-               href="/room/settings"
+               href="/room/you?tab=profile"
                className="w-full py-2.5 rounded-md border border-zinc-700 text-center text-xs font-bold text-white hover:border-orange-500 transition-all"
              >
                Profilo e impostazioni

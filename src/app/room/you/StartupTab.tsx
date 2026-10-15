@@ -22,7 +22,7 @@ function Logo({ s }: { s: Startup }) {
   return <img src={s.logo_url} alt="" className="w-10 h-10 rounded-xl object-contain bg-zinc-900" onError={() => setErr(true)} loading="lazy" />;
 }
 
-export default function StartupsPage() {
+export default function StartupTab() {
   const [items, setItems] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -143,8 +143,7 @@ export default function StartupsPage() {
 
   return (
     <div>
-      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Portfolio</p>
-      <h1 className="text-2xl font-extrabold tracking-tight mb-1">Le tue startup.</h1>
+      <h2 className="text-lg font-extrabold tracking-tight mb-1">Le tue startup.</h2>
       <p className="text-sm text-zinc-400 mb-6">Revenue sotto = auto-dichiarata. Collega Stripe per quella verificata (✓), ben distinta.</p>
       {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
       {msg && <div className="mb-4 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}

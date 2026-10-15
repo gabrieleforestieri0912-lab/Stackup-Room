@@ -10,7 +10,7 @@ import { ArrowRight, Loader2, Trophy } from 'lucide-react';
 type Profile = Record<string, unknown>;
 type Cert = { id: string; courseTitle: string; completedAt: string; finalScore: number };
 
-export default function RoomSettings() {
+export default function ProfileTab() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -101,7 +101,7 @@ export default function RoomSettings() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold tracking-tight mb-1">Impostazioni.</h1>
+      <h2 className="text-lg font-extrabold tracking-tight mb-1">Profilo e impostazioni.</h2>
       <p className="text-sm text-zinc-400 mb-6">Profilo, privacy, consenso AI, export ed eliminazione.</p>
       {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
       {msg && <div className="mb-4 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}

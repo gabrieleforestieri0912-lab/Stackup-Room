@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const code = sp.get('code');
   const state = sp.get('state');
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const fail = (msg: string) => NextResponse.redirect(`${appUrl}/room/verifiche?stripe=error&msg=${encodeURIComponent(msg)}`);
+  const fail = (msg: string) => NextResponse.redirect(`${appUrl}/room/you?tab=contributions&stripe=error&msg=${encodeURIComponent(msg)}`);
 
   if (!code || !state) return fail('Parametri mancanti');
   const verified = verifyState(state);
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
     });
 
-    return NextResponse.redirect(`${appUrl}/room/verifiche?stripe=ok`);
+    return NextResponse.redirect(`${appUrl}/room/you?tab=contributions&stripe=ok`);
   } catch (e) {
     console.error('[stripe/callback] error:', e);
     return fail('Collegamento fallito');

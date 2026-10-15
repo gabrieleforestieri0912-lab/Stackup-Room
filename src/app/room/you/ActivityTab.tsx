@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 type N = { id: string; kind: string; text: string; ref_type: string | null; ref_id: string | null; read: boolean; created_at: string };
 
-export default function NotifichePage() {
+export default function ActivityTab() {
   const [items, setItems] = useState<N[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +28,7 @@ export default function NotifichePage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-2xl font-extrabold tracking-tight flex-1">Notifiche.</h1>
+        <h2 className="text-lg font-extrabold tracking-tight flex-1">Attività.</h2>
         <button onClick={readAll} className="px-3 py-1.5 text-xs font-bold bg-zinc-900 border border-zinc-700 rounded-lg">Segna tutte lette</button>
       </div>
       {items.length === 0 ? <p className="text-sm text-zinc-500 text-center py-10">Nessuna notifica.</p> : (

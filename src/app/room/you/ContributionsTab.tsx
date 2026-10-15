@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
 import { roomAuthHeaders } from '@/lib/auth-token';
 import { Loader2 } from 'lucide-react';
 import { roomInput as input } from '../ui';
@@ -11,7 +10,7 @@ type Link = { id: string; startup_id: string; stripe_account_id: string; livemod
 type Startup = { id: string; name: string };
 
 
-function VerificheInner() {
+export default function ContributionsTab() {
   const sp = useSearchParams();
   const [startups, setStartups] = useState<Startup[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
@@ -148,8 +147,7 @@ function VerificheInner() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Verifiche</p>
-        <h1 className="text-2xl font-extrabold tracking-tight">Fonti collegate.</h1>
+        <h2 className="text-lg font-extrabold tracking-tight">Fonti collegate.</h2>
         <p className="text-sm text-zinc-400 mt-1">Sola lettura. Mai dati di carta: solo MRR riassuntivo e conteggi pubblici.</p>
       </div>
       {err && <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
@@ -158,7 +156,7 @@ function VerificheInner() {
       <section className="bg-black border border-zinc-800 rounded-2xl p-5">
         <h2 className="font-bold text-white mb-3">Stripe → MRR verificato</h2>
         {startups.length === 0 ? (
-          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/startups" className="text-room font-bold">Vai al portfolio →</a></p>
+          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/you?tab=startup" className="text-room font-bold">Vai alle startup →</a></p>
         ) : (
           <>
           <div className="flex gap-2 mb-4">
@@ -294,10 +292,3 @@ function VerificheInner() {
   );
 }
 
-export default function VerifichePage() {
-  return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-room" /></div>}>
-      <VerificheInner />
-    </Suspense>
-  );
-}

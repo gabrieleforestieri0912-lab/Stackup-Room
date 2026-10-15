@@ -11,7 +11,7 @@ type GhDay = { day: string; count: number };
 
 const section = 'bg-black border border-zinc-800 rounded-2xl p-5';
 
-export default function TrackerPage() {
+export default function StatsTab() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [sid, setSid] = useState('');
   const [streak, setStreak] = useState<{ current: number; longest: number; todayDone: boolean; heatmap: string[] } | null>(null);
@@ -101,8 +101,7 @@ export default function TrackerPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Tracker</p>
-        <h1 className="text-2xl font-extrabold tracking-tight mb-3">I tuoi numeri.</h1>
+        <h2 className="text-lg font-extrabold tracking-tight mb-3">I tuoi numeri.</h2>
         {startups.length > 0 && (
           <select aria-label="Startup attiva" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
             {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -145,7 +144,7 @@ export default function TrackerPage() {
         </div>
         <p className="text-xs text-zinc-500 mb-3">Solo conteggi, mai codice · ultimi 30gg: <strong className="text-white">{ghTotal}</strong> {ghMsg && <span className="text-red-400">{ghMsg}</span>}</p>
         {gh.length === 0 ? (
-          <p className="text-sm text-zinc-500">Nessun dato. Imposta lo username in Impostazioni e premi Sincronizza.</p>
+          <p className="text-sm text-zinc-500">Nessun dato. Imposta lo username nel profilo e premi Sincronizza.</p>
         ) : (
           <div className="flex items-end gap-1 h-16" role="img" aria-label="Contributi GitHub">
             {gh.slice(0, 60).reverse().map((d) => (
@@ -159,7 +158,7 @@ export default function TrackerPage() {
         <h2 className="font-bold text-white mb-1">Tracker personalizzati</h2>
         <p className="text-xs text-zinc-500 mb-3">Metriche tue (ore deep work, chiamate, contenuti…). Loggare conta come giorno shippato.</p>
         {startups.length === 0 ? (
-          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/startups" className="text-room font-bold">Vai al portfolio →</a></p>
+          <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/you?tab=startup" className="text-room font-bold">Vai alle startup →</a></p>
         ) : (
           <>
             <form onSubmit={createTracker} className="flex gap-2 mb-4">

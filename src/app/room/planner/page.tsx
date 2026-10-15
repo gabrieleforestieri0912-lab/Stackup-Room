@@ -64,7 +64,7 @@ export default function PlannerPage() {
     return (
       <div className="border border-dashed border-zinc-800 rounded-2xl p-10 text-center">
         <p className="font-bold text-white">Crea prima una startup.</p>
-        <a href="/room/startups" className="text-sm text-room font-bold">Vai al portfolio →</a>
+        <a href="/room/you?tab=startup" className="text-sm text-room font-bold">Vai alle startup →</a>
       </div>
     );
   }

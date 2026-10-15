@@ -168,7 +168,7 @@ const SettingsPage: React.FC = () => {
   <Layout size={17} />
   <span>I miei corsi</span>
   </Link>
-   <Link href="/room/settings" className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
+   <Link href="/room/you?tab=profile" className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-white font-semibold text-sm transition-all">
   <Trophy size={17} />
   <span>Profilo e certificati</span>
   </Link>

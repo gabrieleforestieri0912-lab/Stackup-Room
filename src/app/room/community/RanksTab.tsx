@@ -10,7 +10,7 @@ type Row = {
   value?: number; todayDone?: boolean;
 };
 
-export default function LeaderboardPage() {
+export default function RanksTab() {
   const { user } = useAuth();
   const [type, setType] = useState<'revenue' | 'streak'>('revenue');
   const [period, setPeriod] = useState<'week' | 'month' | 'all'>('all');
@@ -35,8 +35,7 @@ export default function LeaderboardPage() {
 
   return (
     <div>
-      <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Classifiche</p>
-      <h1 className="text-2xl font-extrabold tracking-tight mb-4">Chi shippa.</h1>
+      <h2 className="text-lg font-extrabold tracking-tight mb-4">Chi shippa.</h2>
 
       <div className="flex gap-2 mb-3" role="tablist" aria-label="Tipo classifica">
         <button role="tab" aria-selected={type === 'revenue'} className={tab(type === 'revenue')} onClick={() => setType('revenue')}>Revenue</button>
@@ -56,7 +55,7 @@ export default function LeaderboardPage() {
         <div className="border border-dashed border-zinc-800 rounded-2xl p-10 text-center">
           <p className="font-bold text-white">Nessun dato.</p>
           <p className="text-sm text-zinc-400 mt-1">
-            {type === 'revenue' ? 'Attiva "Mostra revenue" in Impostazioni e collega Stripe.' : 'Shippa oggi dal Planner per entrare in classifica.'}
+            {type === 'revenue' ? 'Attiva "Mostra revenue" nel profilo e collega Stripe.' : 'Shippa oggi dal Planner per entrare in classifica.'}
           </p>
         </div>
       ) : (
