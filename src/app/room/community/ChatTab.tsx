@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, FormEvent } from 'react';
 import { roomAuthHeaders } from '@/lib/auth-token';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { Loader2, Send, Mic, Trash2, Flag, Reply, Pencil } from 'lucide-react';
 import { roomInput as input } from '../ui';
 
@@ -111,6 +112,8 @@ function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e:
 }
 
 export default function ChatTab() {
+  const { user } = useAuth();
+  const userId = user?.id || user?._id || null;
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
@@ -146,14 +149,21 @@ export default function ChatTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Presenza: online ora + "sta scrivendo" (solo conteggi, nessuna identità esposta)
+  // Presenza: chiave stabile = utente (un tab o dieci, conta uno) + "sta scrivendo" altrui.
+  // Solo conteggi, nessuna identità esposta.
   useEffect(() => {
-    const chan = supabase.channel('room-chat', { config: { presence: { key: Math.random().toString(36).slice(2) } } });
+    if (!userId) {
+      setOnline(1);
+      setTyping(0);
+      return;
+    }
+    const chan = supabase.channel('room-chat', { config: { presence: { key: userId } } });
     const sync = () => {
       const state = chan.presenceState() as Record<string, Array<{ typing?: boolean }>>;
-      const all = Object.values(state).flat();
-      setOnline(Math.max(1, all.length));
-      setTyping(all.filter((p) => p.typing).length);
+      setOnline(Math.max(1, Object.keys(state).length));
+      setTyping(
+        Object.entries(state).filter(([k]) => k !== userId).filter(([, metas]) => metas.some((p) => p.typing)).length,
+      );
     };
     chan.on('presence', { event: 'sync' }, sync).subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -162,7 +172,7 @@ export default function ChatTab() {
       }
     });
     return () => { supabase.removeChannel(chan); chanRef.current = null; };
-  }, []);
+  }, [userId]);
 
   const signalTyping = () => {
     chanRef.current?.track({ typing: true });
