@@ -186,15 +186,26 @@ export default function ChatTab() {
 
   const send = async (extra?: { gif_url?: string; audio_path?: string; audio_seconds?: number }) => {
     if (!text.trim() && !extra?.gif_url && !extra?.audio_path) return;
+    const bodyText = text;
+    // Ottimistico: mostra subito il messaggio
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Msg = {
+      id: tempId, body: bodyText, gif_url: extra?.gif_url || null, audio_path: extra?.audio_path || null,
+      audio_seconds: extra?.audio_seconds || null, created_at: new Date().toISOString(),
+      author: user?.name || user?.email || 'Tu', mine: true, reactions: [],
+      reply_to: replyTo?.id || null, edited_at: null, reply: replyTo ? { author: replyTo.author, body: replyTo.body, hidden: false } : null,
+    };
+    setMsgs((prev) => [...prev, optimistic]);
+    setText(''); setShowGifs(false); setReplyTo(null);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     const r = await authed('/api/room/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: text, reply_to: replyTo?.id || null, ...extra }),
+      body: JSON.stringify({ body: bodyText, reply_to: replyTo?.id || null, ...extra }),
     });
     if (r.ok) {
-      setText('');
-      setShowGifs(false);
-      setReplyTo(null);
       load(true);
+    } else {
+      setMsgs((prev) => prev.filter((m) => m.id !== tempId));
     }
   };
 
