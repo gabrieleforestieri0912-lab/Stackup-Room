@@ -1,20 +1,47 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Camera, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
 import { getAccessToken } from '@/lib/auth-token';
+import { useAuth } from '@/context/AuthContext';
+import { initials, avatarGradient } from '@/lib/avatar';
+import { extractDomain, logoUrlFor } from '@/lib/room/m2';
 
 const SITUATIONS = ['Solo founder full-time', 'Founder part-time', 'Dipendente che valida un\u2019idea', 'Studente', 'Freelance verso prodotto'] as const;
 const GOALS12 = ['Lanciare l\u2019MVP', 'Primi 10 clienti', '1.000€ MRR', '10.000€ MRR', 'Raccogliere fondi'] as const;
-const STAGES = ['idea', 'building', 'launched', 'scaling'] as const;
 const SKILL_PRESETS = ['JavaScript', 'TypeScript', 'React', 'Next.js', 'Python', 'Marketing', 'Vendite', 'Design', 'SEO'] as const;
 
 const STEPS = ['Profilo', 'Percorso', 'Startup', 'Obiettivo'] as const;
 
+type StartupDraft = { domain: string; name: string; tagline: string; auto: boolean };
+
+function deriveName(domain: string): string {
+  const d = extractDomain(domain);
+  if (!d) return '';
+  const label = (d.split('.')[0] || '').replace(/[-_]+/g, ' ').trim();
+  return label.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function LogoPreview({ url, name }: { url: string | null; name: string }) {
+  const [err, setErr] = useState(false);
+  if (!url || err) {
+    return (
+      <div className="w-9 h-9 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center font-black shrink-0" aria-hidden>
+        {(name.charAt(0) || '?').toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- logo da Google favicons
+    <img src={url} alt="" onError={() => setErr(true)} className="w-9 h-9 rounded-lg object-contain bg-zinc-900 shrink-0" />
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,12 +49,17 @@ export default function OnboardingPage() {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [locality, setLocality] = useState('');
+  const [bio, setBio] = useState('');
+  const [github, setGithub] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const fileRef = useRef<HTMLInputElement>(null);
   const [situation, setSituation] = useState<string>(SITUATIONS[0]);
   const [goals, setGoals] = useState<string>(GOALS12[0]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [sName, setSName] = useState('');
-  const [sUrl, setSUrl] = useState('');
-  const [sStage, setSStage] = useState<string>('idea');
+  const [startups, setStartups] = useState<StartupDraft[]>([{ domain: '', name: '', tagline: '', auto: true }]);
   const [goalTitle, setGoalTitle] = useState('');
   const [tasks, setTasks] = useState<string[]>(['']);
 
@@ -43,18 +75,86 @@ export default function OnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Verifica disponibilità handle con debounce (dopo che l'utente smette di digitare).
+  useEffect(() => {
+    if (handle.length < 3) { setHandleStatus('idle'); return; }
+    if (!/^[a-z0-9_]{3,24}$/.test(handle)) { setHandleStatus('invalid'); return; }
+    setHandleStatus('checking');
+    const t = setTimeout(async () => {
+      try {
+        const token = await getAccessToken();
+        const res = await fetch(`/api/room/handle?handle=${encodeURIComponent(handle)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) { setHandleStatus('idle'); return; }
+        const d = await res.json();
+        setHandleStatus(d.available ? 'available' : 'taken');
+      } catch {
+        setHandleStatus('idle');
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [handle]);
+
   const toggleSkill = (s: string) => setSkills((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s].slice(0, 9)));
+
+  const uploadAvatar = async (file: File) => {
+    if (!file.type.startsWith('image/')) { setError('Solo immagini (PNG, JPG, WEBP).'); return; }
+    if (file.size > 2 * 1024 * 1024) { setError('Immagine troppo grande (max 2MB).'); return; }
+    setError('');
+    setUploadingAvatar(true);
+    try {
+      const token = await getAccessToken();
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await fetch('/api/room/avatar', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Upload fallito');
+      setAvatarUrl(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload fallito');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const filledStartups = startups.filter((s) => s.domain.trim() || s.name.trim() || s.tagline.trim());
+  const hasStartups = filledStartups.length > 0;
+  // Se non aggiungi startup si salta lo step "Obiettivo" (legato a una startup).
+  const visibleSteps = hasStartups ? STEPS : STEPS.slice(0, -1);
+  const isLastStep = step >= visibleSteps.length - 1;
+
+  const updateStartup = (i: number, patch: Partial<StartupDraft>) =>
+    setStartups((p) => p.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+
+  const onDomainChange = (i: number, raw: string) =>
+    setStartups((p) => p.map((s, j) => {
+      if (j !== i) return s;
+      const domain = raw.trim();
+      return { ...s, domain, name: s.auto ? deriveName(domain) : s.name };
+    }));
 
   const validStep = (): string => {
     if (step === 0) {
       if (!name.trim()) return 'Inserisci il tuo nome.';
+      if (handle.length < 3) return 'L\'handle deve avere almeno 3 caratteri.';
       if (!/^[a-z0-9_]{3,24}$/.test(handle)) return 'Handle: 3-24 caratteri (minuscole, numeri, _).';
+      if (handleStatus === 'taken') return 'Questo handle è già in uso.';
+      if (handleStatus === 'checking') return 'Attendi la verifica dell\'handle...';
       if (!birthDate) return 'Inserisci la data di nascita (16+ anni).';
+      if (!locality.trim()) return 'Inserisci la tua località.';
+      if (!bio.trim()) return 'Scrivi qualcosa su di te (bio).';
       return '';
     }
     if (step === 2) {
-      if (!sName.trim()) return 'Come si chiama la tua startup attiva?';
-      if (sUrl && !/^https?:\/\/.+\..+/.test(sUrl)) return 'Link startup non valido (https://...).';
+      for (const s of filledStartups) {
+        if (!extractDomain(s.domain)) return 'Dominio non valido (es. esempio.com).';
+        if (!s.name.trim()) return 'Inserisci il nome della startup.';
+      }
       return '';
     }
     if (step === 3) {
@@ -69,7 +169,7 @@ export default function OnboardingPage() {
     const err = validStep();
     if (err) { setError(err); return; }
     setError('');
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => Math.min(s + 1, visibleSteps.length - 1));
   };
 
   const submit = async (e: FormEvent) => {
@@ -85,10 +185,19 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           name, handle, birth_date: birthDate,
+          locality, bio, github_username: github, avatar_url: avatarUrl,
           situation, goals, skills,
-          startup: { name: sName, url: sUrl, stage: sStage },
-          goal_title: goalTitle,
-          tasks: tasks.map((t) => t.trim()).filter(Boolean),
+          startups: filledStartups.map((s) => {
+            const domain = extractDomain(s.domain) || '';
+            return {
+              name: s.name.trim(),
+              domain,
+              url: domain ? `https://${domain}` : '',
+              tagline: s.tagline.trim(),
+            };
+          }),
+          goal_title: hasStartups ? goalTitle : '',
+          tasks: hasStartups ? tasks.map((t) => t.trim()).filter(Boolean) : [],
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -114,7 +223,7 @@ export default function OnboardingPage() {
         </div>
 
         <ol className="flex gap-1.5 mb-5" aria-label="Avanzamento onboarding">
-          {STEPS.map((s, i) => (
+          {visibleSteps.map((s, i) => (
             <li key={s} className="flex-1">
               <div className={`h-1.5 rounded-full ${i <= step ? 'bg-orange-600' : 'bg-zinc-800'}`} />
               <p className={`text-[10px] font-bold mt-1 ${i === step ? 'text-orange-300' : 'text-zinc-600'}`}>{i + 1}. {s}</p>
@@ -124,20 +233,109 @@ export default function OnboardingPage() {
 
         {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{error}</div>}
 
-        <form onSubmit={step === STEPS.length - 1 ? submit : (e) => { e.preventDefault(); next(); }}>
+        <form onSubmit={isLastStep ? submit : (e) => { e.preventDefault(); next(); }}>
           {step === 0 && (
             <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2 flex items-center gap-4">
+                <div className="relative shrink-0">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt="Anteprima immagine profilo" className="w-16 h-16 rounded-full object-cover border border-orange-500/40" />
+                  ) : (
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-black"
+                      style={{ background: avatarGradient(name || handle || 'stackup') }}
+                    >
+                      {initials(name)}
+                    </div>
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                      <Loader2 size={18} className="animate-spin text-orange-400" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className={label}>Immagine profilo</span>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="mt-1 inline-flex items-center gap-2 px-3 py-2 text-xs font-bold bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-300 hover:border-orange-500/50 transition-colors disabled:opacity-60"
+                  >
+                    <Camera size={14} /> {avatarUrl ? 'Cambia immagine' : 'Carica immagine'}
+                  </button>
+                  <p className="text-[10px] text-zinc-500 mt-1">PNG, JPG o WEBP · max 2MB</p>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ''; }}
+                />
+              </div>
               <div>
                 <label className={label} htmlFor="ob-name">Nome</label>
                 <input id="ob-name" className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada Lovelace" maxLength={80} />
               </div>
               <div>
-                <label className={label} htmlFor="ob-handle">Handle</label>
-                <input id="ob-handle" className={input} value={handle} onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24))} placeholder="adalov" />
+                <label className={label} htmlFor="ob-handle">Handle (min 3)</label>
+                <input
+                  id="ob-handle"
+                  aria-describedby="ob-handle-status"
+                  className={input}
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24))}
+                  placeholder="adalov"
+                  minLength={3}
+                />
+                <p
+                  id="ob-handle-status"
+                  role="status"
+                  aria-live="polite"
+                  className={`mt-1 flex items-center gap-1 text-[10px] font-bold ${
+                    handleStatus === 'available' ? 'text-emerald-400' :
+                    handleStatus === 'taken' ? 'text-red-400' :
+                    handleStatus === 'checking' ? 'text-zinc-500' : 'text-zinc-600'
+                  }`}
+                >
+                  {handleStatus === 'available' && <><CheckCircle2 size={12} /> Disponibile</>}
+                  {handleStatus === 'taken' && <><XCircle size={12} /> Già in uso</>}
+                  {handleStatus === 'checking' && <><Loader2 size={12} className="animate-spin" /> Verifica...</>}
+                  {handleStatus === 'invalid' && <><AlertCircle size={12} /> Formato non valido</>}
+                  {handleStatus === 'idle' && <><AlertCircle size={12} /> Almeno 3 caratteri</>}
+                </p>
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <label className={label} htmlFor="ob-birth">Data di nascita (16+ anni)</label>
                 <input id="ob-birth" type="date" className={input} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+              </div>
+              <div>
+                <label className={label} htmlFor="ob-loc">Dove ti trovi <span className="text-red-400">*</span></label>
+                <input id="ob-loc" className={input} value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="Milano, IT" maxLength={120} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={label} htmlFor="ob-gh">Username GitHub</label>
+                <input id="ob-gh" className={input} value={github} onChange={(e) => setGithub(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 39))} placeholder="octocat" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={label} htmlFor="ob-bio">Su di te <span className="text-red-400">*</span></label>
+                <textarea id="ob-bio" rows={3} className={`${input} resize-none`} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Due righe su cosa stai costruendo e cosa cerchi." maxLength={500} />
+                <p className="mt-1 text-[10px] text-zinc-600">{bio.trim().length}/500</p>
+              </div>
+              <div className="sm:col-span-2 mt-1 pt-3 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-[10px] text-zinc-500">
+                <span className="truncate">
+                  Accesso con <b className="text-zinc-300">{user?.email || '—'}</b>
+                  {user?.authMethod ? ` · ${{ google: 'Google', github: 'GitHub', otp: 'codice email', local: 'email' }[user.authMethod] || user.authMethod}` : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="font-black uppercase tracking-widest text-zinc-400 hover:text-orange-400 transition-colors"
+                >
+                  Cambia account
+                </button>
               </div>
             </div>
           )}
@@ -171,21 +369,73 @@ export default function OnboardingPage() {
           )}
 
           {step === 2 && (
-            <div className={selectWrap}>
-              <div>
-                <label className={label} htmlFor="ob-sname">Startup attiva</label>
-                <input id="ob-sname" className={input} value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Nome della startup" maxLength={80} />
-              </div>
-              <div>
-                <label className={label} htmlFor="ob-surl">Sito (logo automatico)</label>
-                <input id="ob-surl" inputMode="url" className={input} value={sUrl} onChange={(e) => setSUrl(e.target.value.trim())} placeholder="https://..." maxLength={500} />
-              </div>
-              <div>
-                <label className={label} htmlFor="ob-stage">Stadio</label>
-                <select id="ob-stage" className={input} value={sStage} onChange={(e) => setSStage(e.target.value)}>
-                  {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
+            <div className="grid gap-3">
+              <p className="text-[11px] text-zinc-500">
+                Aggiungi le tue startup (anche solo il dominio). Puoi anche proseguire senza e aggiungerle più tardi.
+              </p>
+              {startups.map((s, i) => {
+                const domain = extractDomain(s.domain);
+                return (
+                  <div key={i} className="relative grid gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+                    {startups.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label={`Rimuovi startup ${i + 1}`}
+                        onClick={() => setStartups((p) => p.filter((_, j) => j !== i))}
+                        className="absolute right-2 top-2 px-1.5 text-lg leading-none text-zinc-600 hover:text-red-400 font-bold"
+                      >
+                        ×
+                      </button>
+                    )}
+                    <div>
+                      <label className={label} htmlFor={`ob-dom-${i}`}>Dominio</label>
+                      <input
+                        id={`ob-dom-${i}`}
+                        inputMode="url"
+                        className={input}
+                        value={s.domain}
+                        onChange={(e) => onDomainChange(i, e.target.value)}
+                        placeholder="esempio.com"
+                        maxLength={255}
+                      />
+                    </div>
+                    {domain && (
+                      <div className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-black p-2.5">
+                        <LogoPreview url={logoUrlFor(domain, null)} name={s.name || domain} />
+                        <div className="min-w-0 flex-1">
+                          <input
+                            aria-label="Nome startup"
+                            className="w-full border-0 bg-transparent p-0 text-sm font-bold text-white outline-none placeholder:text-zinc-600"
+                            value={s.name}
+                            onChange={(e) => updateStartup(i, { name: e.target.value, auto: false })}
+                            placeholder="Nome startup"
+                            maxLength={80}
+                          />
+                          <p className="truncate text-[11px] text-zinc-500">{domain}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className={label} htmlFor={`ob-tag-${i}`}>Tagline</label>
+                      <input
+                        id={`ob-tag-${i}`}
+                        className={input}
+                        value={s.tagline}
+                        onChange={(e) => updateStartup(i, { tagline: e.target.value })}
+                        placeholder="Una riga su cosa fai (facoltativa)"
+                        maxLength={200}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setStartups((p) => [...p, { domain: '', name: '', tagline: '', auto: true }])}
+                className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 py-2.5 text-sm font-bold text-zinc-400 transition-colors hover:border-orange-500/50 hover:text-orange-400"
+              >
+                <Plus size={16} /> Aggiungi startup
+              </button>
             </div>
           )}
 
@@ -220,7 +470,7 @@ export default function OnboardingPage() {
                 <ArrowLeft size={16} /> Indietro
               </button>
             )}
-            {step < STEPS.length - 1 ? (
+            {!isLastStep ? (
               <button type="submit" className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 rounded-xl flex items-center justify-center gap-2">
                 Continua <ArrowRight size={16} />
               </button>

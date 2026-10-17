@@ -2,17 +2,9 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { PanelLeftClose, PanelLeftOpen, Menu, X } from 'lucide-react';
+import { PanelLeftOpen, X } from 'lucide-react';
 import RoomSidebar from './RoomSidebar';
 import Starfield from './Starfield';
-
-const TOP_LINKS = [
-  ['Today', '/room/planner'],
-  ['Chat', '/room/community?tab=chat'],
-  ['Ranks', '/room/community?tab=ranks'],
-  ['Coach', '/room/coach'],
-  ['You', '/room/you'],
-] as const;
 
 const STORAGE_KEY = 'room-sidebar-open';
 
@@ -96,40 +88,17 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
 
       {/* Colonna contenuto: lascia spazio alla sidebar fissa su desktop */}
       <div className={`relative z-10 transition-[padding] duration-300 ease-in-out ${open ? 'lg:pl-64' : 'lg:pl-0'}`}>
-        {/* Barra mobile */}
-        <header className="lg:hidden sticky top-0 z-30 bg-room-bg/90 backdrop-blur border-b border-zinc-800">
-          <nav className="flex items-center gap-1 px-4 h-14 overflow-x-auto" aria-label="Room">
-            <button
-              onClick={toggle}
-              aria-label={open ? 'Chiudi menu' : 'Apri menu'}
-              className="p-2 -ml-2 rounded-lg text-zinc-300 hover:text-white hover:bg-room/10 shrink-0"
-            >
-              <Menu size={20} />
-            </button>
-            <Link href="/room" className="px-3 py-1.5 text-xs font-bold text-white hover:bg-room/10 rounded-lg whitespace-nowrap">Room</Link>
-            {TOP_LINKS.map(([label, href]) => (
-              <Link key={href} href={href} className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-room/10 rounded-lg whitespace-nowrap">
-                {label}
-              </Link>
-            ))}
-            <Link href="/" className="ml-auto px-3 py-1.5 text-xs font-bold text-zinc-500 hover:text-room whitespace-nowrap">← Sito</Link>
-          </nav>
-        </header>
-
-        {/* Barra desktop con pulsante apri/chiudi (sempre visibile) */}
-        <header className="hidden lg:flex sticky top-0 z-30 items-center gap-2 h-14 px-6 bg-room-bg/80 backdrop-blur border-b border-zinc-800/70">
+        {/* Bottone flottante per riaprire la sidebar quando chiusa */}
+        {!open && (
           <button
             onClick={toggle}
-            aria-label={open ? 'Chiudi sidebar' : 'Apri sidebar'}
-            title={open ? 'Chiudi sidebar' : 'Apri sidebar'}
-            className="p-2 -ml-2 rounded-lg text-zinc-400 hover:text-room hover:bg-room/10 transition-colors"
+            aria-label="Apri sidebar"
+            title="Apri sidebar"
+            className="fixed top-3 left-3 z-50 p-2 rounded-lg bg-room-bg border border-zinc-800 text-zinc-400 hover:text-room hover:bg-room/10 transition-colors"
           >
-            {open ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+            <PanelLeftOpen size={20} />
           </button>
-          <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-            {open ? 'Nascondi menu' : 'Mostra menu'}
-          </span>
-        </header>
+        )}
 
         <main className="flex-1 min-w-0 px-4 lg:px-8 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
           {children}

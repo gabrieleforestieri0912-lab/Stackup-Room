@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// Area Room riservata: senza sessione → /login; con sessione ma onboarding
-// incompleto → /onboarding. Le API rispondono già 401 da sole.
+// Area Room riservata: senza sessione → /welcome (intro pubblica) o /login se
+// sei già dentro l'onboarding; con sessione ma onboarding incompleto → /onboarding.
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createServerClient(
@@ -19,13 +19,15 @@ export async function middleware(req: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  const pathname = req.nextUrl.pathname;
+
   if (!user) {
     const url = req.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = pathname === '/onboarding' ? '/login' : '/welcome';
     return NextResponse.redirect(url);
   }
 
-  if (req.nextUrl.pathname !== '/onboarding') {
+  if (pathname !== '/onboarding') {
     const { data: profile } = await supabase
       .from('profiles')
       .select('onboarding_completed')

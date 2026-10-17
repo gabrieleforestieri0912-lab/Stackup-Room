@@ -50,8 +50,8 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
-      await register(name, email, password);
-      router.push('/login?registered=1');
+      const u = await register(name, email, password);
+      router.push(u?.onboardingCompleted === false ? '/onboarding' : '/room');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante la registrazione.');
     } finally {

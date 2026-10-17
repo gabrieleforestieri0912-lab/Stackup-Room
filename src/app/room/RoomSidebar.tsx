@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
 import { User, CalendarClock, MessagesSquare, Sparkles, LogOut, Settings } from 'lucide-react';
+import { initials, avatarGradient } from '@/lib/avatar';
 
 const LINKS = [
   { href: '/room/planner', label: 'Today', icon: CalendarClock, match: '/room/planner' },
@@ -46,8 +47,12 @@ export default function RoomSidebar() {
           // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
           <img src={avatar} alt={name} onError={() => setImgErr(true)} className="w-11 h-11 rounded-full object-cover border border-room/40 shrink-0" />
         ) : (
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-room to-room-deep flex items-center justify-center text-[#0B0D12] font-black shrink-0" aria-hidden>
-            {name.charAt(0).toUpperCase() || 'U'}
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0"
+            style={{ background: avatarGradient(handle || name) }}
+            aria-hidden
+          >
+            {initials(name)}
           </div>
         )}
         <div className="min-w-0">

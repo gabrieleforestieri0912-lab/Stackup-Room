@@ -27,27 +27,40 @@ export async function POST(req: NextRequest) {
   if (!handle || !isValidHandle(handle)) return NextResponse.json({ message: 'Handle non valido (3-24: minuscole, numeri, _)' }, { status: 400 });
   if (!name) return NextResponse.json({ message: 'Nome richiesto' }, { status: 400 });
 
-  // Step profilo esteso (facoltativi)
-  const locality = cleanStr(body.locality, 120) || null;
-  const bio = cleanStr(body.bio, 500) || null;
+  // Step profilo esteso
+  const locality = cleanStr(body.locality, 120);
+  const bio = cleanStr(body.bio, 500);
+  if (!locality) return NextResponse.json({ message: 'Località richiesta' }, { status: 400 });
+  if (!bio) return NextResponse.json({ message: 'Bio richiesta' }, { status: 400 });
   const github = cleanStr(body.github_username, 39);
   if (github && !/^[a-zA-Z0-9-]{1,39}$/.test(github)) return NextResponse.json({ message: 'Username GitHub non valido' }, { status: 400 });
+  const avatarUrl = cleanStr(body.avatar_url, 1000);
+  if (avatarUrl && !isValidUrlOrEmpty(avatarUrl)) return NextResponse.json({ message: 'Avatar non valido' }, { status: 400 });
 
-  // Step startup attiva (obbligatoria in onboarding)
-  const sb = (body.startup || {}) as Record<string, unknown>;
-  const sName = cleanStr(sb.name, 80);
-  const sUrl = cleanStr(sb.url, 500);
-  const sTagline = cleanStr(sb.tagline, 200);
-  const sStage = typeof sb.stage === 'string' && (STAGES as readonly string[]).includes(sb.stage) ? sb.stage : 'idea';
-  if (!sName) return NextResponse.json({ message: 'Nome della startup richiesto' }, { status: 400 });
-  if (!isValidUrlOrEmpty(sUrl)) return NextResponse.json({ message: 'Link startup non valido' }, { status: 400 });
+  // Step startup (facoltativo: 0..10 startup)
+  const rawStartups = Array.isArray(body.startups) ? body.startups : [];
+  const startupsData: { name: string; url: string; domain: string; tagline: string; stage: string }[] = [];
+  for (const raw of rawStartups) {
+    if (startupsData.length >= 10) break;
+    const sb = (raw || {}) as Record<string, unknown>;
+    const sName = cleanStr(sb.name, 80);
+    const sUrlRaw = cleanStr(sb.url, 500);
+    const sDomain = extractDomain(cleanStr(sb.domain, 255) || sUrlRaw);
+    const sTagline = cleanStr(sb.tagline, 200);
+    if (!sName && !sDomain) continue; // riga vuota: ignorata
+    if (!sName) return NextResponse.json({ message: 'Nome della startup richiesto' }, { status: 400 });
+    if (!sDomain) return NextResponse.json({ message: 'Dominio startup non valido' }, { status: 400 });
+    if (sUrlRaw && !isValidUrlOrEmpty(sUrlRaw)) return NextResponse.json({ message: 'Link startup non valido' }, { status: 400 });
+    const sStage = typeof sb.stage === 'string' && (STAGES as readonly string[]).includes(sb.stage) ? sb.stage : 'idea';
+    startupsData.push({ name: sName, url: `https://${sDomain}`, domain: sDomain, tagline: sTagline, stage: sStage });
+  }
 
-  // Step obiettivo + prime task
+  // Step obiettivo + prime task (opzionale: richiesto solo se l'utente ha startup)
   const goal = cleanStr(body.goal_title, 200);
   const rawTasks = Array.isArray(body.tasks) ? body.tasks : [];
   const taskTitles = rawTasks.filter((t): t is string => typeof t === 'string').map((t) => t.trim().slice(0, 200)).filter(Boolean).slice(0, 5);
-  if (!goal) return NextResponse.json({ message: 'Definisci il primo obiettivo' }, { status: 400 });
-  if (taskTitles.length === 0) return NextResponse.json({ message: 'Aggiungi almeno una task iniziale' }, { status: 400 });
+  if (goal && taskTitles.length === 0) return NextResponse.json({ message: 'Aggiungi almeno una task iniziale' }, { status: 400 });
+  if (!goal && taskTitles.length > 0) return NextResponse.json({ message: 'Definisci il primo obiettivo' }, { status: 400 });
 
   const { data: conflict } = await supabaseAdmin.from('profiles').select('id').eq('handle', handle).neq('id', authUser.id).maybeSingle();
   if (conflict) return NextResponse.json({ message: 'Handle già in uso' }, { status: 409 });
@@ -56,18 +69,27 @@ export async function POST(req: NextRequest) {
     name, handle, birth_date: birthDate, locality, bio, github_username: github || null,
     onboarding: { situation, skills, goals },
     onboarding_completed: true,
+    ...(avatarUrl ? { avatar_url: avatarUrl, avatar: avatarUrl } : {}),
   }).eq('id', authUser.id).select().maybeSingle();
   if (error) return NextResponse.json({ message: 'Errore salvataggio onboarding' }, { status: 500 });
 
-  const domain = sUrl ? extractDomain(sUrl) : null;
-  const { data: startup, error: sErr } = await supabaseAdmin.from('startups').insert({
-    user_id: authUser.id, name: sName, domain, url: sUrl || null,
-    tagline: sTagline || null, logo_url: logoUrlFor(domain, null), stage: sStage,
-  }).select().single();
-  if (sErr || !startup) return NextResponse.json({ message: 'Profilo salvato, ma la startup non è stata creata. Aggiungila dal portfolio.', profile }, { status: 207 });
+  const created: { id: string }[] = [];
+  for (const s of startupsData) {
+    const { data: row, error: sErr } = await supabaseAdmin.from('startups').insert({
+      user_id: authUser.id, name: s.name, domain: s.domain, url: s.url,
+      tagline: s.tagline || null, logo_url: logoUrlFor(s.domain, null), stage: s.stage,
+    }).select('id').single();
+    if (!sErr && row) created.push(row);
+  }
+  if (startupsData.length > 0 && created.length === 0) {
+    return NextResponse.json({ message: 'Profilo salvato, ma le startup non sono state create. Aggiungile dal portfolio.', profile }, { status: 207 });
+  }
 
-  await supabaseAdmin.from('goals').insert({ user_id: authUser.id, startup_id: startup.id, title: goal });
-  await supabaseAdmin.from('tasks').insert(taskTitles.map((title) => ({ user_id: authUser.id, startup_id: startup.id, title })));
+  // Obiettivo e task si agganciano alla prima startup creata.
+  if (goal && created.length > 0) {
+    await supabaseAdmin.from('goals').insert({ user_id: authUser.id, startup_id: created[0].id, title: goal });
+    await supabaseAdmin.from('tasks').insert(taskTitles.map((title) => ({ user_id: authUser.id, startup_id: created[0].id, title })));
+  }
 
-  return NextResponse.json({ profile, startup_id: startup.id });
+  return NextResponse.json({ profile, startup_ids: created.map((c) => c.id) });
 }
