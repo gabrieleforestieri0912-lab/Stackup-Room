@@ -508,7 +508,7 @@ const Home: React.FC = () => {
             <Badge className="mx-auto">Entra in StackUp Room</Badge>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
             {/* Piano Gratuito */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -516,11 +516,11 @@ const Home: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
               whileHover={{ scale: 1.02 }}
-              className="p-8 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
+              className="p-12 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
             >
               <h3 className="text-2xl font-black text-white mb-3">Gratuito</h3>
               <div className="mb-5">
-                <span className="text-4xl font-black text-white">€0</span>
+                <span className="text-5xl font-black text-white">€0</span>
                 <span className="text-zinc-400 text-base font-medium ml-2">
                   per sempre
                 </span>
@@ -570,14 +570,14 @@ const Home: React.FC = () => {
                 ease: [0.22, 1, 0.36, 1],
               }}
               whileHover={{ scale: 1.02 }}
-              className="p-8 bg-[#111] border-2 border-orange-300 rounded-2xl relative flex flex-col shadow-[0_0_30px_oklch(.837_.128_66.29/.25)]"
+              className="p-12 bg-[#111] border-2 border-orange-300 rounded-2xl relative flex flex-col shadow-[0_0_30px_oklch(.837_.128_66.29/.25)]"
             >
               <div className="absolute -top-3 right-6 px-3 py-1 rounded-lg bg-orange-300 text-black text-[10px] font-black uppercase tracking-widest">
                 Miglior Offerta
               </div>
               <h3 className="text-2xl font-black text-white mb-3">Annuale</h3>
               <div className="mb-5">
-                <span className="text-4xl font-black text-white">€297</span>
+                <span className="text-5xl font-black text-white">€297</span>
                 <span className="text-zinc-400 text-base font-medium ml-2">
                   / anno
                 </span>
@@ -634,11 +634,11 @@ const Home: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.05 }}
               whileHover={{ scale: 1.02 }}
-              className="p-8 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
+              className="p-12 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
             >
               <h3 className="text-2xl font-black text-white mb-3">6 Mesi</h3>
               <div className="mb-5">
-                <span className="text-4xl font-black text-white">€147</span>
+                <span className="text-5xl font-black text-white">€147</span>
                 <span className="text-zinc-400 text-base font-medium ml-2">
                   / 6 mesi
                 </span>
@@ -694,11 +694,11 @@ const Home: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
               whileHover={{ scale: 1.02 }}
-              className="p-8 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
+              className="p-12 bg-[#111] border border-zinc-800 hover:border-orange-300/60 rounded-2xl relative flex flex-col transition-colors hover:shadow-[0_0_30px_oklch(.837_.128_66.29/.15)]"
             >
               <h3 className="text-2xl font-black text-white mb-3">3 Mesi</h3>
               <div className="mb-5">
-                <span className="text-4xl font-black text-white">€74</span>
+                <span className="text-5xl font-black text-white">€74</span>
               <span className="text-zinc-400 text-base font-medium ml-2">
                 / 3 mesi
               </span>
