@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { unauthorized } from '@/lib/room/api';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
-import { rankRevenue, rankStreak, maskOwner, type Period } from '@/lib/room/leaderboard';
+import { rankFoundersByRevenue, rankRevenue, rankStreak, maskOwner, type Period } from '@/lib/room/leaderboard';
 
 export const runtime = 'nodejs';
 const WINDOW_DAYS: Record<Period, number | null> = { week: 7, month: 30, all: null };
@@ -48,11 +48,14 @@ export async function GET(req: NextRequest) {
         if (!verified.has(r.startup_id)) verified.set(r.startup_id, r);
       }
     }
-    const ownerOf = new Map(list.map((s: { id: string; user_id: string }) => [s.id, s.user_id]));
-    const rows = rankRevenue(list.map((s: { id: string; name: string; revenue_self_cents: number | null }) => ({
-      startup_id: s.id, user_id: '', name: s.name,
+    // Ranking per fondatore: somma i guadagni di tutte le sue startup.
+    // Vince il fondatore che ha guadagnato di più in totale.
+    const rows = rankFoundersByRevenue(list.map((s: { id: string; user_id: string; name: string; revenue_self_cents: number | null }) => ({
+      startup_id: s.id, user_id: s.user_id, name: s.name,
       revenue_self_cents: s.revenue_self_cents, verified: verified.get(s.id),
-    }))).map((r) => ({ ...r, owner: label(ownerOf.get(r.startup_id) as string) }));
+    }))).map((r) => ({ ...r, owner: label(r.user_id), mrr_cents: r.total_cents }));
+    // Compat: mantieni anche rankRevenue per eventuali consumer legacy
+    void rankRevenue;
     return NextResponse.json({ type, period, rows });
   }
 

@@ -269,18 +269,29 @@ export default function ChatTab() {
     load(true);
   };
 
-  if (loading) return <div className="flex justify-center py-16" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
+  if (loading) return <div className="flex justify-center items-center min-h-[calc(100dvh-320px)]" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
-    <div>
+    <div className="flex flex-col w-full flex-1 min-h-[calc(100dvh-260px)]">
       <p className="text-[11px] text-zinc-500 mb-2" role="status">
         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" aria-hidden />
         {online} online{typing > 0 ? ` · qualcuno sta scrivendo…` : ''}
       </p>
-      <ul className="space-y-2 mb-4 max-h-[50vh] overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
-        {msgs.length === 0 && <li className="text-sm text-zinc-500 text-center py-8">Nessun messaggio negli ultimi 7 giorni. Rompi il ghiaccio 👇</li>}
+      <ul className="flex-1 min-h-[320px] space-y-2 mb-4 overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
+        {msgs.length === 0 && (
+          <li className="flex flex-col items-center justify-center text-center min-h-[320px] h-full border border-dashed border-zinc-800 rounded-2xl py-16 px-6">
+            <p className="text-sm text-zinc-400 font-bold">Nessun messaggio negli ultimi 7 giorni.</p>
+            <p className="text-sm text-zinc-500 mt-1">Rompi il ghiaccio 👇</p>
+          </li>
+        )}
         {msgs.map((m) => (
-          <li key={m.id} className={`border rounded-2xl p-3 ${m.mine ? 'border-room/40 bg-room/5' : 'border-zinc-800 bg-black'}`}>
+          <li key={m.id} className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+            {!m.mine && (
+              <span className="shrink-0 w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-bold text-zinc-400">
+                {m.author.replace(/^@/, '').slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <div className={`max-w-[78%] border rounded-2xl p-3 ${m.mine ? 'border-room/40 bg-room/10' : 'border-zinc-800 bg-black'}`}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold text-room-bright">{m.author}</span>
               <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
@@ -327,6 +338,17 @@ export default function ChatTab() {
               await authed(`/api/room/chat/${m.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) });
               load(true);
             }} />
+            </div>
+            {m.mine && (
+              <span className="shrink-0 w-8 h-8 rounded-full overflow-hidden border border-room/40 bg-room/20 flex items-center justify-center text-[11px] font-bold text-room-bright">
+                {user?.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- avatar utente
+                  <img src={user.avatar} alt="Tu" className="w-full h-full object-cover" />
+                ) : (
+                  (user?.name || user?.email || 'Tu').slice(0, 2).toUpperCase()
+                )}
+              </span>
+            )}
           </li>
         ))}
         <div ref={bottomRef} />
