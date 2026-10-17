@@ -111,7 +111,7 @@ function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e:
   );
 }
 
-export default function ChatTab() {
+export default function ChatTab({ onPresence }: { onPresence?: (p: { online: number; typing: number }) => void }) {
   const { user } = useAuth();
   const userId = user?.id || user?._id || null;
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -183,6 +183,10 @@ export default function ChatTab() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [msgs.length]);
+
+  useEffect(() => {
+    onPresence?.({ online, typing });
+  }, [online, typing, onPresence]);
 
   const send = async (extra?: { gif_url?: string; audio_path?: string; audio_seconds?: number }) => {
     if (!text.trim() && !extra?.gif_url && !extra?.audio_path) return;
@@ -284,10 +288,6 @@ export default function ChatTab() {
 
   return (
     <div className="flex flex-col w-full flex-1 min-h-[calc(100dvh-260px)]">
-      <p className="text-[11px] text-zinc-500 mb-2" role="status">
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" aria-hidden />
-        {online} online{typing > 0 ? ` · qualcuno sta scrivendo…` : ''}
-      </p>
       <ul className="flex-1 min-h-[320px] space-y-2 mb-4 overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && (
           <li className="flex flex-col items-center justify-center text-center min-h-[320px] h-full border border-dashed border-zinc-800 rounded-2xl py-16 px-6">
