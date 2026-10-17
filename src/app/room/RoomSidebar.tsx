@@ -36,7 +36,7 @@ export default function RoomSidebar() {
     })();
   }, []);
 
-  const name = String(profile?.name || user?.name || '');
+  const name = String(profile?.name || user?.name || user?.email || 'Utente');
   const handle = profile?.handle as string | null;
   const avatar = !imgErr ? String((profile?.avatar_url as string) || (profile?.avatar as string) || user?.avatar || '') : '';
 
