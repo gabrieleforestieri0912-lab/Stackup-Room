@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
   const startupId = typeof body.startup_id === 'string' ? body.startup_id : '';
   const key = typeof body.key === 'string' ? body.key.trim() : '';
   if (!startupId) return NextResponse.json({ message: 'Startup richiesta' }, { status: 400 });
-  if (!key.startsWith('rk_live_') && !key.startsWith('rk_test_')) {
-    return NextResponse.json({ message: 'Solo chiavi ristrette (rk_live_… o rk_test_…). Crea una chiave con soli permessi di lettura da Stripe → Developers → API keys.' }, { status: 400 });
+  if (!key.startsWith('rk_live_')) {
+    return NextResponse.json({ message: 'Solo chiavi rk_live_… accettate. Crea una chiave con soli permessi di lettura da Stripe → Developers → API keys.' }, { status: 400 });
   }
   const { data: s } = await supabaseAdmin.from('startups').select('id').eq('id', startupId).eq('user_id', user.id).maybeSingle();
   if (!s) return NextResponse.json({ message: 'Startup non trovata' }, { status: 404 });

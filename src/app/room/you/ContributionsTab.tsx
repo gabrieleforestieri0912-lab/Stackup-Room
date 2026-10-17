@@ -87,17 +87,6 @@ export default function ContributionsTab() {
     };
   }, [ghUser]);
 
-  const connect = async () => {
-    setErr(''); setMsg('');
-    const r = await fetch('/api/room/stripe/connect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-      body: JSON.stringify({ startup_id: sid }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) { setErr(d.message || 'Errore'); return; }
-    window.location.assign(d.url);
-  };
-
   const refresh = async (startupId: string) => {
     setErr(''); setMsg('');
     const r = await fetch('/api/room/stripe/refresh', {
@@ -122,6 +111,7 @@ export default function ContributionsTab() {
   const saveRk = async () => {
     setErr(''); setMsg('');
     if (!sid) { setErr('Seleziona una startup.'); return; }
+    if (!rkValue.startsWith('rk_live_')) { setErr('Solo chiavi rk_live_ sono accettate (niente rk_test).'); return; }
     const r = await fetch('/api/room/stripe/key', {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, key: rkValue.trim() }),
@@ -159,17 +149,14 @@ export default function ContributionsTab() {
           <p className="text-sm text-zinc-500">Crea prima una startup. <a href="/room/you?tab=startup" className="text-room font-bold">Vai alle startup →</a></p>
         ) : (
           <>
-          <div className="flex gap-2 mb-4">
-            <select aria-label="Startup da collegare" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
-              {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <button onClick={connect} className="px-4 py-2.5 bg-room text-[#0B0D12] text-sm font-bold rounded-xl whitespace-nowrap">Collega (OAuth)</button>
-          </div>
           <div className="flex gap-2 mb-1">
-            <input aria-label="Chiave ristretta Stripe" type="password" autoComplete="off" placeholder="oppure rk_live_… / rk_test_… (sola lettura)" value={rkValue} onChange={(e) => setRkValue(e.target.value.trim())} className="flex-1 px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl" />
+            <input aria-label="Chiave ristretta Stripe" type="password" autoComplete="off" placeholder="rk_live_… (sola lettura)" value={rkValue} onChange={(e) => setRkValue(e.target.value.trim())} className="flex-1 px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl" />
             <button onClick={saveRk} className="px-4 py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room whitespace-nowrap">Salva chiave</button>
           </div>
-          <p className="text-[11px] text-zinc-600 mb-4">Crea la chiave da Stripe → Developers → API keys → Restricted key, con soli permessi in lettura.</p>
+          <select aria-label="Startup da collegare" className={`${input} mb-4`} value={sid} onChange={(e) => setSid(e.target.value)}>
+            {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <p className="text-[11px] text-zinc-600 mb-4">Crea la chiave da Stripe → Developers → API keys → Restricted key, con soli permessi in lettura. Solo rk_live: le chiavi rk_test non vengono accettate.</p>
           </>
         )}
         {links.length === 0 && keys.length === 0 ? (
