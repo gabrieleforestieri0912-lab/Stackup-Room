@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { Suspense, useState, useEffect } from'react';
+import React, { Suspense, useState, useEffect, useRef } from'react';
 import Image from'next/image';
 import { useParams, useSearchParams } from'next/navigation';
 import SectionTitle from'@/components/ui/SectionTitle';
@@ -99,6 +99,7 @@ interface Section {
 
 interface MockCourse {
  _id: string;
+ slug: string;
  title: string;
  description: string;
  longDescription: string;
@@ -112,10 +113,10 @@ interface MockCourse {
  price: number;
  level: string;
  duration: number;
- imageUrl: string;
+ imageUrl?: string;
  prerequisites?: string[];
  learningObjectives?: string[];
- instructor: Instructor;
+ instructor?: Instructor;
   reviewCount: number;
  enrollmentCount: number;
  sections: Section[];
@@ -136,13 +137,39 @@ const CourseDetailPage = () => {
  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 
- const isEnrolled = course?._id ? user?.enrolledCourses?.includes(course._id) : false;
+  const isEnrolled = course?._id ? user?.enrolledCourses?.includes(course._id) : false;
+  const freeAccess = Number(course?.price ?? -1) === 0;
+  const autoEnrollRef = useRef(false);
 
- useEffect(() => {
- if (slug) {
- fetchCourse();
- }
- }, [slug]);
+  useEffect(() => {
+  if (slug) {
+  fetchCourse();
+  }
+  }, [slug]);
+
+  // I corsi gratuiti si iscrive automaticamente l'utente loggato: senza
+  // enrollment il contenuto, i progressi e i certificati restano bloccati.
+  useEffect(() => {
+  if (!course || autoEnrollRef.current) return;
+  if (!freeAccess || !user || isEnrolled) return;
+  autoEnrollRef.current = true;
+  (async () => {
+  try {
+  const token = await getAccessToken();
+  if (!token) return;
+  const res = await fetch(`/api/courses/${course.slug}/enroll`, {
+   method: 'POST',
+   headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.ok) {
+   await refreshUser();
+   fetchCourse();
+  }
+  } catch {
+  // silenzioso: l'utente può iscriversi dal pulsante "Inizia gratis"
+  }
+  })();
+  }, [course, freeAccess, user, isEnrolled, refreshUser]);
 
  useEffect(() => {
  if (success ==='true') {
@@ -192,7 +219,33 @@ const CourseDetailPage = () => {
  }
  };
 
- const fetchCourse = async () => {
+  const handleEnrollFree = async () => {
+  if (!course) return;
+  if (!user) {
+  toast.error('Accedi per iniziare il corso');
+  return;
+  }
+  try {
+  const token = await getAccessToken();
+  if (!token) {
+  toast.error('Sessione scaduta. Effettua di nuovo il login.');
+  return;
+  }
+  const res = await fetch(`/api/courses/${course.slug}/enroll`, {
+   method: 'POST',
+   headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Errore iscrizione');
+  await refreshUser();
+  fetchCourse();
+  toast.success('Iscrizione completata! Inizia il corso. 🚀');
+  } catch (error) {
+  toast.error(error instanceof Error ? error.message : 'Errore');
+  }
+  };
+
+  const fetchCourse = async () => {
  try {
  const token = await getAccessToken();
  const response = await fetch(`/api/courses/${slug}`, {
@@ -411,10 +464,11 @@ const CourseDetailPage = () => {
   </div>
   )}
 
+  {course.instructor && (
   <div className="flex items-center gap-4 mb-8">
   <Image
   src={course.instructor.avatar ||'/avatar-default.jpg'}
-  alt={course.instructor.name}
+  alt={course.instructor.name || 'Instructor'}
   width={56}
   height={56}
   className="w-14 h-14 object-cover"
@@ -424,6 +478,7 @@ const CourseDetailPage = () => {
   <p className="text-base text-zinc-400">{course.instructor.bio}</p>
   </div>
   </div>
+  )}
 
   <div className="flex gap-4">
   {isEnrolled ? (
@@ -433,6 +488,14 @@ const CourseDetailPage = () => {
   >
   <Play size={20} />
   <span>Continua il corso</span>
+  </button>
+  ) : freeAccess ? (
+  <button 
+  onClick={handleEnrollFree}
+  className="px-8 py-4 bg-orange-600 text-white font-bold text-base hover:bg-orange-700 transition-colors flex items-center gap-2"
+  >
+  <Play size={20} />
+  <span>Inizia gratis</span>
   </button>
   ) : (
   <button 
@@ -444,22 +507,26 @@ const CourseDetailPage = () => {
   <span>{purchaseLoading ?'Elaborazione...' :`Acquista ora a €${course.price}`}</span>
   </button>
   )}
-  {!isEnrolled && (
+  {!isEnrolled && !freeAccess && (
   <button className="px-8 py-4 border-2 border-zinc-800 text-zinc-300 font-bold text-base hover:border-orange-300 hover:text-orange-600 transition-colors">
   Anteprima gratuita
   </button>
   )}
- </div>
+  </div>
  </div>
 
  <div className="relative">
  <div className="aspect-video bg-black overflow-hidden shadow-xl relative">
+ {course.imageUrl ? (
  <Image
  src={course.imageUrl}
  alt={course.title}
  fill
  className="object-cover"
  />
+ ) : (
+ <div className="absolute inset-0 bg-linear-to-br from-zinc-900 via-black to-zinc-950" />
+ )}
  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
  <button className="w-20 h-20 bg-black/20 backdrop-blur-sm flex items-center justify-center hover:bg-black/30 transition-colors">
  <Play size={32} className="text-white ml-1" />
@@ -593,7 +660,7 @@ const CourseDetailPage = () => {
    <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-6 text-center">
    <Lock size={20} className="text-zinc-500 mx-auto mb-2" />
    <p className="text-sm text-zinc-400 font-medium">
-   Il contenuto della lezione è riservato ai membri. Acquista il corso per sbloccarlo.
+   {freeAccess ? 'Accedi per iniziare questo corso gratuito.' : 'Il contenuto della lezione è riservato ai membri. Acquista il corso per sbloccarlo.'}
    </p>
    </div>
    ) : sectionLocked ? (
@@ -678,7 +745,7 @@ const CourseDetailPage = () => {
    <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-6 text-center">
    <Lock size={20} className="text-zinc-500 mx-auto mb-2" />
    <p className="text-sm text-zinc-400 font-medium">
-   Gli esercizi sono riservati ai membri. Acquista il corso per sbloccarli.
+   {freeAccess ? 'Accedi per sbloccare gli esercizi del corso.' : 'Gli esercizi sono riservati ai membri. Acquista il corso per sbloccarli.'}
    </p>
    </div>
    ) : sectionLocked ? (
