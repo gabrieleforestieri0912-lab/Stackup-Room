@@ -59,15 +59,50 @@ export default function YouDashboard() {
   const ghYear = gh.reduce((a, d) => a + d.count, 0);
 
   const shipDays = new Set(streak?.heatmap || []);
-  const heatSource = source === 'club' ? shipDays : new Set(gh.filter((d) => d.count > 0).map((d) => d.day));
-  const day = new Date();
-  const cells: Array<{ iso: string; active: boolean }> = [];
-  for (let i = 119; i >= 0; i--) {
-    const d = new Date(day);
-    d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    cells.push({ iso, active: heatSource.has(iso) });
+  const ghDays = new Set(gh.filter((d) => d.count > 0).map((d) => d.day));
+  const heatSource = source === 'club' ? shipDays : ghDays;
+
+  // Calendario 12 mesi stilato come GitHub: colonne = settimane, righe = giorni (dal domenica)
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(start.getDate() - 370);
+  start.setDate(start.getDate() - start.getDay()); // allinea a domenica
+  const weeks: Array<Array<{ iso: string; active: boolean } | null>> = [];
+  let week: Array<{ iso: string; active: boolean } | null> = [];
+  const monthLabels: Array<{ month: string; span: number }> = [];
+  let lastMonth = -1;
+  const cursor = new Date(start);
+  while (cursor <= today) {
+    const iso = cursor.toISOString().slice(0, 10);
+    const cell = { iso, active: heatSource.has(iso) };
+    if (cursor.getDay() === 0 && lastMonth !== cursor.getMonth()) {
+      if (week.length > 0) {
+        weeks.push(week);
+        const firstDay = week.find(Boolean);
+        if (firstDay) monthLabels.push({ month: firstDay.iso.slice(5, 7), span: 0 });
+      } else if (monthLabels.length === 0) {
+        monthLabels.push({ month: iso.slice(5, 7), span: 0 });
+      }
+      lastMonth = cursor.getMonth();
+      week = [];
+    }
+    week.push(cell);
+    cursor.setDate(cursor.getDate() + 1);
   }
+  if (week.length > 0) {
+    weeks.push(week);
+    const firstDay = week.find(Boolean);
+    if (firstDay) monthLabels.push({ month: firstDay.iso.slice(5, 7), span: 0 });
+  }
+  // Ricostruisci le etichette mese in base alle colonne effettive
+  monthLabels.length = 0;
+  weeks.forEach((w, i) => {
+    const f = w.find(Boolean);
+    if (!f) return;
+    const m = f.iso.slice(5, 7);
+    if (i === 0 || monthLabels[monthLabels.length - 1].month !== m) monthLabels.push({ month: m, span: i });
+  });
+  const MESE = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
   const StatRow = ({ icon, label, hint, value, hintClass = 'text-room font-bold' }: {
     icon: React.ReactNode; label: string; hint?: string; value: React.ReactNode; hintClass?: string;
@@ -196,20 +231,49 @@ export default function YouDashboard() {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(0,1fr))] gap-1.5 mb-3" role="img"
-              aria-label={`Mappa attività ultimi 120 giorni, sorgente ${source}`}>
-              {cells.map((c) => (
-                <div key={c.iso} title={`${c.iso}${c.active ? ' · attività' : ''}`}
-                  className={`aspect-square rounded-[3px] ${c.active ? 'bg-room' : 'bg-zinc-900'}`} />
-              ))}
+            <div className="overflow-x-auto pb-1">
+              <div className="min-w-[640px]">
+                {/* Etichette mese */}
+                <div className="relative h-4 mb-1 ml-7">
+                  {monthLabels.map((ml) => (
+                    <span key={`${ml.month}-${ml.span}`} className="absolute top-0 text-[10px] text-zinc-500" style={{ left: `${ml.span}rem` }}>
+                      {MESE[Number(ml.month)]}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-1">
+                  {/* Giorni settimana */}
+                  <div className="flex flex-col gap-1 w-6 shrink-0 text-[10px] text-zinc-600 pr-1">
+                    {['L', '', 'M', '', 'G', '', 'S'].map((d, i) => (
+                      <span key={i} className="h-3 leading-3">{d}</span>
+                    ))}
+                  </div>
+                  {/* Griglia settimane × giorni */}
+                  <div className="flex gap-1" role="img" aria-label={`Mappa attività ultimi 12 mesi, sorgente ${source}`}>
+                    {weeks.map((w, wi) => (
+                      <div key={wi} className="flex flex-col gap-1">
+                        {Array.from({ length: 7 }).map((_, di) => {
+                          const c = w[di];
+                          if (!c) return <span key={di} className="w-3 h-3" />;
+                          return (
+                            <span key={di} title={`${c.iso}${c.active ? ' · attività' : ''}`}
+                              className={`w-3 h-3 rounded-[3px] ${c.active ? 'bg-room' : 'bg-zinc-900'}`} />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-zinc-600">
+            <div className="flex items-center gap-2 text-[11px] text-zinc-600 mt-3">
               <span>Less</span>
               <span className="w-3 h-3 rounded-[3px] bg-zinc-900" />
-              <span className="w-3 h-3 rounded-[3px] bg-room/50" />
+              <span className="w-3 h-3 rounded-[3px] bg-room/40" />
+              <span className="w-3 h-3 rounded-[3px] bg-room/70" />
               <span className="w-3 h-3 rounded-[3px] bg-room" />
               <span>More</span>
-              <span className="ml-auto">last 120 days</span>
+              <span className="ml-auto">last 12 months</span>
             </div>
             <p className="text-[11px] text-zinc-600 mt-2">
               {source === 'club' ? 'Contato dai task che segni — un quadrato al giorno.' : 'Contributi pubblici GitHub — solo conteggi, mai codice.'}

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const { data } = await supabaseAdmin.from('ship_days').select('day').eq('user_id', user.id).order('day', { ascending: false }).limit(400);
   const days = (data || []).map((d: { day: string }) => d.day);
   const streak = computeStreak(days);
-  return NextResponse.json({ ...streak, heatmap: days.slice(0, 120) });
+  return NextResponse.json({ ...streak, heatmap: days.slice(0, 371) });
 }
 
 // Segna oggi come shippato (manuale).

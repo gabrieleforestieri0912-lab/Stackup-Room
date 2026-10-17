@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   const { user } = await requireUser(req);
   if (!user) return unauthorized();
-  const { data } = await supabaseAdmin.from('github_cache').select('day,count').eq('user_id', user.id).order('day', { ascending: false }).limit(120);
+  const { data } = await supabaseAdmin.from('github_cache').select('day,count').eq('user_id', user.id).order('day', { ascending: false }).limit(371);
   return NextResponse.json({ series: data || [] });
 }
 
