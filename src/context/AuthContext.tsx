@@ -75,6 +75,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    const { data: { session } } = await supabase.auth.getSession();
    if (session?.access_token) {
     persistToken(session.access_token);
+    const su = session.user;
+    if (su) {
+     setUser({ _id: su.id, id: su.id, name: (su.user_metadata?.name || su.user_metadata?.full_name || su.email || 'Utente') as string, email: su.email || '', avatar: (su.user_metadata?.avatar_url || su.user_metadata?.picture) as string | undefined, authMethod: 'otp', createdAt: su.created_at || new Date().toISOString(), enrolledCourses: [], certificates: [], studyStreak: 0, studyHours: 0, exp: 0 });
+    }
     await fetchUser(session.access_token);
    } else {
     persistToken();
