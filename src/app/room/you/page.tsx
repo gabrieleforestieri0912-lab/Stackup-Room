@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RoomLoader } from '../ui';
+import YouDashboard from './YouDashboard';
 import ProfileTab from './ProfileTab';
 import StatsTab from './StatsTab';
 import StartupTab from './StartupTab';
@@ -10,6 +11,7 @@ import ActivityTab from './ActivityTab';
 import ContributionsTab from './ContributionsTab';
 
 const TABS = [
+  { id: 'home', label: 'Home' },
   { id: 'profile', label: 'Profile' },
   { id: 'stats', label: 'Stats' },
   { id: 'startup', label: 'Startup' },
@@ -23,14 +25,18 @@ function YouInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const raw = searchParams?.get('tab');
-  const tab: TabId = TABS.some((t) => t.id === raw) ? (raw as TabId) : 'profile';
+  const tab: TabId = TABS.some((t) => t.id === raw) ? (raw as TabId) : 'home';
 
   const select = (id: TabId) => router.replace(`/room/you?tab=${id}`, { scroll: false });
 
   return (
     <div>
-      <p className="text-room text-xs font-semibold uppercase tracking-[0.12em] mb-2">You</p>
-      <h1 className="text-2xl font-extrabold tracking-tight mb-4">Il tuo spazio.</h1>
+      {tab !== 'home' && (
+        <>
+          <p className="text-room text-xs font-semibold uppercase tracking-[0.12em] mb-2">You</p>
+          <h1 className="text-2xl font-extrabold tracking-tight mb-4">Il tuo spazio.</h1>
+        </>
+      )}
       <div className="flex gap-2 mb-5 overflow-x-auto" role="tablist" aria-label="Sezioni You">
         {TABS.map((t) => (
           <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => select(t.id)}
@@ -40,6 +46,7 @@ function YouInner() {
         ))}
       </div>
       <Suspense fallback={<RoomLoader />}>
+        {tab === 'home' && <YouDashboard />}
         {tab === 'profile' && <ProfileTab />}
         {tab === 'stats' && <StatsTab />}
         {tab === 'startup' && <StartupTab />}
