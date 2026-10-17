@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, ArrowLeft, ArrowRight, Check, Camera, CheckCircle2, XCircle, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Camera, CheckCircle2, XCircle, AlertCircle, Plus, Github } from 'lucide-react';
 import { getAccessToken } from '@/lib/auth-token';
 import { useAuth } from '@/context/AuthContext';
 import { initials, avatarGradient } from '@/lib/avatar';
@@ -13,7 +13,7 @@ const SITUATIONS = ['Solo founder full-time', 'Founder part-time', 'Dipendente c
 const GOALS12 = ['Lanciare l\u2019MVP', 'Primi 10 clienti', '1.000€ MRR', '10.000€ MRR', 'Raccogliere fondi'] as const;
 const SKILL_PRESETS = ['JavaScript', 'TypeScript', 'React', 'Next.js', 'Python', 'Marketing', 'Vendite', 'Design', 'SEO'] as const;
 
-const STEPS = ['Profilo', 'Percorso', 'Startup', 'Obiettivo'] as const;
+const STEPS = ['Profilo', 'Percorso', 'Startup', 'GitHub', 'Obiettivo'] as const;
 
 type StartupDraft = { domain: string; name: string; tagline: string; auto: boolean };
 
@@ -52,6 +52,16 @@ export default function OnboardingPage() {
   const [locality, setLocality] = useState('');
   const [bio, setBio] = useState('');
   const [github, setGithub] = useState('');
+  const [ghStatus, setGhStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
+  const [ghError, setGhError] = useState('');
+  const [ghProfile, setGhProfile] = useState<null | {
+    login: string;
+    name: string | null;
+    avatar_url: string;
+    html_url: string;
+    public_repos: number;
+    followers: number;
+  }>(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
@@ -95,6 +105,46 @@ export default function OnboardingPage() {
     }, 500);
     return () => clearTimeout(t);
   }, [handle]);
+
+  // Modificare lo username invalida la connessione GitHub (serve riconnettere).
+  useEffect(() => {
+    setGhStatus('idle');
+    setGhError('');
+    setGhProfile(null);
+  }, [github]);
+
+  const connectGitHub = async () => {
+    const q = github.trim().replace(/^@/, '');
+    if (!q) { setGhStatus('error'); setGhError('Inserisci il tuo username GitHub.'); return; }
+    if (!/^[a-zA-Z0-9-]{1,39}$/.test(q)) { setGhStatus('error'); setGhError('Username non valido (lettere, numeri, trattini).'); return; }
+    setGhStatus('checking');
+    setGhError('');
+    try {
+      const token = await getAccessToken();
+      const res = await fetch(`/api/room/github/profile?username=${encodeURIComponent(q)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGhStatus('error');
+        setGhError(data.message || 'Connessione a GitHub fallita.');
+        return;
+      }
+      const p = data.profile;
+      setGhProfile({
+        login: String(p?.login || q),
+        name: p?.name ?? null,
+        avatar_url: String(p?.avatar_url || ''),
+        html_url: String(p?.html_url || `https://github.com/${q}`),
+        public_repos: Number(p?.public_repos || 0),
+        followers: Number(p?.followers || 0),
+      });
+      setGhStatus('connected');
+    } catch {
+      setGhStatus('error');
+      setGhError('GitHub non raggiungibile, riprova più tardi.');
+    }
+  };
 
   const toggleSkill = (s: string) => setSkills((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s].slice(0, 9)));
 
@@ -158,6 +208,10 @@ export default function OnboardingPage() {
       return '';
     }
     if (step === 3) {
+      if (ghStatus !== 'connected') return 'Connetti il tuo account GitHub per proseguire.';
+      return '';
+    }
+    if (step === 4) {
       if (!goalTitle.trim()) return 'Definisci il primo obiettivo.';
       if (tasks.map((t) => t.trim()).filter(Boolean).length === 0) return 'Aggiungi almeno una task iniziale.';
       return '';
@@ -316,10 +370,6 @@ export default function OnboardingPage() {
                 <input id="ob-loc" className={input} value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="Milano, IT" maxLength={120} />
               </div>
               <div className="sm:col-span-2">
-                <label className={label} htmlFor="ob-gh">Username GitHub</label>
-                <input id="ob-gh" className={input} value={github} onChange={(e) => setGithub(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 39))} placeholder="octocat" />
-              </div>
-              <div className="sm:col-span-2">
                 <label className={label} htmlFor="ob-bio">Su di te <span className="text-red-400">*</span></label>
                 <textarea id="ob-bio" rows={3} className={`${input} resize-none`} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Due righe su cosa stai costruendo e cosa cerchi." maxLength={500} />
                 <p className="mt-1 text-[10px] text-zinc-600">{bio.trim().length}/500</p>
@@ -442,6 +492,72 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className={selectWrap}>
               <div>
+                <label className={label} htmlFor="ob-gh">Username GitHub</label>
+                <div className="flex gap-2">
+                  <input
+                    id="ob-gh"
+                    className={input}
+                    value={github}
+                    onChange={(e) => setGithub(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 39))}
+                    placeholder="octocat"
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={connectGitHub}
+                    disabled={ghStatus === 'checking' || !github.trim()}
+                    className="shrink-0 px-4 py-2.5 text-sm font-bold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:border-orange-500/50 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                  >
+                    {ghStatus === 'checking' ? <Loader2 size={15} className="animate-spin" /> : <Github size={15} />}
+                    {ghStatus === 'checking' ? 'Verifica...' : 'Connetti'}
+                  </button>
+                </div>
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={`mt-1.5 flex items-center gap-1 text-[10px] font-bold ${
+                    ghStatus === 'connected' ? 'text-emerald-400' :
+                    ghStatus === 'error' ? 'text-red-400' :
+                    ghStatus === 'checking' ? 'text-zinc-500' : 'text-zinc-600'
+                  }`}
+                >
+                  {ghStatus === 'connected' && <><CheckCircle2 size={12} /> Connesso</>}
+                  {ghStatus === 'error' && <><XCircle size={12} /> {ghError}</>}
+                  {ghStatus === 'checking' && <><Loader2 size={12} className="animate-spin" /> Connessione a GitHub...</>}
+                  {ghStatus === 'idle' && <><AlertCircle size={12} /> Inserisci lo username e premi Connetti</>}
+                </p>
+              </div>
+
+              {ghStatus === 'connected' && ghProfile && (
+                <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3">
+                  <div className="flex items-center gap-3">
+                    {ghProfile.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={ghProfile.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-emerald-500/40 shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-black shrink-0">
+                        {ghProfile.login.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white truncate">{ghProfile.name || ghProfile.login}</p>
+                      <a href={ghProfile.html_url} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium truncate">
+                        @{ghProfile.login}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 mt-2 text-[11px] text-zinc-400 font-medium">
+                    <span><b className="text-zinc-200">{ghProfile.public_repos}</b> repo</span>
+                    <span><b className="text-zinc-200">{ghProfile.followers}</b> follower</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className={selectWrap}>
+              <div>
                 <label className={label} htmlFor="ob-goal">Primo obiettivo</label>
                 <input id="ob-goal" className={input} value={goalTitle} onChange={(e) => setGoalTitle(e.target.value)} placeholder="Es. landing online entro venerdì" maxLength={200} />
               </div>
@@ -471,7 +587,7 @@ export default function OnboardingPage() {
               </button>
             )}
             {!isLastStep ? (
-              <button type="submit" className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 rounded-xl flex items-center justify-center gap-2">
+              <button type="submit" disabled={step === 3 && ghStatus !== 'connected'} className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                 Continua <ArrowRight size={16} />
               </button>
             ) : (

@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
   if (!locality) return NextResponse.json({ message: 'Località richiesta' }, { status: 400 });
   if (!bio) return NextResponse.json({ message: 'Bio richiesta' }, { status: 400 });
   const github = cleanStr(body.github_username, 39);
-  if (github && !/^[a-zA-Z0-9-]{1,39}$/.test(github)) return NextResponse.json({ message: 'Username GitHub non valido' }, { status: 400 });
+  if (!github) return NextResponse.json({ message: 'Username GitHub richiesto' }, { status: 400 });
+  if (!/^[a-zA-Z0-9-]{1,39}$/.test(github)) return NextResponse.json({ message: 'Username GitHub non valido' }, { status: 400 });
   const avatarUrl = cleanStr(body.avatar_url, 1000);
   if (avatarUrl && !isValidUrlOrEmpty(avatarUrl)) return NextResponse.json({ message: 'Avatar non valido' }, { status: 400 });
 
