@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, User as UserIcon, Menu, X, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { initials, avatarGradient } from '../../lib/avatar';
 
 
 interface NavLink {
@@ -178,12 +179,15 @@ const Navbar = () => {
            onError={() => setDesktopAvatarError(true)}
             className="w-7 h-7 border border-orange-400/30 shadow-sm object-cover rounded-full"
           />
-         ) : (
-          <div className="w-7 h-7 bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-[11px] font-black shadow-lg shadow-orange-500/20 rounded-full">
-           {user.name.charAt(0).toUpperCase() || "U"}
-          </div>
-         )}
-         </button>
+          ) : (
+           <div
+            className="w-7 h-7 flex items-center justify-center text-white text-[11px] font-black shadow-lg rounded-full"
+            style={{ background: avatarGradient(user.handle || user.name) }}
+           >
+            {initials(user.name)}
+           </div>
+          )}
+          </button>
 
         <AnimatePresence>
          {isProfileOpen && (
@@ -259,12 +263,15 @@ const Navbar = () => {
          onError={() => setMobileAvatarError(true)}
          className="w-7 h-7 border border-orange-400/30 shadow-sm object-cover rounded-full"
         />
-       ) : (
-        <div className="w-7 h-7 bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-[11px] font-black shadow-lg shadow-orange-500/20 rounded-full">
-         {user.name.charAt(0).toUpperCase() || "U"}
-        </div>
-       )}
-      </div>
+        ) : (
+         <div
+          className="w-7 h-7 flex items-center justify-center text-white text-[11px] font-black shadow-lg rounded-full"
+          style={{ background: avatarGradient(user.handle || user.name) }}
+         >
+          {initials(user.name)}
+         </div>
+        )}
+       </div>
      ) : loading ? (
       <span className="w-7 h-7 rounded-full bg-zinc-800 animate-pulse" aria-hidden />
      ) : (
