@@ -301,7 +301,7 @@ export default function CoachPage() {
                 🔒 Join to unlock
               </a>
             )}
-            <a href="/room/planner" className="px-4 py-3 font-bold text-violet-400 hover:text-violet-300 transition-colors whitespace-nowrap">My Plan</a>
+            <a href="/room/myplan" className="px-4 py-3 font-bold text-violet-400 hover:text-violet-300 transition-colors whitespace-nowrap">My Plan</a>
           </div>
         </section>
 

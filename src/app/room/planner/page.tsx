@@ -1,38 +1,49 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { roomAuthHeaders } from '@/lib/auth-token';
-import { Loader2, Plus, Trash2, Flame, Check } from 'lucide-react';
+import { Loader2, Plus, Trash2, Flame, Check, Sparkles, X, Users, Lock } from 'lucide-react';
 import { roomInput as input } from '../ui';
 
 type Startup = { id: string; name: string };
 type Task = { id: string; title: string; priority: string; status: string; due_date: string | null };
 type Block = { id: string; start_time: string; end_time: string; label: string };
-type Goal = { id: string; title: string; status: string; proof_url: string | null; proof_note: string | null; screenshot_path?: string | null };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-export default function PlannerPage() {
+const localISO = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+export default function TodayPage() {
+  const { user } = useAuth();
   const [startups, setStartups] = useState<Startup[]>([]);
   const [sid, setSid] = useState('');
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState('');
   const [standup, setStandup] = useState({ done: '', todo: '', blockers: '' });
+  const [standupOpen, setStandupOpen] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [newBlock, setNewBlock] = useState({ start: '09:00', end: '10:00', label: '' });
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [newGoal, setNewGoal] = useState('');
   const [streak, setStreak] = useState<{ current: number; longest: number; todayDone: boolean; heatmap: string[] } | null>(null);
-  // Apertura automatica del form blocchi quando si arriva da ?plan=1
-  const [addBlockOpen, setAddBlockOpen] = useState(() => {
+
+  // Nota una tantum: giornata e chiusura decise una sola volta (niente re-render)
+  const [note] = useState(() => {
+    let dismissed = false;
+    let day = 1;
     if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      if (sp.get('plan') === '1') { window.history.replaceState({}, '', '/room/planner'); return true; }
+      try {
+        dismissed = localStorage.getItem('room-day-note') === 'gone';
+        const first = localStorage.getItem('room-first-seen');
+        if (!first) localStorage.setItem('room-first-seen', new Date().toISOString());
+        else day = Math.floor((Date.now() - new Date(first).getTime()) / 86400000) + 1;
+      } catch { /* storage non disponibile */ }
     }
-    return false;
+    return { dismissed, day };
   });
-  const [addGoalOpen, setAddGoalOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(!note.dismissed);
 
   useEffect(() => {
     (async () => {
@@ -50,14 +61,12 @@ export default function PlannerPage() {
     if (!sid) return;
     (async () => {
       const h = await roomAuthHeaders();
-      const [t, b, g] = await Promise.all([
+      const [t, b] = await Promise.all([
         fetch(`/api/room/tasks?startup_id=${sid}`, { headers: h }).then((r) => r.json()),
         fetch(`/api/room/blocks?day=${today()}`, { headers: h }).then((r) => r.json()),
-        fetch(`/api/room/goals?startup_id=${sid}`, { headers: h }).then((r) => r.json()),
       ]);
       setTasks(t.tasks || []);
       setBlocks(b.blocks || []);
-      setGoals(g.goals || []);
       const su = await fetch(`/api/room/standups?startup_id=${sid}&day=${today()}`, { headers: h }).then((r) => r.json());
       if (su.standups?.[0]) {
         const s0 = su.standups[0];
@@ -77,6 +86,11 @@ export default function PlannerPage() {
       </div>
     );
   }
+
+  const dismissNote = () => {
+    setNoteOpen(false);
+    try { localStorage.setItem('room-day-note', 'gone'); } catch { /* ignore */ }
+  };
 
   const addTask = async (e: FormEvent) => {
     e.preventDefault();
@@ -107,222 +121,221 @@ export default function PlannerPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ startup_id: sid, day: today(), ...standup }),
     });
+    setStandupOpen(false);
     const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
     if (s.ok) setStreak(await s.json());
   };
 
-  const addBlock = async (e: FormEvent) => {
-    e.preventDefault();
-    const r = await fetch('/api/room/blocks', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-      body: JSON.stringify({ day: today(), start_time: newBlock.start, end_time: newBlock.end, label: newBlock.label, startup_id: sid }),
-    });
-    if (r.ok) { const b = await r.json().then((d) => d.block); setBlocks((p) => [...p, b].sort((a, c) => a.start_time.localeCompare(c.start_time))); }
-  };
+  // Saluto in base all'ora
+  const h = new Date().getHours();
+  const greeting = h < 5 ? 'Buonanotte' : h < 12 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  const firstName = (user?.name || '').trim().split(' ')[0] || 'founder';
 
-  const addGoal = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newGoal.trim()) return;
-    const r = await fetch('/api/room/goals', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-      body: JSON.stringify({ startup_id: sid, title: newGoal }),
-    });
-    if (r.ok) { const g = await r.json().then((d) => d.goal); setGoals((p) => [g, ...p]); setNewGoal(''); }
-  };
+  // Settimana corrente (lunedì → domenica) per i pallini della streak
+  const heat = new Set(streak?.heatmap || []);
+  const nowD = new Date();
+  const todayIdx = (nowD.getDay() + 6) % 7; // 0 = lunedì
+  const monday = new Date(nowD);
+  monday.setDate(nowD.getDate() - todayIdx);
+  const week = WEEK.map((l, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return { l, on: heat.has(localISO(d)), future: i > todayIdx };
+  });
 
-  const section = 'bg-black border border-zinc-800 rounded-2xl p-4';
-  const h2 = 'font-bold text-white mb-3';
-  const kicker = 'text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500';
+  const doneCount = tasks.filter((t) => t.status === 'done').length;
+  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+  const standupSaved = Boolean(standup.done || standup.todo || standup.blockers);
+  const noteTitle = note.day <= 1
+    ? 'Primo giorno. Inizia a shippare.'
+    : note.day === 2
+      ? 'Due giorni sulle spalle. Stai shippando.'
+      : `Giorno ${note.day}. Stai shippando.`;
+
+  const ta = `${input} !py-2.5`;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => { if (typeof window !== 'undefined' && window.history.length > 1) window.history.back(); else window.location.href = '/room/coach'; }}
-          aria-label="Indietro" title="Indietro"
-          className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:border-room hover:text-white transition-all">
-          ←
-        </button>
-        <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">My Plan</h1>
-        <select aria-label="Startup attiva" className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 max-w-[160px]" value={sid} onChange={(e) => setSid(e.target.value)}>
-          {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </div>
-
-      {/* Oggi */}
-      <section className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5" aria-label="Schedule di oggi">
-        <p className={`${kicker} mb-3`}>Today&apos;s schedule</p>
-        {blocks.length === 0 ? (
-          <>
-            <h2 className="text-lg font-extrabold text-white">Nessun piano per oggi</h2>
-            <p className="text-sm text-zinc-500 mt-1.5 mb-4">
-              Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano in My Plan.
-            </p>
-            <a href="/room/coach?plan=1" className="w-full flex items-center justify-center gap-2 py-3.5 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all">
-              ✨ Pianifica la mia giornata con il Coach
-            </a>
-          </>
-        ) : (
-          <ul className="space-y-2">
-            {blocks.map((b) => (
-              <li key={b.id} className="flex items-center gap-3 bg-black border border-zinc-800 rounded-xl px-3.5 py-2.5">
-                <span className="font-mono text-xs text-room shrink-0">{b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)}</span>
-                <span className="flex-1 truncate text-sm text-zinc-200">{b.label || '—'}</span>
-                <button onClick={async () => {
-                  await fetch(`/api/room/blocks/${b.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
-                  setBlocks((p) => p.filter((x) => x.id !== b.id));
-                }} aria-label="Elimina blocco" className="p-1.5 text-zinc-600 hover:text-red-400"><Trash2 size={14} /></button>
-              </li>
-            ))}
-            <li>
-              <a href="/room/coach?plan=1" className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-700 hover:border-room text-white text-sm font-bold rounded-xl transition-all">
-                ✨ Riallaccia il giorno con il Coach
-              </a>
-            </li>
-          </ul>
-        )}
-      </section>
-
-      {/* Aggiungi blocco orario */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl">
-        <button onClick={() => setAddBlockOpen(!addBlockOpen)} aria-expanded={addBlockOpen}
-          className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-zinc-900/50 rounded-2xl transition-colors">
-          <span className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 shrink-0"><Plus size={15} /></span>
-          <span className="flex-1 font-bold text-[15px] text-white">Aggiungi blocco orario</span>
-          <span className={`text-zinc-500 transition-transform ${addBlockOpen ? 'rotate-180' : ''}`} aria-hidden>⌄</span>
-        </button>
-        {addBlockOpen && (
-          <form onSubmit={addBlock} className="grid grid-cols-3 gap-2 px-4 pb-4">
-            <input aria-label="Inizio" type="time" className={input} value={newBlock.start} onChange={(e) => setNewBlock({ ...newBlock, start: e.target.value })} />
-            <input aria-label="Fine" type="time" className={input} value={newBlock.end} onChange={(e) => setNewBlock({ ...newBlock, end: e.target.value })} />
-            <input aria-label="Etichetta blocco" className={input} placeholder="Focus" value={newBlock.label} onChange={(e) => setNewBlock({ ...newBlock, label: e.target.value })} maxLength={200} />
-            <button className="col-span-3 py-2.5 bg-room text-[#0B0D12] text-sm font-bold rounded-xl">Aggiungi blocco</button>
-          </form>
-        )}
-      </div>
-
-      {/* Milestone */}
-      <section className={section} aria-label="Milestone">
-        <div className="flex items-center gap-3 mb-3">
-          <p className={`${kicker} flex-1`}>My milestones</p>
-          <button onClick={() => setAddGoalOpen(!addGoalOpen)}
-            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-200 hover:border-room transition-all flex items-center gap-1.5">
-            📅 Milestone
-          </button>
-        </div>
-        {addGoalOpen && (
-          <form onSubmit={addGoal} className="flex gap-2 mb-4">
-            <input aria-label="Nuova milestone" className={input} value={newGoal} onChange={(e) => setNewGoal(e.target.value)} placeholder="Lancio, release, scadenza privata..." maxLength={200} autoFocus />
-            <button className="px-4 bg-room text-[#0B0D12] rounded-xl font-bold">Ok</button>
-          </form>
-        )}
-        {goals.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-lg font-extrabold text-white">Niente di programmate ancora</p>
-            <p className="text-sm text-zinc-500 mt-2 max-w-md mx-auto">
-              Aggiungi una data di lancio, un rilascio feature o una scadenza privata silenziosa — quelle pubbliche finiscono sul calendario del club.
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {goals.map((g) => (
-              <li key={g.id} className="text-sm border border-zinc-800 rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                  <span className={`flex-1 ${g.status === 'done' ? 'line-through text-zinc-500' : 'text-zinc-200 font-semibold'}`}>{g.title}</span>
-                  {g.status !== 'done' && (
-                    <button onClick={async () => {
-                      const r = await fetch(`/api/room/goals/${g.id}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-                        body: JSON.stringify({ status: 'done' }),
-                      });
-                      if (r.ok) setGoals((p) => p.map((x) => (x.id === g.id ? { ...x, status: 'done' } : x)));
-                    }} className="text-[11px] font-bold text-room">Fatto ✓</button>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <input aria-label="URL prova" defaultValue={g.proof_url || ''} placeholder="URL prova (https://...)" className={`${input} !py-1.5 !text-xs`}
-                    onBlur={async (e) => {
-                      if (e.target.value === (g.proof_url || '')) return;
-                      await fetch(`/api/room/goals/${g.id}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-                        body: JSON.stringify({ proof_url: e.target.value || null }),
-                      });
-                    }} />
-                </div>
-                <label className="block mt-2 text-[11px] font-bold text-zinc-500 cursor-pointer hover:text-room">
-                  {g.screenshot_path ? '✓ Prova allegata · sostituisci' : '+ Allega screenshot prova'}
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    const fd = new FormData();
-                    fd.append('goal_id', g.id);
-                    fd.append('screenshot', f);
-                    const r = await fetch('/api/room/proofs', { method: 'POST', headers: await roomAuthHeaders(), body: fd });
-                    if (r.ok) setGoals((p) => p.map((x) => (x.id === g.id ? { ...x, screenshot_path: 'ok' } : x)));
-                  }} />
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Streak */}
-      {streak && (
-        <div className={`${section} flex items-center gap-4`} role="status" aria-label="Streak">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${streak.todayDone ? 'bg-ember text-[#0B0D12]' : 'bg-zinc-900 text-zinc-500'}`}>
-            <Flame size={22} />
-          </div>
-          <div className="flex-1">
-            <p className="font-extrabold text-white">{streak.current} giorni di fila {streak.todayDone ? '· oggi fatto ✓' : '· oggi da fare'}</p>
-            <p className="text-xs text-zinc-500">Record: {streak.longest}</p>
-          </div>
-          {!streak.todayDone && (
-            <button onClick={async () => {
-              await fetch('/api/room/streak', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) }, body: JSON.stringify({ startup_id: sid }) });
-              const s = await fetch('/api/room/streak', { headers: await roomAuthHeaders() });
-              if (s.ok) setStreak(await s.json());
-            }} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">Shippato oggi</button>
+    <div className="max-w-5xl mx-auto space-y-5">
+      {/* Testata: saluto + avatar */}
+      <div className="flex items-center gap-4">
+        <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-white flex-1">
+          {greeting}, {firstName}.
+        </h1>
+        <Link href="/room/you" aria-label="Vai al tuo profilo" className="shrink-0">
+          {user?.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
+            <img src={user.avatar} alt="" className="w-11 h-11 rounded-full object-cover border-2 border-zinc-700 hover:border-room transition-colors" />
+          ) : (
+            <span className="w-11 h-11 rounded-full bg-room/20 border-2 border-zinc-700 flex items-center justify-center text-room font-black text-sm">
+              {firstName.slice(0, 2).toUpperCase()}
+            </span>
           )}
-        </div>
+        </Link>
+      </div>
+
+      {/* Nota una tantum */}
+      {noteOpen && (
+        <section aria-label="Nota del giorno" className="relative bg-zinc-950 border border-zinc-800 rounded-2xl p-5 pr-12">
+          <button onClick={dismissNote} aria-label="Chiudi nota" title="Chiudi"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-600 hover:text-white hover:bg-zinc-900 transition-colors">
+            <X size={16} />
+          </button>
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 flex items-center gap-2 mb-3">
+            <Users size={14} className="text-room" aria-hidden /> Giorno {note.day} · Nota una tantum
+          </p>
+          <h2 className="text-lg font-extrabold text-white">{noteTitle}</h2>
+          <p className="text-sm text-zinc-400 leading-relaxed mt-1.5">
+            È l&apos;abitudine su cui nasce il Club — una room a pagamento di founder solitari con ranking verificati,
+            coaching giornaliero e feedback reali su ciò che shippi. Un&apos;occhiata e questa card sparisce per sempre.
+          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
+            <a href="/room/community" onClick={dismissNote}
+              className="flex-1 py-3.5 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all text-center">
+              Scopri cosa c&apos;è dentro
+            </a>
+            <button onClick={dismissNote} className="px-5 py-3 text-zinc-500 hover:text-zinc-300 font-bold text-sm transition-colors">
+              Non ora
+            </button>
+          </div>
+        </section>
       )}
 
-      {/* Task */}
-      <div id="task" className={`${section} scroll-mt-20`}>
-        <h2 className={h2}>Task</h2>
-        <form onSubmit={addTask} className="flex gap-2 mb-3">
-          <input aria-label="Nuovo task" className={input} value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Nuovo task..." maxLength={200} />
-          <button aria-label="Aggiungi task" className="px-4 bg-room text-[#0B0D12] rounded-xl font-bold"><Plus size={16} /></button>
-        </form>
-        {tasks.length === 0 ? <p className="text-sm text-zinc-500">Nessun task. Aggiungi il primo sopra.</p> : (
-          <ul className="space-y-2">
-            {tasks.map((t) => (
-              <li key={t.id} className="flex items-center gap-2 text-sm">
-                <button onClick={() => setTaskStatus(t.id, t.status === 'done' ? 'todo' : 'done')} aria-label={t.status === 'done' ? 'Riapri task' : 'Completa task'}
-                  className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${t.status === 'done' ? 'bg-room border-room text-white' : 'border-zinc-700 text-transparent'}`}>
-                  <Check size={14} />
-                </button>
-                <span className={`flex-1 ${t.status === 'done' ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>{t.title}</span>
-                <button onClick={async () => {
-                  await fetch(`/api/room/tasks/${t.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
-                  setTasks((p) => p.filter((x) => x.id !== t.id));
-                }} aria-label="Elimina task" className="p-1.5 text-zinc-600 hover:text-red-400"><Trash2 size={14} /></button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        {/* Colonna sinistra: standup, streak, task */}
+        <div className="space-y-5">
+          {/* Daily standup */}
+          <section id="standup" className="scroll-mt-20 bg-teal-500/5 border border-teal-500/30 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={14} className="text-teal-400" aria-hidden />
+              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-teal-400">Daily standup</p>
+            </div>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              Ieri, oggi, blocchi — tre note veloci, trasformate in una task list actionable per la giornata.
+            </p>
+            <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5">
+              <Lock size={12} aria-hidden /> Il feedback del Coach sulle tue note è una funzione per membri.
+            </p>
+            <button onClick={() => setStandupOpen(!standupOpen)}
+              className="w-full mt-4 py-3.5 bg-teal-500 hover:bg-teal-400 text-black font-bold rounded-xl transition-colors">
+              {standupOpen ? 'Chiudi standup' : standupSaved ? 'Modifica standup' : 'Inizia standup'}
+            </button>
+            {standupOpen && (
+              <form onSubmit={saveStandup} className="mt-4 space-y-2">
+                <textarea aria-label="Fatto" rows={2} className={ta} placeholder="Fatto ieri/oggi" value={standup.done} onChange={(e) => setStandup({ ...standup, done: e.target.value })} maxLength={2000} />
+                <textarea aria-label="Da fare" rows={2} className={ta} placeholder="Da fare oggi" value={standup.todo} onChange={(e) => setStandup({ ...standup, todo: e.target.value })} maxLength={2000} />
+                <textarea aria-label="Blocchi" rows={2} className={ta} placeholder="Blocchi" value={standup.blockers} onChange={(e) => setStandup({ ...standup, blockers: e.target.value })} maxLength={2000} />
+                <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room transition-all">Salva standup</button>
+              </form>
+            )}
+          </section>
 
-      {/* Standup */}
-      <form onSubmit={saveStandup} id="standup" className={`${section} scroll-mt-20`}>
-        <h2 className={h2}>Standup di oggi</h2>
-        <div className="space-y-2">
-          <textarea aria-label="Fatto" rows={2} className={input} placeholder="Fatto" value={standup.done} onChange={(e) => setStandup({ ...standup, done: e.target.value })} maxLength={2000} />
-          <textarea aria-label="Da fare" rows={2} className={input} placeholder="Da fare" value={standup.todo} onChange={(e) => setStandup({ ...standup, todo: e.target.value })} maxLength={2000} />
-          <textarea aria-label="Blocchi" rows={2} className={input} placeholder="Blocchi" value={standup.blockers} onChange={(e) => setStandup({ ...standup, blockers: e.target.value })} maxLength={2000} />
+          {/* Streak */}
+          <section className="bg-orange-500/5 border border-orange-500/30 rounded-2xl p-5" aria-label="Streak">
+            <div className="flex items-center gap-4">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${streak?.todayDone ? 'bg-ember text-[#0B0D12]' : 'bg-orange-500/20 text-orange-400'}`}>
+                <Flame size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xl font-extrabold text-orange-400">{streak?.current ?? 0} giorni</p>
+                <p className="text-xs text-zinc-500">
+                  {streak?.todayDone ? 'Shippato oggi ✓ · torna domani' : 'Completa un task per iniziare la streak'}
+                </p>
+              </div>
+              <div className="text-right shrink-0" aria-label="Ultimi 7 giorni">
+                <div className="flex gap-1.5 justify-end mb-1.5">
+                  {week.map((d, i) => (
+                    <span key={i} className={`w-2 h-2 rounded-full ${d.on ? 'bg-orange-400' : d.future ? 'bg-zinc-800' : 'bg-zinc-700'}`} />
+                  ))}
+                </div>
+                <div className="flex gap-1.5 text-[9px] font-bold text-zinc-600">
+                  {week.map((d, i) => <span key={i} className="w-2 text-center">{d.l}</span>)}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Task di oggi */}
+          <section id="task" className="scroll-mt-20 bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 flex-1">Today&apos;s tasks</p>
+              <span className="text-xs font-mono font-bold text-zinc-400">{doneCount}/{tasks.length}</span>
+            </div>
+            <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden mb-4" role="progressbar"
+              aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={Math.max(tasks.length, 1)} aria-label="Task completati">
+              <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+            </div>
+            {tasks.length === 0 ? (
+              <p className="text-sm text-zinc-500 mb-3">Nessun task in lista. Cosa shippi oggi?</p>
+            ) : (
+              <ul className="space-y-1.5 mb-3">
+                {tasks.map((t) => (
+                  <li key={t.id} className="flex items-center gap-2.5 text-sm group">
+                    <button onClick={() => setTaskStatus(t.id, t.status === 'done' ? 'todo' : 'done')}
+                      aria-label={t.status === 'done' ? 'Riapri task' : 'Completa task'}
+                      className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${t.status === 'done' ? 'bg-teal-500 border-teal-500 text-black' : 'border-zinc-600 text-transparent hover:border-zinc-400'}`}>
+                      <Check size={12} />
+                    </button>
+                    <span className={`flex-1 truncate ${t.status === 'done' ? 'line-through text-zinc-600' : 'text-zinc-200'}`}>{t.title}</span>
+                    <button onClick={async () => {
+                      await fetch(`/api/room/tasks/${t.id}`, { method: 'DELETE', headers: await roomAuthHeaders() });
+                      setTasks((p) => p.filter((x) => x.id !== t.id));
+                    }} aria-label="Elimina task"
+                      className="p-1.5 text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all">
+                      <Trash2 size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form onSubmit={addTask} className="flex gap-2">
+              <input aria-label="Nuovo task" className={`${input} flex-1`} value={newTask} onChange={(e) => setNewTask(e.target.value)}
+                placeholder="Aggiungi qualcosa da shippare oggi..." maxLength={200} />
+              <button aria-label="Aggiungi task"
+                className="w-11 h-11 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-white hover:border-room transition-all shrink-0">
+                <Plus size={18} />
+              </button>
+            </form>
+          </section>
         </div>
-        <button className="mt-3 w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Salva standup</button>
-      </form>
+
+        {/* Colonna destra: schedule di oggi */}
+        <section aria-label="Schedule di oggi" className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mb-3">Today&apos;s schedule</p>
+          {blocks.length === 0 ? (
+            <>
+              <h2 className="text-lg font-extrabold text-white">Nessun piano per oggi</h2>
+              <p className="text-sm text-zinc-500 mt-1.5 mb-4">
+                Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano in My Plan.
+              </p>
+              <a href="/room/coach?plan=1"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all">
+                ✨ Pianifica la mia giornata con il Coach
+              </a>
+            </>
+          ) : (
+            <>
+              <ul className="space-y-2 mb-3">
+                {blocks.map((b) => (
+                  <li key={b.id} className="flex items-center gap-3 bg-black border border-zinc-800 rounded-xl px-3.5 py-2.5">
+                    <span className="font-mono text-xs text-room shrink-0">{b.start_time.slice(0, 5)}–{b.end_time.slice(0, 5)}</span>
+                    <span className="flex-1 truncate text-sm text-zinc-200">{b.label || '—'}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
+                <a href="/room/coach?plan=1"
+                  className="flex-1 py-3 bg-zinc-900 border border-zinc-700 hover:border-room text-white text-sm font-bold rounded-xl transition-all text-center">
+                  ✨ Riallaccia con il Coach
+                </a>
+                <Link href="/room/myplan"
+                  className="px-4 py-3 border border-zinc-800 hover:border-room text-zinc-400 text-sm font-bold rounded-xl transition-all text-center whitespace-nowrap">
+                  My Plan
+                </Link>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

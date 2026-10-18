@@ -125,7 +125,7 @@ export default function RoomHome() {
           items: [
             { href: '/room/planner#task', title: 'Tasks', desc: 'I task di oggi, per startup.', icon: Target },
             { href: '/room/planner#standup', title: 'Daily Standup', desc: 'Fatto, da fare, blocchi.', icon: Flame },
-            { href: '/room/planner#schedule', title: 'Schedule', desc: 'Time-blocking della giornata.', icon: BookOpen },
+            { href: '/room/myplan#schedule', title: 'Schedule', desc: 'Time-blocking della giornata.', icon: BookOpen },
           ],
         },
         {
