@@ -16,8 +16,8 @@ async function fetchCalendarCounts(username: string): Promise<Map<string, number
   const to = new Date();
   const from = new Date(to);
   from.setDate(from.getDate() - 364);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  const query = `query($login:String!,$from:Date!,$to:Date!){ user(login:$login){ contributionCollection(from:$from,to:$to){ contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }`;
+  const fmt = (d: Date) => d.toISOString();
+  const query = `query($login:String!,$from:DateTime!,$to:DateTime!){ user(login:$login){ contributionsCollection(from:$from,to:$to){ contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }`;
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: ghHeaders(),
@@ -25,9 +25,9 @@ async function fetchCalendarCounts(username: string): Promise<Map<string, number
   });
   if (res.status === 404) throw new Error('Utente GitHub non trovato');
   if (!res.ok) throw new Error('GitHub non raggiungibile');
-  const json = (await res.json()) as { data?: { user?: { contributionCollection?: { contributionCalendar?: { weeks?: Array<{ contributionDays?: GhGraphQlDay[] }> } } } }; errors?: unknown[] };
+  const json = (await res.json()) as { data?: { user?: { contributionsCollection?: { contributionCalendar?: { weeks?: Array<{ contributionDays?: GhGraphQlDay[] }> } } } }; errors?: unknown[] };
   if (json.errors?.length) throw new Error('GraphQL: contribuzioni non disponibili');
-  const weeks = json.data?.user?.contributionCollection?.contributionCalendar?.weeks;
+  const weeks = json.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
   if (!weeks) throw new Error('Utente GitHub non trovato');
   const counts = new Map<string, number>();
   for (const w of weeks) {
