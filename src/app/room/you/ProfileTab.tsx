@@ -121,6 +121,9 @@ export default function ProfileTab() {
   const input = 'w-full px-4 py-3 bg-black border border-zinc-800 focus:border-room outline-none transition-all text-zinc-100 text-sm rounded-xl';
   const label = 'block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1.5';
   const socials = (profile.socials as Record<string, string>) || {};
+  const providerAvatar = String(user?.avatar || '');
+  const currentAvatar = String(profile.avatar_url || providerAvatar);
+  const fromProvider = !profile.avatar_url && Boolean(providerAvatar);
 
   return (
     <div>
@@ -142,9 +145,9 @@ export default function ProfileTab() {
         <div>
           <span className={label}>Immagine profilo</span>
           <div className="flex items-center gap-3">
-            {String(profile.avatar_url || '') ? (
+            {currentAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
-              <img src={String(profile.avatar_url)} alt="Anteprima avatar" className="w-14 h-14 rounded-full object-cover border border-room/40 shrink-0" />
+              <img src={currentAvatar} alt="Anteprima avatar" className="w-14 h-14 rounded-full object-cover border border-room/40 shrink-0" />
             ) : (
               <span className="w-14 h-14 rounded-full bg-room/20 border border-room/40 flex items-center justify-center text-room font-black shrink-0" aria-hidden>
                 {String(profile.name || 'Tu').slice(0, 2).toUpperCase()}
@@ -153,6 +156,9 @@ export default function ProfileTab() {
             <label htmlFor="s-av-file" className={`px-4 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-200 hover:border-room transition-all cursor-pointer ${uploadingAvatar ? 'opacity-60 pointer-events-none' : ''}`}>
               {uploadingAvatar ? 'Caricamento…' : 'Scegli immagine'}
             </label>
+            {fromProvider && (
+              <span className="text-[11px] text-zinc-500 max-w-[180px]">Attuale: immagine dell&apos;account collegato (Google/GitHub).</span>
+            )}
             {String(profile.avatar_url || '') && (
               <button type="button" onClick={() => { set('avatar_url', ''); setMsg('Immagine rimossa. Premi "Salva profilo".'); }}
                 className="px-3 py-2.5 text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors">
