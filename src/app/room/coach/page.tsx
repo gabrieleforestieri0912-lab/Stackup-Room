@@ -16,6 +16,27 @@ const MODES: Array<{ id: Mode; label: string; hint: string }> = [
   { id: 'ask', label: 'Ask the club', hint: 'Bozza domanda forum pronta da pubblicare.' },
 ];
 
+const ADVISORS: Array<{ id: string; emoji: string; title: string; desc: string; prompt: string }> = [
+  { id: 'validation', emoji: '💡', title: 'Idea Validation', desc: 'Kill weak ideas fast, double down on signal', prompt: 'Valuta la mia idea: ti dico cos\'ho in testa e cosa ho già provato.' },
+  { id: 'marketing', emoji: '📣', title: 'Marketing', desc: 'Distribution, content and channels that compound', prompt: 'Aiutami sul go-to-market: canali, contenuti e distribuzione.' },
+  { id: 'pricing', emoji: '🏷', title: 'Pricing', desc: 'Charge more, structure plans, kill discount reflexes', prompt: 'Voglio rivedere pricing e piani: come strutturarli?' },
+  { id: 'launch', emoji: '🚀', title: 'Launch', desc: 'Product Hunt, App Store and launch-week playbooks', prompt: 'Prepara il playbook di lancio per la mia startup.' },
+  { id: 'exit', emoji: '🐙', title: 'Exit & Acquisition', desc: 'Valuations, buyers and selling your app', prompt: 'Parliamo di valutazione, acquirenti e vendita del prodotto.' },
+];
+
+
+function Row({ emoji, title, desc, locked, onClick }: { emoji: string; title: string; desc: string; locked: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3.5 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3.5 text-left hover:border-zinc-600 transition-all">
+      <span className="text-xl shrink-0" aria-hidden>{emoji}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-extrabold text-[15px] text-white">{title}</span>
+        <span className="block text-[13px] text-zinc-500 truncate">{desc}</span>
+      </span>
+      {locked && <span className="text-zinc-600 shrink-0" aria-label="Riservato ai membri">🔒</span>}
+    </button>
+  );
+}
 
 export default function CoachPage() {
   const [ctx, setCtx] = useState<{ consent: boolean; startups: Array<{ id: string; name: string }>; openTasks: number; todayStandup: boolean; usage: { used: number; limit: number } } | null>(null);
@@ -26,16 +47,20 @@ export default function CoachPage() {
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [err, setErr] = useState('');
+  const [view, setView] = useState<'home' | 'chat'>('home');
+  const [member, setMember] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     const h = await roomAuthHeaders();
-    const [c, s] = await Promise.all([
+    const [c, s, p] = await Promise.all([
       fetch('/api/room/coach/context', { headers: h }).then((r) => r.json()),
       fetch('/api/room/coach', { headers: h }).then((r) => r.json()),
+      fetch('/api/room/profile', { headers: h }).then((r) => r.json()).catch(() => ({})),
     ]);
     setCtx(c);
     setSessions(s.sessions || []);
+    setMember(Boolean(p.profile?.handle));
   };
   useEffect(() => { load(); }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [msgs.length]);
@@ -58,6 +83,15 @@ export default function CoachPage() {
     setMode(m);
     setMsgs(d.messages || []);
     setErr('');
+  };
+
+  const openCoach = (m: Mode, prompt?: string) => {
+    setMode(m);
+    setSessionId(null);
+    setMsgs([]);
+    setErr('');
+    setDraft(prompt || '');
+    setView('chat');
   };
 
   const send = async (e: FormEvent) => {
@@ -128,8 +162,7 @@ export default function CoachPage() {
   if (!ctx) return <div className="flex justify-center py-20" role="status"><Loader2 className="animate-spin text-room" /></div>;
 
   // Senza consenso: schermata esplicita + fallback offline (nessun AI coinvolto).
-  if (!ctx.consent) {
-    return (
+  const consentScreen = (
       <div>
         <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Coach AI</p>
         <h1 className="text-xl font-extrabold tracking-tight mb-4">Prima il consenso.</h1>
@@ -155,13 +188,16 @@ export default function CoachPage() {
         </div>
       </div>
     );
-  }
 
   const lastAssistant = [...msgs].reverse().find((m) => m.role === 'assistant')?.content || '';
 
-  return (
+  if (view === 'chat') {
+    if (!ctx.consent) return consentScreen;
+    return (
     <div>
       <div className="flex items-center gap-2 mb-1">
+        <button onClick={() => setView('home')} aria-label="Torna alla home del coach"
+          className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-bold text-zinc-300 hover:border-room transition-all">←</button>
         <h1 className="text-xl font-extrabold tracking-tight flex-1">Coach.</h1>
         <span className="text-[11px] text-zinc-500 font-mono">{ctx.usage.used}/{ctx.usage.limit} oggi</span>
       </div>
@@ -226,6 +262,59 @@ export default function CoachPage() {
       {mode === 'ask' && lastAssistant === '' && (
         <p className="text-[11px] text-zinc-600 mt-2">Suggerimento: descrivi idea + cosa hai già provato + la domanda precisa.</p>
       )}
+    </div>
+    );
+  }
+
+  // ---------- HOME ----------
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <h1 className="text-2xl font-extrabold tracking-tight text-white flex-1">Coach</h1>
+        <span className="text-[11px] text-zinc-500 font-mono">{ctx.usage.used}/{ctx.usage.limit} oggi</span>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        {/* Day planner */}
+        <section className="border border-violet-500/40 bg-violet-500/5 rounded-2xl p-5">
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.16em] text-violet-400 flex items-center gap-2 mb-3">
+            <span aria-hidden>🗓</span> Day Planner
+          </p>
+          <p className="text-sm text-zinc-300 leading-relaxed mb-4">
+            Trasformo la tua lista task in blocchi orari reali — sprint di build, uno slot marketing, una pausa.
+            La pianificazione AI è una funzione per membri; la pianificazione manuale resta libera in <strong className="text-white">My Plan</strong>.
+          </p>
+          <div className="flex items-center gap-3">
+            {member ? (
+              <button onClick={() => openCoach('planner')} className="flex-1 py-3 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl transition-colors">
+                Apri il Day planner
+              </button>
+            ) : (
+              <a href="/room/settings" className="flex-1 py-3 bg-violet-600/40 border border-violet-400/50 text-violet-200 font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                🔒 Join to unlock
+              </a>
+            )}
+            <a href="/room/planner" className="px-4 py-3 font-bold text-violet-400 hover:text-violet-300 transition-colors whitespace-nowrap">My Plan</a>
+          </div>
+        </section>
+
+        {/* Advisors */}
+        <div>
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mb-3">Advisors · Members only</p>
+          <div className="space-y-2.5">
+            {ADVISORS.map((a) => (
+              <Row key={a.id} emoji={a.emoji} title={a.title} desc={a.desc} locked={!member}
+                onClick={() => (member ? openCoach('advisor', a.prompt) : window.location.assign('/room/settings'))} />
+            ))}
+          </div>
+
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mt-5 mb-3">Tools · Free</p>
+          <div className="space-y-2.5">
+            <Row emoji="🧭" title="Standup" desc="Collo di bottiglia + 3 priorità da oggi" locked={false} onClick={() => openCoach('standup')} />
+            <Row emoji="💬" title="Ask the club" desc="Bozza domanda forum pronta da pubblicare" locked={false} onClick={() => openCoach('ask')} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
