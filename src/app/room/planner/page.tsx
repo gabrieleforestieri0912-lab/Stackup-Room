@@ -207,7 +207,7 @@ export default function TodayPage() {
           <section id="standup" className="scroll-mt-20 bg-teal-500/5 border border-teal-500/30 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={14} className="text-teal-400" aria-hidden />
-              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-teal-400">Daily standup</p>
+              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-teal-400">Standup quotidiano</p>
             </div>
             <p className="text-sm text-zinc-300 leading-relaxed">
               Ieri, oggi, blocchi — tre note veloci, trasformate in una task list actionable per la giornata.
@@ -257,7 +257,7 @@ export default function TodayPage() {
           {/* Task di oggi */}
           <section id="task" className="scroll-mt-20 bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
-              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 flex-1">Today&apos;s tasks</p>
+              <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 flex-1">Task di oggi</p>
               <span className="text-xs font-mono font-bold text-zinc-400">{doneCount}/{tasks.length}</span>
             </div>
             <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden mb-4" role="progressbar"
@@ -300,12 +300,12 @@ export default function TodayPage() {
 
         {/* Colonna destra: schedule di oggi */}
         <section aria-label="Schedule di oggi" className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
-          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mb-3">Today&apos;s schedule</p>
+          <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mb-3">Piano di oggi</p>
           {blocks.length === 0 ? (
             <>
               <h2 className="text-lg font-extrabold text-white">Nessun piano per oggi</h2>
               <p className="text-sm text-zinc-500 mt-1.5 mb-4">
-                Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano in My Plan.
+                Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano in «Il mio piano».
               </p>
               <a href="/room/coach?plan=1"
                 className="w-full flex items-center justify-center gap-2 py-3.5 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all">
@@ -329,7 +329,7 @@ export default function TodayPage() {
                 </a>
                 <Link href="/room/myplan"
                   className="px-4 py-3 border border-zinc-800 hover:border-room text-zinc-400 text-sm font-bold rounded-xl transition-all text-center whitespace-nowrap">
-                  My Plan
+                  Il mio piano
                 </Link>
               </div>
             </>

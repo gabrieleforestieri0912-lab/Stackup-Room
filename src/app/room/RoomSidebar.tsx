@@ -9,16 +9,16 @@ import { User, CalendarClock, Users, Sparkles, Settings, Mail, Lightbulb, Rocket
 import { initials, avatarGradient } from '@/lib/avatar';
 
 export const LINKS = [
-  { href: '/room/planner', label: 'Today', icon: CalendarClock, match: '/room/planner' },
+  { href: '/room/planner', label: 'Oggi', icon: CalendarClock, match: '/room/planner' },
   { href: '/room/community', label: 'Club', icon: Users, match: '/room/community' },
   { href: '/room/coach', label: 'Coach', icon: Sparkles, match: '/room/coach' },
-  { href: '/room/you', label: 'You', icon: User, match: '/room/you' },
+  { href: '/room/you', label: 'Tu', icon: User, match: '/room/you' },
 ];
 
 const SUPPORT = [
-  { href: 'mailto:hello@stackup.dev', label: 'Email us', icon: Mail },
-  { href: 'https://github.com/gabrieleforestieri0912-lab/Stackup-Room/issues/new?label=feature', label: 'Request a feature', icon: Lightbulb, external: true },
-  { href: 'https://github.com/gabrieleforestieri0912-lab/Stackup-Room/issues/new?label=bug', label: 'Report a bug', icon: Rocket, external: true },
+  { href: 'mailto:hello@stackup.dev', label: 'Scrivici', icon: Mail },
+  { href: 'https://github.com/gabrieleforestieri0912-lab/Stackup-Room/issues/new?label=feature', label: 'Richiedi una funzione', icon: Lightbulb, external: true },
+  { href: '/room/report', label: 'Segnala un bug', icon: Rocket },
 ];
 
 export default function RoomSidebar() {
@@ -77,19 +77,20 @@ export default function RoomSidebar() {
 
       {/* Support */}
       <div className="border-t border-zinc-900 pt-3 mt-3">
-        <p className="px-3 mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600">Support</p>
-        <nav className="space-y-0.5" aria-label="Support">
-          {SUPPORT.map((s) => (
-            <a
-              key={s.href}
-              href={s.href}
-              {...(s.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-              className="flex items-center gap-3.5 px-3 py-2 text-[14px] font-bold text-zinc-400 hover:text-white hover:bg-zinc-900/60 rounded-xl transition-all"
-            >
+        <p className="px-3 mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-600">Supporto</p>
+        <nav className="space-y-0.5" aria-label="Supporto">
+          {SUPPORT.map((s) => {
+            const cls = 'flex items-center gap-3.5 px-3 py-2 text-[14px] font-bold text-zinc-400 hover:text-white hover:bg-zinc-900/60 rounded-xl transition-all';
+            const inner = (<>
               <s.icon size={17} className="text-zinc-500" />
               {s.label}
-            </a>
-          ))}
+            </>);
+            return s.external ? (
+              <a key={s.href} href={s.href} target="_blank" rel="noreferrer" className={cls}>{inner}</a>
+            ) : (
+              <Link key={s.href} href={s.href} className={cls}>{inner}</Link>
+            );
+          })}
         </nav>
       </div>
 
@@ -106,7 +107,7 @@ export default function RoomSidebar() {
           )}
           <span className="min-w-0">
             <span className="block truncate text-[13px] font-bold text-white">{name}</span>
-            <span className="block truncate text-[11px] text-zinc-500">{handle ? `@${handle}` : 'Builder — free'}</span>
+            <span className="block truncate text-[11px] text-zinc-500">{handle ? `@${handle}` : 'Builder — gratis'}</span>
           </span>
         </Link>
         <Link href="/room/settings" aria-label="Impostazioni" title="Impostazioni"

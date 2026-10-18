@@ -143,7 +143,7 @@ export default function MyPlanPage() {
           className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:border-room hover:text-white transition-all">
           ←
         </button>
-        <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">My Plan</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">Il mio piano</h1>
         <select aria-label="Startup attiva" className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 max-w-[160px]" value={sid} onChange={(e) => setSid(e.target.value)}>
           {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -151,12 +151,12 @@ export default function MyPlanPage() {
 
       {/* Oggi */}
       <section className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5" aria-label="Schedule di oggi">
-        <p className={`${kicker} mb-3`}>Today&apos;s schedule</p>
+        <p className={`${kicker} mb-3`}>Piano di oggi</p>
         {blocks.length === 0 ? (
           <>
             <h2 className="text-lg font-extrabold text-white">Nessun piano per oggi</h2>
             <p className="text-sm text-zinc-500 mt-1.5 mb-4">
-              Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano in My Plan.
+              Lascia che il coach trasformi i tuoi task in uno schedule reale, oppure costruiscilo a mano qui.
             </p>
             <a href="/room/coach?plan=1" className="w-full flex items-center justify-center gap-2 py-3.5 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all">
               ✨ Pianifica la mia giornata con il Coach
@@ -176,7 +176,7 @@ export default function MyPlanPage() {
             ))}
             <li>
               <a href="/room/coach?plan=1" className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-700 hover:border-room text-white text-sm font-bold rounded-xl transition-all">
-                ✨ Riallaccia il giorno con il Coach
+                ✨ Pianifica di nuovo con il Coach
               </a>
             </li>
           </ul>
@@ -204,7 +204,7 @@ export default function MyPlanPage() {
       {/* Milestone */}
       <section className={section} aria-label="Milestone">
         <div className="flex items-center gap-3 mb-3">
-          <p className={`${kicker} flex-1`}>My milestones</p>
+          <p className={`${kicker} flex-1`}>Le mie milestone</p>
           <button onClick={() => setAddGoalOpen(!addGoalOpen)}
             className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-200 hover:border-room transition-all flex items-center gap-1.5">
             📅 Milestone

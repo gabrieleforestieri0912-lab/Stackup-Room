@@ -11,10 +11,10 @@ import { MessageCircle, Headphones, Trophy, Globe, CalendarDays } from 'lucide-r
 
 const TABS = [
   { id: 'chat', label: 'Chat', icon: MessageCircle },
-  { id: 'forum', label: 'Rooms', icon: Headphones },
-  { id: 'ranks', label: 'Ranks', icon: Trophy },
-  { id: 'network', label: 'Network', icon: Globe },
-  { id: 'eventi', label: 'Events', icon: CalendarDays },
+  { id: 'forum', label: 'Stanze', icon: Headphones },
+  { id: 'ranks', label: 'Classifiche', icon: Trophy },
+  { id: 'network', label: 'Rete', icon: Globe },
+  { id: 'eventi', label: 'Eventi', icon: CalendarDays },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -36,13 +36,13 @@ function CommunityInner() {
     <div>
       {/* Header "THE CLUB" + presenza */}
       <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl font-extrabold tracking-[0.16em] text-white">THE CLUB</h1>
+        <h1 className="text-xl font-extrabold tracking-[0.16em] text-white">IL CLUB</h1>
         <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded-md bg-zinc-900 border border-zinc-700 text-zinc-400 flex items-center gap-1.5">
           <MessageCircle size={11} className="text-room" /> Community
         </span>
         <span className="ml-auto flex items-center gap-2 text-[13px] text-zinc-400" role="status">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" aria-hidden />
-          {shown.online > 0 ? `${shown.online} online` : 'community'}{shown.typing > 0 ? ' · qualcuno scrive…' : ''}
+          {shown.online > 0 ? `${shown.online} collegati` : 'comunità'}{shown.typing > 0 ? ' · qualcuno scrive…' : ''}
         </span>
       </div>
 
@@ -69,7 +69,7 @@ function CommunityInner() {
           {(['live', 'forum'] as const).map((s) => (
             <button key={s} role="tab" aria-selected={sub === s} onClick={() => selectSub(s)}
               className={`py-2.5 text-[13px] font-bold rounded-xl transition-all ${sub === s ? 'bg-zinc-900 text-white border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300 border border-transparent'}`}>
-              {s === 'live' ? 'Live Chat' : 'Forum'}
+              {s === 'live' ? 'Chat live' : 'Forum'}
             </button>
           ))}
         </div>

@@ -101,37 +101,37 @@ export default function RoomHome() {
       {/* La tua Room — stessa IA della sidebar */}
       {[
         {
-          group: 'You',
+          group: 'Tu',
           items: [
-            { href: '/room/you?tab=stats', title: 'Stats', desc: 'Streak, GitHub, metriche custom.', icon: BarChart3 },
-            { href: '/room/you?tab=startup', title: 'Your Startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
-            { href: '/room/you?tab=activity', title: 'Activity', desc: 'Le tue notifiche e menzioni.', icon: MessageSquare },
-            { href: '/room/you?tab=contributions', title: 'Contributions', desc: 'Fonti verificate per i rank.', icon: Trophy },
-            { href: '/room/you?tab=profile', title: 'Profile', desc: 'Profilo, privacy, certificati.', icon: User },
+            { href: '/room/you?tab=stats', title: 'Statistiche', desc: 'Streak, GitHub, metriche personali.', icon: BarChart3 },
+            { href: '/room/you?tab=startup', title: 'La tua startup', desc: 'Portfolio, metriche, verifiche.', icon: Rocket },
+            { href: '/room/you?tab=activity', title: 'Attività', desc: 'Le tue notifiche e menzioni.', icon: MessageSquare },
+            { href: '/room/you?tab=contributions', title: 'Contribuzioni', desc: 'Fonti verificate per i rank.', icon: Trophy },
+            { href: '/room/you?tab=profile', title: 'Profilo', desc: 'Profilo, privacy, certificati.', icon: User },
           ],
         },
         {
-          group: 'Room',
+          group: 'Club',
           items: [
             { href: '/room/community?tab=chat', title: 'Chat', desc: 'La chat del club, ultimi 7 giorni.', icon: MessageSquare },
-            { href: '/room/community?tab=forum', title: 'Rooms', desc: 'Stanze di discussione per topic.', icon: MessagesSquare },
-            { href: '/room/community?tab=ranks', title: 'Ranks', desc: 'Leaderboard verificate del club.', icon: Trophy },
-            { href: '/room/community?tab=network', title: 'Network', desc: 'Bacheca offerte e richieste.', icon: BarChart3 },
-            { href: '/room/community?tab=eventi', title: 'Events', desc: 'Eventi e ritrovi del club.', icon: Rocket },
+            { href: '/room/community?tab=forum', title: 'Stanze', desc: 'Stanze di discussione per topic.', icon: MessagesSquare },
+            { href: '/room/community?tab=ranks', title: 'Classifiche', desc: 'Leaderboard verificate del club.', icon: Trophy },
+            { href: '/room/community?tab=network', title: 'Rete', desc: 'Bacheca offerte e richieste.', icon: BarChart3 },
+            { href: '/room/community?tab=eventi', title: 'Eventi', desc: 'Eventi e ritrovi del club.', icon: Rocket },
           ],
         },
         {
-          group: 'Today',
+          group: 'Oggi',
           items: [
-            { href: '/room/planner#task', title: 'Tasks', desc: 'I task di oggi, per startup.', icon: Target },
-            { href: '/room/planner#standup', title: 'Daily Standup', desc: 'Fatto, da fare, blocchi.', icon: Flame },
-            { href: '/room/myplan#schedule', title: 'Schedule', desc: 'Time-blocking della giornata.', icon: BookOpen },
+            { href: '/room/planner#task', title: 'Task', desc: 'I task di oggi, per startup.', icon: Target },
+            { href: '/room/planner#standup', title: 'Standup quotidiano', desc: 'Fatto, da fare, blocchi.', icon: Flame },
+            { href: '/room/myplan#schedule', title: 'Pianificazione', desc: 'Time-blocking della giornata.', icon: BookOpen },
           ],
         },
         {
           group: 'Coach',
           items: [
-            { href: '/room/coach', title: 'Coach AI', desc: 'Standup, day plan, advisor.', icon: Sparkles },
+            { href: '/room/coach', title: 'Coach AI', desc: 'Standup, piano del giorno, consulenti.', icon: Sparkles },
           ],
         },
       ].map((s) => (

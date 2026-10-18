@@ -51,7 +51,7 @@ export default function ForumTab() {
           <input aria-label="Titolo topic" required className={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Apri un topic..." maxLength={200} />
           <select aria-label="Tipo topic" className="px-3 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs font-bold" value={tag} onChange={(e) => setTag(e.target.value)}>
             <option value="discussione">Discussione</option>
-            <option value="ask">Ask the club</option>
+            <option value="ask">Chiedi al club</option>
             <option value="show">Show</option>
           </select>
         </div>

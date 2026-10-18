@@ -182,7 +182,7 @@ export default function ProfileTab() {
         <div className="space-y-3 bg-zinc-950 border border-zinc-800 rounded-xl p-4">
           <label className="flex items-start gap-3 text-sm">
             <input type="checkbox" checked={Boolean(profile.anonymous_mode)} onChange={(e) => set('anonymous_mode', e.target.checked)} className="mt-1 accent-room" />
-            <span><strong className="text-white">Anonymous Mode</strong><br /><span className="text-zinc-400 text-xs">Maschera identità su classifiche e community, stats mantenute.</span></span>
+            <span><strong className="text-white">Modalità anonima</strong><br /><span className="text-zinc-400 text-xs">Maschera identità su classifiche e community, stats mantenute.</span></span>
           </label>
           <label className="flex items-start gap-3 text-sm">
             <input type="checkbox" checked={Boolean(profile.show_revenue)} onChange={(e) => set('show_revenue', e.target.checked)} className="mt-1 accent-room" />

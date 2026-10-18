@@ -12,11 +12,11 @@ import ContributionsTab from './ContributionsTab';
 
 const TABS = [
   { id: 'home', label: 'Home' },
-  { id: 'profile', label: 'Profile' },
-  { id: 'stats', label: 'Stats' },
+  { id: 'profile', label: 'Profilo' },
+  { id: 'stats', label: 'Statistiche' },
   { id: 'startup', label: 'Startup' },
-  { id: 'activity', label: 'Activity' },
-  { id: 'contributions', label: 'Contributions' },
+  { id: 'activity', label: 'Attività' },
+  { id: 'contributions', label: 'Contribuzioni' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];

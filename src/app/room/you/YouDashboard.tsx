@@ -177,7 +177,7 @@ export default function YouDashboard() {
         <div className="space-y-5">
           <section className={card} aria-label="Le tue startup">
             <div className="flex items-center gap-3 mb-4">
-              <h2 className={`${kicker} flex-1`}>Your startups</h2>
+              <h2 className={`${kicker} flex-1`}>Le tue startup</h2>
               <Link href="/room/you?tab=startup" aria-label="Aggiungi startup"
                 className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:border-room hover:text-white transition-all">
                 <Plus size={16} />
@@ -223,7 +223,7 @@ export default function YouDashboard() {
 
           <section className={card} aria-label="Attività">
             <div className="flex items-center gap-3 mb-4">
-              <h2 className={`${kicker} flex-1`}>Activity</h2>
+              <h2 className={`${kicker} flex-1`}>Attività</h2>
               <div className="flex gap-1.5" role="tablist" aria-label="Sorgente attività">
                 {(['club', 'github'] as const).map((k) => (
                   <button key={k} role="tab" aria-selected={source === k} onClick={() => setSource(k)}
@@ -284,14 +284,14 @@ export default function YouDashboard() {
 
           <section className={card} aria-label="Contributions">
             <div className="flex items-center gap-3 mb-3">
-              <h2 className={`${kicker} flex-1`}>Club contributions</h2>
+              <h2 className={`${kicker} flex-1`}>Contribuzioni al club</h2>
               <span className="text-[11px] text-zinc-600">all-time</span>
             </div>
             <div className="flex items-center gap-3 py-2.5 border-b border-zinc-900 last:border-0">
               <span className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                 <GitBranch size={15} />
               </span>
-              <span className="flex-1 font-bold text-sm text-white">Replies given</span>
+              <span className="flex-1 font-bold text-sm text-white">Risposte date</span>
               <span className="font-extrabold text-white">0</span>
             </div>
           </section>
