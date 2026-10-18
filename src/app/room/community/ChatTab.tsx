@@ -68,16 +68,19 @@ function renderBody(body: string) {
 
 function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e: string) => void }) {
   return (
-    <span className="flex flex-wrap gap-1 mt-1.5">
+    <span className="flex flex-wrap gap-1 mt-1">
       {reactions.map((r) => (
         <button key={r.emoji} onClick={() => onReact(r.emoji)} aria-pressed={r.mine}
-          className={`px-2 py-0.5 text-xs rounded-lg border ${r.mine ? 'border-room bg-room/20' : 'border-zinc-800 bg-zinc-950'}`}>
+          className={`px-1.5 py-0.5 text-[11px] rounded-md border transition-colors ${r.mine ? 'border-room bg-room/15 text-room-bright' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500'}`}>
           {r.emoji} {r.count}
         </button>
       ))}
-      {EMOJI.filter((e) => !reactions.some((r) => r.emoji === e)).map((e) => (
-        <button key={e} onClick={() => onReact(e)} aria-label={`Reagisci con ${e}`} className="px-1.5 py-0.5 text-xs rounded-lg border border-transparent hover:border-zinc-700 opacity-60 hover:opacity-100">{e}</button>
-      ))}
+      <span className="contents">
+        {EMOJI.filter((e) => !reactions.some((r) => r.emoji === e)).map((e) => (
+          <button key={e} onClick={() => onReact(e)} aria-label={`Reagisci con ${e}`}
+            className="px-1 py-0.5 text-[11px] rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-900 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all">{e}</button>
+        ))}
+      </span>
     </span>
   );
 }
@@ -255,18 +258,30 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
             <p className="text-sm text-zinc-500 mt-1">Rompi il ghiaccio 👇</p>
           </li>
         )}
-        {msgs.map((m) => (
-          <li key={m.id} className={`flex items-end gap-2 ${m.mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-200`}>
-            {!m.mine && (
-              <span className="shrink-0 w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-bold text-zinc-400">
-                {m.author.replace(/^@/, '').slice(0, 2).toUpperCase()}
+        {msgs.map((m, i) => {
+          const prev = i > 0 ? msgs[i - 1] : null;
+          const grouped = Boolean(prev && prev.author === m.author && prev.mine === m.mine
+            && new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60 * 1000);
+          return (
+          <li key={m.id} className={`relative group flex items-start gap-3 px-2 py-1 -mx-2 rounded-lg hover:bg-zinc-900/50 transition-colors animate-in fade-in duration-150 ${grouped ? 'mt-0' : 'mt-2'}`}>
+            <span className={`shrink-0 w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-black mt-0.5 ${m.mine ? 'bg-room/20 border border-room/40 text-room-bright' : 'bg-zinc-800 border border-zinc-700 text-zinc-300'} ${grouped ? 'invisible' : ''}`}>
+              {m.mine && user?.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element -- avatar utente
+                <img src={user.avatar} alt="Tu" className="w-full h-full object-cover" />
+              ) : (
+                m.author.replace(/^@/, '').slice(0, 2).toUpperCase()
+              )}
+            </span>
+            <div className="flex-1 min-w-0">
+            {grouped ? (
+              <span className="absolute left-0 top-0 w-9 text-center text-[9px] text-zinc-600 leading-9 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" aria-hidden>
+                {new Date(m.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
               </span>
-            )}
-            <div className={`max-w-[70%] border rounded-2xl px-3.5 py-2.5 shadow-sm ${m.mine ? 'border-room/40 bg-room/15' : 'border-zinc-800 bg-zinc-950'}`}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold text-room-bright">{m.author}</span>
+            ) : (
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className={`text-[13px] font-bold ${m.mine ? 'text-room-bright' : 'text-white'}`}>{m.author}</span>
               <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
-              <span className="ml-auto flex gap-1">
+              <span className="ml-auto flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <button onClick={() => setReplyTo(m)} aria-label={`Rispondi a ${m.author}`} className="p-1 text-zinc-600 hover:text-room"><Reply size={12} /></button>
                 {!m.mine && (
                   <>
@@ -288,10 +303,12 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
                 )}
               </span>
             </div>
+            )}
             {m.reply && (
-              <div className="border-l-2 border-room pl-2 mb-1.5 text-xs text-zinc-400">
-                <span className="font-bold text-room-bright">{m.reply.author}</span>{' '}
-                {m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : m.reply.body || <em>allegato</em>}
+              <div className="flex items-center gap-1.5 mb-0.5 text-[11px] text-zinc-500">
+                <span className="w-4 h-3 border-l-2 border-t-2 border-zinc-700 rounded-tl-md -mb-1" aria-hidden />
+                <span className="font-bold text-zinc-400">{m.reply.author}</span>
+                <span className="truncate max-w-[240px]">{m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : m.reply.body || <em>allegato</em>}</span>
               </div>
             )}
             {editingId === m.id ? (
@@ -309,18 +326,9 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
               load(true);
             }} />
             </div>
-            {m.mine && (
-              <span className="shrink-0 w-8 h-8 rounded-full overflow-hidden border border-room/40 bg-room/20 flex items-center justify-center text-[11px] font-bold text-room-bright">
-                {user?.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- avatar utente
-                  <img src={user.avatar} alt="Tu" className="w-full h-full object-cover" />
-                ) : (
-                  (user?.name || user?.email || 'Tu').slice(0, 2).toUpperCase()
-                )}
-              </span>
-            )}
           </li>
-        ))}
+          );
+        })}
         <div ref={bottomRef} />
       </ul>
 
