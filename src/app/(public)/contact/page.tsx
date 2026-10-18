@@ -76,7 +76,7 @@ const Contact: React.FC = () => {
 
   <div className="space-y-8">
   {[
-  { i: <Mail className="text-orange-400" />, t:"Scrivici", v:"info@stackup.it", s:"Rispondiamo in genere entro 24 ore lavorative" },
+  { i: <Mail className="text-orange-400" />, t:"Scrivici", v:"gabriele.forestieri0912@gmail.com", s:"Rispondiamo in genere entro 24 ore lavorative" },
   { i: <MessageSquare className="text-orange-400" />, t:"Community", v:"Discord Server", s:"Confronto e supporto dalla community" },
   { i: <MapPin className="text-orange-400" />, t:"Sede", v:"Milano, Italia", s:"Operiamo da remoto con base a Milano" }
   ].map((item, i) => (

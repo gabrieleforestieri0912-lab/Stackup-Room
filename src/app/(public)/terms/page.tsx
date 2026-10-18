@@ -14,7 +14,7 @@ export default function TermsPage() {
     <div className="prose prose-slate max-w-none space-y-6 text-zinc-400">
      <p>Benvenuto su StackUp Room. Utilizzando la piattaforma accetti i seguenti termini.</p>
      <h2 className="text-lg font-bold text-zinc-100">Titolare del servizio</h2>
-     <p>StackUp Room — progetto di Gabriele Forestieri, Milano, Italia. Contatto: <span className="text-orange-400">info@stackup.it</span>.</p>
+     <p>StackUp Room — progetto di Gabriele Forestieri, Milano, Italia. Contatto: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
      <h2 className="text-lg font-bold text-zinc-100">Account</h2>
      <p>Sei responsabile della sicurezza delle credenziali. L&apos;account è personale e non cedibile.</p>
      <h2 className="text-lg font-bold text-zinc-100">Acquisti e accesso ai contenuti</h2>
@@ -26,7 +26,7 @@ export default function TermsPage() {
      <h2 className="text-lg font-bold text-zinc-100">Limitazioni</h2>
      <p>I risultati dipendono da impegno, prerequisiti e contesto personale: non garantiamo esiti occupazionali specifici.</p>
      <h2 className="text-lg font-bold text-zinc-100">Contatti</h2>
-     <p>Per questioni legali o di supporto: <span className="text-orange-400">info@stackup.it</span>.</p>
+     <p>Per questioni legali o di supporto: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
     </div>
    </div>
   </div>

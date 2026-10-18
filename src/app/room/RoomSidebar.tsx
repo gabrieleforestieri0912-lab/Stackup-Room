@@ -15,9 +15,9 @@ export const LINKS = [
   { href: '/room/you', label: 'Tu', icon: User, match: '/room/you' },
 ];
 
-const SUPPORT = [
-  { href: 'mailto:hello@stackup.dev', label: 'Scrivici', icon: Mail },
-  { href: 'https://github.com/gabrieleforestieri0912-lab/Stackup-Room/issues/new?label=feature', label: 'Richiedi una funzione', icon: Lightbulb, external: true },
+const SUPPORT: Array<{ href: string; label: string; icon: typeof Mail; external?: boolean }> = [
+  { href: 'mailto:gabriele.forestieri0912@gmail.com', label: 'Scrivici', icon: Mail },
+  { href: '/room/feature', label: 'Richiedi una funzione', icon: Lightbulb },
   { href: '/room/report', label: 'Segnala un bug', icon: Rocket },
 ];
 

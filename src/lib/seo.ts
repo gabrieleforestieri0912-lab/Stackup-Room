@@ -87,7 +87,7 @@ export function organizationJsonLd() {
     url: siteUrl(),
     logo: absUrl('/stackup-og.svg'),
     description: SITE_TAGLINE,
-    email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@stackup.it',
+    email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'gabriele.forestieri0912@gmail.com',
     sameAs: [],
     founder: {
       '@type': 'Person',
