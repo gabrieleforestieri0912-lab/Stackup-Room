@@ -133,6 +133,11 @@ export default function YouDashboard() {
   });
   const MESE = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
+  // Colori separati: GitHub = verde (scala ufficiale), Room = verde acqua
+  const heat = source === 'github'
+    ? { active: 'bg-[#39d353]', levels: ['bg-[#0e4429]', 'bg-[#26a641]', 'bg-[#39d353]'], day: 'contributo GitHub' }
+    : { active: 'bg-room', levels: ['bg-room/40', 'bg-room/70', 'bg-room'], day: 'attività Room' };
+
   return (
     <div>
       <div className="flex items-start gap-3 mb-5">
@@ -236,7 +241,10 @@ export default function YouDashboard() {
               <div className="flex gap-1.5" role="tablist" aria-label="Sorgente attività">
                 {(['club', 'github'] as const).map((k) => (
                   <button key={k} role="tab" aria-selected={source === k} onClick={() => setSource(k)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all capitalize ${source === k ? 'border-room bg-room/15 text-room-bright' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all capitalize ${
+                      source === k
+                        ? k === 'github' ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400' : 'border-room bg-room/15 text-room-bright'
+                        : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>
                     {k}
                   </button>
                 ))}
@@ -273,8 +281,8 @@ export default function YouDashboard() {
                         const c = w[di];
                         if (!c) return <span key={`${wi}-${di}`} className="w-full h-3" />;
                         return (
-                          <span key={`${wi}-${di}`} title={`${c.iso}${c.active ? ' · attività' : ''}`}
-                            className={`w-full h-3 rounded-[3px] ${c.active ? 'bg-room' : 'bg-zinc-900'}`} />
+                          <span key={`${wi}-${di}`} title={`${c.iso}${c.active ? ` · ${heat.day}` : ''}`}
+                            className={`w-full h-3 rounded-[3px] ${c.active ? heat.active : 'bg-zinc-900'}`} />
                         );
                       }),
                     )}
@@ -285,11 +293,11 @@ export default function YouDashboard() {
             <div className="flex items-center gap-2 text-[11px] text-zinc-600 mt-3">
               <span>Meno</span>
               <span className="w-3 h-3 rounded-[3px] bg-zinc-900" />
-              <span className="w-3 h-3 rounded-[3px] bg-room/40" />
-              <span className="w-3 h-3 rounded-[3px] bg-room/70" />
-              <span className="w-3 h-3 rounded-[3px] bg-room" />
+              <span className={`w-3 h-3 rounded-[3px] ${heat.levels[0]}`} />
+              <span className={`w-3 h-3 rounded-[3px] ${heat.levels[1]}`} />
+              <span className={`w-3 h-3 rounded-[3px] ${heat.levels[2]}`} />
               <span>Più</span>
-              <span className="ml-auto">ultimi 12 mesi</span>
+              <span className="ml-auto">{source === 'github' ? 'contributi GitHub · verdi' : 'attività Room · verde acqua'}</span>
             </div>
             <p className="text-[11px] text-zinc-600 mt-2">
               {source === 'club' ? 'Contato dai task che segni — un quadrato al giorno.' : 'Contributi pubblici GitHub — solo conteggi, mai codice.'}
