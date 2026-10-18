@@ -33,10 +33,7 @@
   box-shadow: 0 0 0 2px #4de0c9, 0 0 20px rgba(77, 224, 201, 0.15);
 }
 
-/* Sidebar Room: dimensioni fisse di disegno, escluse dal boost globale dei testi piccoli */
-.room-sidebar .text-\[10px\] { font-size: 10px; }
-.room-sidebar .text-\[11px\] { font-size: 11px; }
-.room-sidebar .text-\[13px\] { font-size: 13px; }
+/* Sidebar Room */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -51,31 +48,7 @@ body {
   font-family: var(--font-mono), "JetBrains Mono", monospace;
 }
 
-/* Global font-size boost for small custom text sizes */
-@media (min-width: 0px) {
-  .text-\[10px\] { font-size: 11px; }
-  .text-\[9px\] { font-size: 10px; }
-  .text-\[8px\] { font-size: 9px; }
-  .text-\[11px\] { font-size: 12px; }
-  .text-\[12px\] { font-size: 13px; }
-  .text-\[13px\] { font-size: 14px; }
-}
-@media (min-width: 1280px) {
-  .text-\[10px\] { font-size: 13px; }
-  .text-\[9px\] { font-size: 12px; }
-  .text-\[8px\] { font-size: 10px; }
-  .text-\[11px\] { font-size: 14px; }
-  .text-\[12px\] { font-size: 15px; }
-  .text-\[13px\] { font-size: 16px; }
-}
-@media (min-width: 1536px) {
-  .text-\[10px\] { font-size: 14px; }
-  .text-\[9px\] { font-size: 13px; }
-  .text-\[8px\] { font-size: 11px; }
-  .text-\[11px\] { font-size: 15px; }
-  .text-\[12px\] { font-size: 16px; }
-  .text-\[13px\] { font-size: 17px; }
-}
+/* Le scritte usano le dimensioni dichiarate nelle classi: niente boost globale */
 
 /* Skeleton Loading Shimmer - visible on black bg */
 @keyframes shimmer {
