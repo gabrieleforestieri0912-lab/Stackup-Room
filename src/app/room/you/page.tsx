@@ -34,7 +34,7 @@ function YouInner() {
       {tab !== 'home' && (
         <>
           <p className="text-room text-xs font-semibold uppercase tracking-[0.12em] mb-2">You</p>
-          <h1 className="text-2xl font-extrabold tracking-tight mb-4">Il tuo spazio.</h1>
+          <h1 className="text-xl font-extrabold tracking-tight mb-4">Il tuo spazio.</h1>
         </>
       )}
       <div className="flex gap-2 mb-5 overflow-x-auto" role="tablist" aria-label="Sezioni You">

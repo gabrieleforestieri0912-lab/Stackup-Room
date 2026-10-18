@@ -12,8 +12,23 @@ type Startup = { id: string; name: string; domain: string | null; url: string | 
 type Streak = { current: number; longest: number; todayDone: boolean; heatmap: string[] };
 type GhDay = { day: string; count: number };
 
-const card = 'bg-black border border-zinc-800 rounded-2xl p-5';
+const card = 'bg-black border border-zinc-800 rounded-2xl p-4';
 const kicker = 'text-[11px] font-mono font-black uppercase tracking-[0.16em] text-zinc-500';
+
+function StatRow({ icon, label, hint, value, hintClass = 'text-room font-bold' }: {
+  icon: React.ReactNode; label: string; hint?: string; value: React.ReactNode; hintClass?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3.5 py-3 border-b border-zinc-900 last:border-0">
+      <span className="shrink-0">{icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-bold text-[13px] text-white">{label}</span>
+        {hint && <span className={`block text-xs ${hintClass}`}>{hint}</span>}
+      </span>
+      <span className="font-extrabold text-white text-base shrink-0">{value}</span>
+    </div>
+  );
+}
 
 export default function YouDashboard() {
   const { user } = useAuth();
@@ -104,23 +119,10 @@ export default function YouDashboard() {
   });
   const MESE = ['', 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
-  const StatRow = ({ icon, label, hint, value, hintClass = 'text-room font-bold' }: {
-    icon: React.ReactNode; label: string; hint?: string; value: React.ReactNode; hintClass?: string;
-  }) => (
-    <div className="flex items-center gap-3.5 py-3.5 border-b border-zinc-900 last:border-0">
-      <span className="shrink-0">{icon}</span>
-      <span className="flex-1 min-w-0">
-        <span className="block font-bold text-sm text-white">{label}</span>
-        {hint && <span className={`block text-xs ${hintClass}`}>{hint}</span>}
-      </span>
-      <span className="font-extrabold text-white text-lg shrink-0">{value}</span>
-    </div>
-  );
-
   return (
     <div>
       <div className="flex items-start gap-3 mb-5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-white flex-1">You</h1>
+        <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">You</h1>
         <button onClick={() => router.replace('/room/you?tab=profile', { scroll: false })} aria-label="Impostazioni"
           className="w-11 h-11 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:text-white hover:border-room transition-all">
           <Settings size={18} />
@@ -143,7 +145,7 @@ export default function YouDashboard() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-extrabold text-white text-xl leading-tight truncate">{name}</h2>
+                    <h2 className="font-extrabold text-white text-lg leading-tight truncate">{name}</h2>
                     {handle && <p className="text-sm text-zinc-400">@{handle}</p>}
                     {locality && <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1"><MapPin size={12} /> {locality}</p>}
                   </div>
@@ -182,7 +184,7 @@ export default function YouDashboard() {
               </Link>
             </div>
             <div className="flex items-baseline gap-3 pb-4 mb-2 border-b border-zinc-900">
-              <span className="text-3xl font-extrabold text-white">€{(mrr / 100).toLocaleString('it-IT')}</span>
+              <span className="text-xl font-extrabold text-white">€{(mrr / 100).toLocaleString('it-IT')}</span>
               <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-zinc-900 border border-zinc-700 text-zinc-400">
                 {verifiedMrr > 0 ? 'verified' : 'pre-rev'}
               </span>

@@ -101,7 +101,7 @@ export default function ProfileTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-extrabold tracking-tight mb-1">Profilo e impostazioni.</h2>
+      <h2 className="text-[15px] font-extrabold tracking-tight mb-1">Profilo e impostazioni.</h2>
       <p className="text-sm text-zinc-400 mb-6">Profilo, privacy, consenso AI, export ed eliminazione.</p>
       {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
       {msg && <div className="mb-4 p-3 bg-room/10 border border-room/20 text-room-bright text-xs font-bold rounded-xl" role="status">{msg}</div>}

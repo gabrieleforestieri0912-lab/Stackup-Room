@@ -128,7 +128,7 @@ export default function PlannerPage() {
     <div className="space-y-5">
       <div>
         <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Planner · privato</p>
-        <h1 className="text-2xl font-extrabold tracking-tight mb-3">La tua giornata.</h1>
+        <h1 className="text-xl font-extrabold tracking-tight mb-3">La tua giornata.</h1>
         <select aria-label="Startup attiva" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
           {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>

@@ -132,7 +132,7 @@ export default function CoachPage() {
     return (
       <div>
         <p className="text-room-bright text-xs font-semibold uppercase tracking-[0.12em] mb-2">Coach AI</p>
-        <h1 className="text-2xl font-extrabold tracking-tight mb-4">Prima il consenso.</h1>
+        <h1 className="text-xl font-extrabold tracking-tight mb-4">Prima il consenso.</h1>
         <div className="border border-room/40 bg-room/5 rounded-2xl p-5 text-sm space-y-3">
           <p className="font-bold text-white">Cosa viene inviato e a chi:</p>
           <ul className="list-disc pl-5 text-zinc-300 space-y-1">
@@ -162,7 +162,7 @@ export default function CoachPage() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-1">
-        <h1 className="text-2xl font-extrabold tracking-tight flex-1">Coach.</h1>
+        <h1 className="text-xl font-extrabold tracking-tight flex-1">Coach.</h1>
         <span className="text-[11px] text-zinc-500 font-mono">{ctx.usage.used}/{ctx.usage.limit} oggi</span>
       </div>
       <p className="text-xs text-zinc-500 mb-4">Legge già startup, task, standup e background: vai dritto al punto.</p>

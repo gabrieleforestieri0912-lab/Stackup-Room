@@ -32,7 +32,7 @@ export default function RanksTab() {
 
   return (
     <div className="w-full">
-      <h2 className="text-lg font-extrabold tracking-tight">Chi ha guadagnato di più.</h2>
+      <h2 className="text-[15px] font-extrabold tracking-tight">Chi ha guadagnato di più.</h2>
       <p className="text-sm text-zinc-400 mt-1 mb-6">
         Classifica dei fondatori per guadagno totale — somma di tutte le loro startup.
       </p>

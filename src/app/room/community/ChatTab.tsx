@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { roomAuthHeaders } from '@/lib/auth-token';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -34,30 +34,8 @@ function useAudioPlayer(path: string | null) {
   return { url, load };
 }
 
-function VoiceNote({ path, seconds, mine }: { path: string; seconds: number | null; mine: boolean }) {
+function VoiceNote({ path, seconds }: { path: string; seconds: number | null; mine: boolean }) {
   const { url, load } = useAudioPlayer(path);
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [transcribing, setTranscribing] = useState(false);
-  const [sttErr, setSttErr] = useState('');
-
-  const transcribe = async () => {
-    setSttErr('');
-    setTranscribing(true);
-    try {
-      const r = await authed('/api/room/coach/transcribe', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio_path: path }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setSttErr(d.detail || d.message || 'Trascrizione non disponibile.');
-        return;
-      }
-      setTranscript(d.transcript);
-    } finally {
-      setTranscribing(false);
-    }
-  };
 
   return (
     <span className="flex flex-col gap-1.5">
@@ -67,20 +45,13 @@ function VoiceNote({ path, seconds, mine }: { path: string; seconds: number | nu
             const u = await load();
             if (u) new Audio(u).play().catch(() => {});
           }}
-          className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-bold hover:border-room"
+          className="px-2.5 py-1 bg-zinc-900 border border-zinc-700 rounded-lg text-[11px] font-bold hover:border-room"
           aria-label={`Riproduci nota vocale${seconds ? ` di ${seconds} secondi` : ''}`}
         >
           ▶ {seconds ? `${seconds}s` : 'Audio'}
         </button>
-        {mine && !transcript && (
-          <button onClick={transcribe} disabled={transcribing} className="px-3 py-1.5 border border-zinc-700 rounded-lg text-xs font-bold hover:border-room disabled:opacity-60">
-            {transcribing ? 'Trascrivo...' : 'Trascrivi'}
-          </button>
-        )}
       </span>
-      {url && <audio controls src={url} className="h-8 max-w-[220px]" />}
-      {sttErr && <span className="text-[11px] text-zinc-500">{sttErr}</span>}
-      {transcript && <span className="text-xs text-zinc-300 border-l-2 border-room pl-2 italic">{transcript}</span>}
+      {url && <audio controls src={url} className="h-7 max-w-[200px]" />}
     </span>
   );
 }
@@ -117,9 +88,6 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
-  const [gifQ, setGifQ] = useState('');
-  const [gifs, setGifs] = useState<string[]>([]);
-  const [showGifs, setShowGifs] = useState(false);
   const [recording, setRecording] = useState(false);
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -188,19 +156,19 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
     onPresence?.({ online, typing });
   }, [online, typing, onPresence]);
 
-  const send = async (extra?: { gif_url?: string; audio_path?: string; audio_seconds?: number }) => {
-    if (!text.trim() && !extra?.gif_url && !extra?.audio_path) return;
+  const send = async (extra?: { audio_path?: string; audio_seconds?: number }) => {
+    if (!text.trim() && !extra?.audio_path) return;
     const bodyText = text;
     // Ottimistico: mostra subito il messaggio
     const tempId = `temp-${Date.now()}`;
     const optimistic: Msg = {
-      id: tempId, body: bodyText, gif_url: extra?.gif_url || null, audio_path: extra?.audio_path || null,
+      id: tempId, body: bodyText, gif_url: null, audio_path: extra?.audio_path || null,
       audio_seconds: extra?.audio_seconds || null, created_at: new Date().toISOString(),
       author: user?.name || user?.email || 'Tu', mine: true, reactions: [],
       reply_to: replyTo?.id || null, edited_at: null, reply: replyTo ? { author: replyTo.author, body: replyTo.body, hidden: false } : null,
     };
     setMsgs((prev) => [...prev, optimistic]);
-    setText(''); setShowGifs(false); setReplyTo(null);
+    setText(''); setReplyTo(null);
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     const r = await authed('/api/room/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -225,14 +193,6 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
     } else {
       alert('Modificabile solo entro 15 minuti.');
     }
-  };
-
-  const searchGifs = async (e: FormEvent) => {
-    e.preventDefault();
-    const r = await authed(`/api/room/gifs?q=${encodeURIComponent(gifQ || 'startup')}`);
-    const d = await r.json().catch(() => ({}));
-    setGifs(d.gifs || []);
-    if (!r.ok && r.status === 501) setGifs([]);
   };
 
   const toggleRec = async () => {
@@ -287,7 +247,7 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   if (loading) return <div className="flex justify-center items-center min-h-[calc(100dvh-320px)]" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
-    <div className="flex flex-col w-full flex-1 min-h-[calc(100dvh-260px)]">
+    <div className="flex flex-col w-full max-w-3xl mx-auto flex-1 min-h-[calc(100dvh-260px)]">
       <ul className="flex-1 min-h-[320px] space-y-2 mb-4 overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && (
           <li className="flex flex-col items-center justify-center text-center min-h-[320px] h-full border border-dashed border-zinc-800 rounded-2xl py-16 px-6">
@@ -341,9 +301,8 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
                 <button onClick={() => saveEdit(m.id)} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">OK</button>
               </div>
             ) : (
-              m.body && <p className="text-sm text-zinc-200 break-words">{renderBody(m.body)}</p>
+              m.body && <p className="text-[13px] leading-snug text-zinc-200 break-words">{renderBody(m.body)}</p>
             )}
-            {m.gif_url && <img src={m.gif_url} alt="GIF" className="mt-2 rounded-xl max-h-48" loading="lazy" /* eslint-disable-line @next/next/no-img-element -- GIF esterne da domini arbitrari */ />}
             {m.audio_path && <div className="mt-2"><VoiceNote path={m.audio_path} seconds={m.audio_seconds} mine={m.mine} /></div>}
             <Reactions reactions={m.reactions} onReact={async (emoji) => {
               await authed(`/api/room/chat/${m.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) });
@@ -365,23 +324,6 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
         <div ref={bottomRef} />
       </ul>
 
-      {showGifs && (
-        <div className="border border-zinc-800 rounded-2xl p-3 mb-2">
-          <form onSubmit={searchGifs} className="flex gap-2 mb-2">
-            <input aria-label="Cerca GIF" className={input} value={gifQ} onChange={(e) => setGifQ(e.target.value)} placeholder="Cerca GIF..." />
-            <button className="px-3 py-2 bg-zinc-900 border border-zinc-700 text-xs font-bold rounded-xl">Cerca</button>
-          </form>
-          <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-            {gifs.map((g) => (
-              <button key={g} onClick={() => send({ gif_url: g })} aria-label="Invia GIF">
-                <img src={g} alt="" className="rounded-lg h-20 w-full object-cover" loading="lazy" /* eslint-disable-line @next/next/no-img-element -- GIF esterne da domini arbitrari */ />
-              </button>
-            ))}
-            {gifs.length === 0 && <p className="col-span-3 text-xs text-zinc-500 text-center py-4">Cerca una GIF oppure configura TENOR_API_KEY.</p>}
-          </div>
-        </div>
-      )}
-
       {replyTo && (
         <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-2 mb-2 text-xs text-zinc-400">
           <span className="flex-1 truncate">Rispondi a <strong className="text-room-bright">{replyTo.author}</strong>: {replyTo.body.slice(0, 80) || 'allegato'}</span>
@@ -391,7 +333,6 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
 
       <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
         <input aria-label="Scrivi un messaggio" className={input} value={text} onChange={(e) => { setText(e.target.value); signalTyping(); }} placeholder="Scrivi alla room... (usa @handle per menzionare)" maxLength={2000} />
-        <button type="button" onClick={() => setShowGifs(!showGifs)} aria-label="Aggiungi GIF" aria-pressed={showGifs} className="px-3 py-2 bg-zinc-900 border border-zinc-700 text-xs font-bold rounded-xl">GIF</button>
         <button type="button" onClick={toggleRec} aria-label={recording ? 'Ferma registrazione' : 'Registra nota vocale'} aria-pressed={recording}
           className={`px-3 py-2 border text-xs font-bold rounded-xl ${recording ? 'bg-red-600 border-red-600 text-white animate-pulse' : 'bg-zinc-900 border-zinc-700'}`}>
           <Mic size={14} />

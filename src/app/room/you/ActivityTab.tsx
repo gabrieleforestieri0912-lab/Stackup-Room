@@ -28,7 +28,7 @@ export default function ActivityTab() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="text-lg font-extrabold tracking-tight flex-1">Attività.</h2>
+        <h2 className="text-[15px] font-extrabold tracking-tight flex-1">Attività.</h2>
         <button onClick={readAll} className="px-3 py-1.5 text-xs font-bold bg-zinc-900 border border-zinc-700 rounded-lg">Segna tutte lette</button>
       </div>
       {items.length === 0 ? <p className="text-sm text-zinc-500 text-center py-10">Nessuna notifica.</p> : (

@@ -101,7 +101,7 @@ export default function StatsTab() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-extrabold tracking-tight mb-3">I tuoi numeri.</h2>
+        <h2 className="text-[15px] font-extrabold tracking-tight mb-3">I tuoi numeri.</h2>
         {startups.length > 0 && (
           <select aria-label="Startup attiva" className={input} value={sid} onChange={(e) => setSid(e.target.value)}>
             {startups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

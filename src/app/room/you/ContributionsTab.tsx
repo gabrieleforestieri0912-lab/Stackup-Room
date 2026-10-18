@@ -137,7 +137,7 @@ export default function ContributionsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-extrabold tracking-tight">Fonti collegate.</h2>
+        <h2 className="text-[15px] font-extrabold tracking-tight">Fonti collegate.</h2>
         <p className="text-sm text-zinc-400 mt-1">Sola lettura. Mai dati di carta: solo MRR riassuntivo e conteggi pubblici.</p>
       </div>
       {err && <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
