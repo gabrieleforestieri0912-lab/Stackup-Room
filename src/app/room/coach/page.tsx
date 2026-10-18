@@ -63,6 +63,13 @@ export default function CoachPage() {
     setMember(Boolean(p.profile?.handle));
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('plan') === '1') {
+      openCoach('planner', 'Pianifica la mia giornata di oggi in blocchi orari.');
+      window.history.replaceState({}, '', '/room/coach');
+    }
+  }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [msgs.length]);
 
   const giveConsent = async () => {
