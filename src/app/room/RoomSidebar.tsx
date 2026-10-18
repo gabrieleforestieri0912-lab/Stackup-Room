@@ -44,10 +44,9 @@ export default function RoomSidebar() {
     <div className="room-sidebar flex flex-col h-full">
       {/* Logo */}
       <Link href="/room" className="flex items-center gap-3 px-2 py-4 mb-1">
-        <span className="w-9 h-9 rounded-xl bg-room/15 border border-room/30 flex items-center justify-center shrink-0" aria-hidden>
-          <Rocket size={18} className="text-room" />
-        </span>
-        <span className="font-extrabold text-white tracking-tight">Startup Club</span>
+        {/* eslint-disable-next-line @next/next/no-img-element -- logo statico del progetto */}
+        <img src="/stackup-room.png" alt="" width={36} height={36} className="w-9 h-9 rounded-xl object-contain shrink-0" />
+        <span className="font-extrabold text-white tracking-tight">Stackup Room</span>
       </Link>
       <div className="border-t border-zinc-900 mx-1 mb-3" />
 

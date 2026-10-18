@@ -1,5 +1,45 @@
-// Conteggi giornalieri da eventi pubblici GitHub (mai accesso al codice).
+// Conteggi giornalieri reali: prima il calendario ufficiale GitHub (GraphQL
+// contributionCollection, stesso grafico del profilo), poi gli eventi pubblici come fallback.
 export async function fetchPublicCounts(username: string): Promise<Map<string, number>> {
+  try {
+    return await fetchCalendarCounts(username);
+  } catch {
+    return fetchEventCounts(username);
+  }
+}
+
+type GhGraphQlDay = { date: string; contributionCount: number };
+
+// Grafico contribuzioni ufficiale: copre 365 giorni con tutti i tipi di contributo.
+async function fetchCalendarCounts(username: string): Promise<Map<string, number>> {
+  if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN assente');
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - 364);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const query = `query($login:String!,$from:Date!,$to:Date!){ user(login:$login){ contributionCollection(from:$from,to:$to){ contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }`;
+  const res = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: ghHeaders(),
+    body: JSON.stringify({ query, variables: { login: username, from: fmt(from), to: fmt(to) } }),
+  });
+  if (res.status === 404) throw new Error('Utente GitHub non trovato');
+  if (!res.ok) throw new Error('GitHub non raggiungibile');
+  const json = (await res.json()) as { data?: { user?: { contributionCollection?: { contributionCalendar?: { weeks?: Array<{ contributionDays?: GhGraphQlDay[] }> } } } }; errors?: unknown[] };
+  if (json.errors?.length) throw new Error('GraphQL: contribuzioni non disponibili');
+  const weeks = json.data?.user?.contributionCollection?.contributionCalendar?.weeks;
+  if (!weeks) throw new Error('Utente GitHub non trovato');
+  const counts = new Map<string, number>();
+  for (const w of weeks) {
+    for (const d of w.contributionDays || []) {
+      counts.set(d.date, d.contributionCount);
+    }
+  }
+  return counts;
+}
+
+// Fallback senza token: eventi pubblici (copertura ~90 giorni).
+async function fetchEventCounts(username: string): Promise<Map<string, number>> {
   const headers: Record<string, string> = { Accept: 'application/vnd.github+json', 'User-Agent': 'stackup-room' };
   if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   const counts = new Map<string, number>();
