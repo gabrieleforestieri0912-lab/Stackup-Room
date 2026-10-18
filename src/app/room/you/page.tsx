@@ -27,24 +27,19 @@ function YouInner() {
   const raw = searchParams?.get('tab');
   const tab: TabId = TABS.some((t) => t.id === raw) ? (raw as TabId) : 'home';
 
-  const select = (id: TabId) => router.replace(`/room/you?tab=${id}`, { scroll: false });
-
   return (
     <div>
+      {/* Niente tab in alto: si entra dalle card del dashboard, qui c'è solo il ritorno */}
       {tab !== 'home' && (
-        <>
-          <p className="text-room text-xs font-semibold uppercase tracking-[0.12em] mb-2">You</p>
-          <h1 className="text-xl font-extrabold tracking-tight mb-4">Il tuo spazio.</h1>
-        </>
-      )}
-      <div className="flex gap-2 mb-5 overflow-x-auto" role="tablist" aria-label="Sezioni You">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => select(t.id)}
-            className={`px-4 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${tab === t.id ? 'bg-room text-[#0B0D12] shadow-lg shadow-room/20' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
-            {t.label}
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={() => router.replace('/room/you', { scroll: false })}
+            aria-label="Torna alla panoramica" title="Torna alla panoramica"
+            className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:border-room hover:text-white transition-all">
+            ←
           </button>
-        ))}
-      </div>
+          <p className="text-sm font-bold text-zinc-400">{TABS.find((t) => t.id === tab)?.label}</p>
+        </div>
+      )}
       <Suspense fallback={<RoomLoader />}>
         {tab === 'home' && <YouDashboard />}
         {tab === 'profile' && <ProfileTab />}
