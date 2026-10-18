@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import RoomSidebar, { LINKS } from './RoomSidebar';
@@ -8,6 +8,15 @@ import Starfield from './Starfield';
 
 export default function RoomLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
+
+  // Riduci animazioni: scelta salvata in impostazioni, applicata all'intera Room
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('room.reduceMotion') === '1') {
+        document.documentElement.classList.add('reduced-motion');
+      }
+    } catch { /* localStorage non disponibile */ }
+  }, []);
 
   return (
     <div className="room-scope min-h-screen bg-[#05070b] text-zinc-100">

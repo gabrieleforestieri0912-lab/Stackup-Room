@@ -33,6 +33,16 @@
   box-shadow: 0 0 0 2px #4de0c9, 0 0 20px rgba(77, 224, 201, 0.15);
 }
 
+/* Riduci animazioni: opzione attivabile da Impostazioni → Movimento */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* Sidebar Room */
 
 @media (prefers-color-scheme: dark) {
