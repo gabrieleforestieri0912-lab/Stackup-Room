@@ -12,14 +12,46 @@ type Startup = {
 
 const STAGES = ['idea', 'building', 'launched', 'scaling', 'exit'] as const;
 
-function Logo({ s }: { s: Startup }) {
+function Logo({ s, onUploaded }: { s: Startup; onUploaded: (url: string) => void }) {
   const [err, setErr] = useState(false);
-  if (!s.logo_url || err) {
-    return <div aria-hidden className="w-10 h-10 rounded-xl bg-room/20 text-room flex items-center justify-center font-extrabold">{s.name.charAt(0).toUpperCase()}</div>;
-  }
-  // Loghi esterni da domini arbitrari: next/image richiederebbe remotePatterns dinamici
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={s.logo_url} alt="" className="w-10 h-10 rounded-xl object-contain bg-zinc-900" onError={() => setErr(true)} loading="lazy" />;
+  const [busy, setBusy] = useState(false);
+
+  const upload = async (f: File | undefined) => {
+    if (!f || busy) return;
+    setBusy(true);
+    const fd = new FormData();
+    fd.append('logo', f);
+    try {
+      const r = await fetch(`/api/room/startups/${s.id}/logo`, { method: 'POST', headers: await roomAuthHeaders(), body: fd });
+      if (r.ok) {
+        const d = await r.json();
+        setErr(false);
+        onUploaded(String(d.url || ''));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <label title="Carica un logo dal computer"
+      className={`relative shrink-0 cursor-pointer group ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
+      {(!s.logo_url || err) ? (
+        <div aria-hidden className="w-10 h-10 rounded-xl bg-room/20 text-room flex items-center justify-center font-extrabold">
+          {s.name.charAt(0).toUpperCase()}
+        </div>
+      ) : (
+        // Loghi esterni da domini arbitrari: next/image richiederebbe remotePatterns dinamici
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={s.logo_url} alt="" className="w-10 h-10 rounded-xl object-contain bg-zinc-900" onError={() => setErr(true)} loading="lazy" />
+      )}
+      <span className="absolute inset-0 rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[9px] font-black uppercase text-white">
+        Logo
+      </span>
+      <input type="file" accept="image/*" className="hidden" aria-label={`Carica logo di ${s.name}`}
+        onChange={(e) => upload(e.target.files?.[0])} />
+    </label>
+  );
 }
 
 export default function StartupTab() {
@@ -169,7 +201,7 @@ export default function StartupTab() {
           {items.map((s) => (
             <li key={s.id} className="bg-black border border-zinc-800 rounded-2xl p-5">
               <div className="flex items-start gap-3">
-                <Logo s={s} />
+                <Logo s={s} onUploaded={(url) => setItems((p) => p.map((x) => (x.id === s.id ? { ...x, logo_url: url } : x)))} />
                 <div className="min-w-0 flex-1">
                   <h2 className="font-bold text-white truncate">{s.name}</h2>
                   {s.tagline && <p className="text-xs text-zinc-400 truncate">{s.tagline}</p>}

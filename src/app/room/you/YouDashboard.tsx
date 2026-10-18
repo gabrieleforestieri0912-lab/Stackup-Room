@@ -30,6 +30,20 @@ function StatRow({ icon, label, hint, value, hintClass = 'text-room font-bold' }
   );
 }
 
+// Logo startup senza bordo: se l'immagine non carica torna all'iniziale
+function DashLogo({ s }: { s: Startup }) {
+  const [err, setErr] = useState(false);
+  if (!s.logo_url || err) {
+    return (
+      <span className="w-9 h-9 rounded-lg bg-room/15 flex items-center justify-center text-room font-black text-sm shrink-0" aria-hidden>
+        {s.name.slice(0, 1).toUpperCase()}
+      </span>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element -- logo da URL arbitrario
+  return <img src={s.logo_url} alt="" onError={() => setErr(true)} className="w-9 h-9 rounded-lg object-contain shrink-0" />;
+}
+
 export default function YouDashboard() {
   const { user } = useAuth();
   const router = useRouter();
@@ -197,12 +211,7 @@ export default function YouDashboard() {
                 {startups.map((s) => (
                   <li key={s.id}>
                     <Link href="/room/you?tab=startup" className="flex items-center gap-3 py-3 border-b border-zinc-900 last:border-0 hover:opacity-80 transition-opacity">
-                      {s.logo_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- logo da URL arbitrario
-                        <img src={s.logo_url} alt="" className="w-9 h-9 rounded-lg object-cover border border-zinc-800 shrink-0" />
-                      ) : (
-                        <span className="w-9 h-9 rounded-lg bg-room/15 border border-room/30 flex items-center justify-center text-room font-black text-sm shrink-0">{s.name.slice(0, 1).toUpperCase()}</span>
-                      )}
+                      <DashLogo s={s} />
                       <span className="flex-1 min-w-0">
                         <span className="block font-bold text-white truncate">{s.name}</span>
                         <span className="block text-xs text-zinc-500 truncate">{s.domain || s.url || s.tagline || '—'}</span>
