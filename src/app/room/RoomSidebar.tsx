@@ -15,10 +15,10 @@ export const LINKS = [
   { href: '/room/you', label: 'Tu', icon: User, match: '/room/you' },
 ];
 
-const SUPPORT: Array<{ href: string; label: string; icon: typeof Mail; external?: boolean }> = [
+const SUPPORT: Array<{ href: string; label: string; icon: typeof Mail; external?: boolean; color?: string }> = [
   { href: 'mailto:gabriele.forestieri0912@gmail.com', label: 'Scrivici', icon: Mail },
-  { href: '/room/feature', label: 'Richiedi una funzione', icon: Lightbulb },
-  { href: '/room/report', label: 'Segnala un bug', icon: Rocket },
+  { href: '/room/feature', label: 'Richiedi una funzione', icon: Lightbulb, color: 'text-yellow-400' },
+  { href: '/room/report', label: 'Segnala un bug', icon: Rocket, color: 'text-red-400' },
 ];
 
 export default function RoomSidebar() {
@@ -81,7 +81,7 @@ export default function RoomSidebar() {
           {SUPPORT.map((s) => {
             const cls = 'flex items-center gap-3.5 px-3 py-2 text-[14px] font-bold text-zinc-400 hover:text-white hover:bg-zinc-900/60 rounded-xl transition-all';
             const inner = (<>
-              <s.icon size={17} className="text-zinc-500" />
+              <s.icon size={17} className={s.color || 'text-zinc-500'} />
               {s.label}
             </>);
             return s.external ? (
