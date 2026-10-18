@@ -24,6 +24,85 @@ function deriveName(domain: string): string {
   return label.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+const LOC_INPUT = 'w-full px-3.5 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all text-zinc-100 text-sm rounded-xl';
+
+// Campo località con suggerimenti reali (geocoding gratuito Open-Meteo, senza chiave).
+function LocalityInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const [sugs, setSugs] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const q = value.trim();
+    if (q.length < 2) { setSugs([]); setOpen(false); return; }
+    setLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=it&format=json`);
+        const d = (await r.json()) as { results?: Array<{ name: string; admin1?: string; country?: string }> };
+        const list = (d.results || []).map((x) => [x.name, x.admin1, x.country].filter(Boolean).join(', '));
+        setSugs(list);
+        setOpen(list.length > 0);
+      } catch {
+        setSugs([]);
+        setOpen(false);
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  // Chiudi il menu quando si clicca fuori
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  return (
+    <div ref={boxRef} className="relative">
+      <input
+        id={id}
+        className={LOC_INPUT}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => { if (sugs.length) setOpen(true); }}
+        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
+        placeholder="Milano, Lombardia, Italia"
+        maxLength={120}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        aria-controls={`${id}-sugs`}
+        autoComplete="off"
+      />
+      {loading && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600" aria-hidden>
+          <Loader2 size={14} className="animate-spin" />
+        </span>
+      )}
+      {open && sugs.length > 0 && (
+        <ul id={`${id}-sugs`} role="listbox"
+          className="absolute z-20 mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
+          {sugs.map((s) => (
+            <li key={s} role="option" aria-selected={s === value}>
+              <button type="button"
+                onClick={() => { onChange(s); setOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 text-sm text-zinc-200 hover:bg-zinc-900 transition-colors">
+                {s}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function LogoPreview({ url, name }: { url: string | null; name: string }) {
   const [err, setErr] = useState(false);
   if (!url || err) {
@@ -367,7 +446,7 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <label className={label} htmlFor="ob-loc">Dove ti trovi <span className="text-red-400">*</span></label>
-                <input id="ob-loc" className={input} value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="Milano, IT" maxLength={120} />
+                <LocalityInput id="ob-loc" value={locality} onChange={setLocality} />
               </div>
               <div className="sm:col-span-2">
                 <label className={label} htmlFor="ob-bio">Su di te <span className="text-red-400">*</span></label>
