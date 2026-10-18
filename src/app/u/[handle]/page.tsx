@@ -1,12 +1,27 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { siteUrl } from '@/lib/seo';
 
 async function getProfile(handle: string) {
-  const base = siteUrl();
-  const res = await fetch(`${base}/api/room/public/${encodeURIComponent(handle)}`, { next: { revalidate: 60 } });
-  if (!res.ok) return null;
-  return res.json().then((d) => d.profile);
+  // Prima prova sull'host corrente della richiesta, poi sul dominio di produzione:
+  // così il profilo pubblico non 404 quando NEXT_PUBLIC_APP_URL punta altrove.
+  const bases: string[] = [];
+  try {
+    const h = await headers();
+    const host = h.get('x-forwarded-host') || h.get('host');
+    const proto = h.get('x-forwarded-proto') || 'http';
+    if (host) bases.push(`${proto}://${host}`);
+  } catch { /* build senza request: usa il fallback */ }
+  bases.push(siteUrl());
+
+  for (const base of bases) {
+    try {
+      const res = await fetch(`${base}/api/room/public/${encodeURIComponent(handle)}`, { next: { revalidate: 60 } });
+      if (res.ok) return res.json().then((d) => d.profile);
+    } catch { /* prova la base successiva */ }
+  }
+  return null;
 }
 
 type Startup = { id: string; name: string; tagline: string | null; stage: string; url: string | null };

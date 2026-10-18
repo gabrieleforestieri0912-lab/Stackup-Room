@@ -8,7 +8,7 @@ import { getAccessToken } from '@/lib/auth-token';
 import { User, CalendarClock, Users, Sparkles, Settings, Mail, Lightbulb, Rocket } from 'lucide-react';
 import { initials, avatarGradient } from '@/lib/avatar';
 
-const LINKS = [
+export const LINKS = [
   { href: '/room/planner', label: 'Today', icon: CalendarClock, match: '/room/planner' },
   { href: '/room/community', label: 'Club', icon: Users, match: '/room/community' },
   { href: '/room/coach', label: 'Coach', icon: Sparkles, match: '/room/coach' },

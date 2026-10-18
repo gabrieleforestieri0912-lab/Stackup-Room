@@ -1,34 +1,13 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { PanelLeftOpen, X } from 'lucide-react';
-import RoomSidebar from './RoomSidebar';
+import { usePathname } from 'next/navigation';
+import RoomSidebar, { LINKS } from './RoomSidebar';
 import Starfield from './Starfield';
 
-const STORAGE_KEY = 'room-sidebar-open';
-
 export default function RoomLayout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) return saved === '1';
-      }
-    } catch { /* ignore */ }
-    return true;
-  });
-
-  const toggle = () => {
-    setOpen((v) => {
-      try { localStorage.setItem(STORAGE_KEY, v ? '0' : '1'); } catch { /* ignore */ }
-      return !v;
-    });
-  };
-  const close = () => {
-    setOpen(false);
-    try { localStorage.setItem(STORAGE_KEY, '0'); } catch { /* ignore */ }
-  };
+  const pathname = usePathname() || '';
 
   return (
     <div className="room-scope min-h-screen bg-[#05070b] text-zinc-100">
@@ -49,61 +28,41 @@ export default function RoomLayout({ children }: { children: React.ReactNode }) 
         />
       </div>
 
-      {/* Overlay mobile quando aperta */}
-      {open && (
-        <button
-          aria-label="Chiudi menu"
-          onClick={close}
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
-        />
-      )}
-
-      {/* Sidebar FISSA: ancorata a sinistra, altezza piena, non fluttuante */}
+      {/* Sidebar FISSA e sempre visibile su desktop (non apribibile/chiudibile) */}
       <aside
         aria-label="Navigazione Room"
-        aria-hidden={!open}
-        className={`fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-room-bg border-r border-zinc-800 flex flex-col transition-transform duration-300 ease-in-out ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-64 shrink-0 bg-room-bg border-r border-zinc-800 flex-col"
       >
-        <div className="flex items-center justify-between px-3 pt-3">
-          <Link href="/room" className="px-2 text-sm font-black tracking-tight text-white">
-            STACKUP <span className="text-room">ROOM</span>
-          </Link>
-          <button
-            onClick={close}
-            aria-label="Chiudi sidebar"
-            title="Chiudi sidebar"
-            className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-room/10 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="flex-1 min-h-0 p-3">
+        <div className="flex-1 min-h-0 p-3 overflow-y-auto">
           <Suspense>
             <RoomSidebar />
           </Suspense>
         </div>
       </aside>
 
-      {/* Colonna contenuto: lascia spazio alla sidebar fissa su desktop */}
-      <div className={`relative z-10 transition-[padding] duration-300 ease-in-out ${open ? 'lg:pl-64' : 'lg:pl-0'}`}>
-        {/* Bottone flottante per riaprire la sidebar quando chiusa */}
-        {!open && (
-          <button
-            onClick={toggle}
-            aria-label="Apri sidebar"
-            title="Apri sidebar"
-            className="fixed top-3 left-3 z-50 p-2 rounded-lg bg-room-bg border border-zinc-800 text-zinc-400 hover:text-room hover:bg-room/10 transition-colors"
-          >
-            <PanelLeftOpen size={20} />
-          </button>
-        )}
-
-        <main className="flex-1 min-w-0 px-4 lg:px-8 py-6 lg:py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+      {/* Colonna contenuto: spazio fisso per la sidebar su desktop */}
+      <div className="relative z-10 lg:pl-64">
+        <main className="flex-1 min-w-0 px-4 lg:px-8 py-6 lg:py-8 pb-28 lg:pb-10">
           {children}
         </main>
       </div>
+
+      {/* Navigazione mobile: barra fissa in basso (la sidebar non si apre/chiude) */}
+      <nav aria-label="Navigazione Room mobile"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-room-bg border-t border-zinc-800 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex">
+          {LINKS.map((n) => {
+            const active = pathname === n.match || pathname.startsWith(`${n.match}/`);
+            return (
+              <Link key={n.href} href={n.href} aria-current={active ? 'page' : undefined}
+                className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors ${active ? 'text-room-bright' : 'text-zinc-500'}`}>
+                <n.icon size={18} className={active ? 'text-room' : ''} />
+                {n.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
