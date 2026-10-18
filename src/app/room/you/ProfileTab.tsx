@@ -19,6 +19,7 @@ export default function ProfileTab() {
   const [err, setErr] = useState('');
   const [confirmDelete, setConfirmDelete] = useState('');
   const [certs, setCerts] = useState<Cert[]>([]);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const load = async () => {
     const token = await getAccessToken();
@@ -91,6 +92,28 @@ export default function ProfileTab() {
     await logout();
   };
 
+  const uploadAvatar = async (file: File | undefined) => {
+    if (!file) return;
+    setErr(''); setMsg('');
+    if (!file.type.startsWith('image/')) { setErr('Seleziona un file immagine.'); return; }
+    if (file.size > 2 * 1024 * 1024) { setErr('Immagine massimo 2MB.'); return; }
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const token = await getAccessToken();
+      const res = await fetch('/api/room/avatar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Upload non riuscito');
+      set('avatar_url', data.url);
+      setMsg('Immagine profilo aggiornata.');
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'Errore upload');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading || !profile) {
     return <div className="flex items-center justify-center py-20" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
   }
@@ -116,7 +139,31 @@ export default function ProfileTab() {
           <div><label className={label} htmlFor="s-gh">Username GitHub</label><input id="s-gh" className={input} value={String(profile.github_username || '')} onChange={(e) => set('github_username', e.target.value)} placeholder="octocat" /></div>
         </div>
         <div><label className={label} htmlFor="s-bio">Bio</label><textarea id="s-bio" rows={3} className={input} value={String(profile.bio || '')} onChange={(e) => set('bio', e.target.value)} maxLength={500} /></div>
-        <div><label className={label} htmlFor="s-av">Avatar URL</label><input id="s-av" type="url" className={input} value={String(profile.avatar_url || '')} onChange={(e) => set('avatar_url', e.target.value)} placeholder="https://..." /></div>
+        <div>
+          <span className={label}>Immagine profilo</span>
+          <div className="flex items-center gap-3">
+            {String(profile.avatar_url || '') ? (
+              // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
+              <img src={String(profile.avatar_url)} alt="Anteprima avatar" className="w-14 h-14 rounded-full object-cover border border-room/40 shrink-0" />
+            ) : (
+              <span className="w-14 h-14 rounded-full bg-room/20 border border-room/40 flex items-center justify-center text-room font-black shrink-0" aria-hidden>
+                {String(profile.name || 'Tu').slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <label htmlFor="s-av-file" className={`px-4 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-200 hover:border-room transition-all cursor-pointer ${uploadingAvatar ? 'opacity-60 pointer-events-none' : ''}`}>
+              {uploadingAvatar ? 'Caricamento…' : 'Scegli immagine'}
+            </label>
+            {String(profile.avatar_url || '') && (
+              <button type="button" onClick={() => { set('avatar_url', ''); setMsg('Immagine rimossa. Premi "Salva profilo".'); }}
+                className="px-3 py-2.5 text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors">
+                Rimuovi
+              </button>
+            )}
+            <input id="s-av-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
+              onChange={(e) => { uploadAvatar(e.target.files?.[0]); e.target.value = ''; }} />
+          </div>
+          <p className="text-[11px] text-zinc-600 mt-1.5">PNG, JPG, WEBP o GIF · massimo 2MB.</p>
+        </div>
         <fieldset>
           <legend className={label}>Link social (URL completi)</legend>
           <div className="grid sm:grid-cols-2 gap-4">
