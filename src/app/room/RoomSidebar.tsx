@@ -95,7 +95,7 @@ export default function RoomSidebar() {
 
       {/* Utente in basso */}
       <div className="border-t border-zinc-900 mt-3 pt-3 flex items-center gap-2.5 px-2">
-        <Link href={handle ? `/u/${handle}` : '/room/you?tab=profile'} className="flex items-center gap-2.5 flex-1 min-w-0 py-1" title="Profilo">
+        <Link href="/room/settings" className="flex items-center gap-2.5 flex-1 min-w-0 py-1" title="Impostazioni">
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element -- avatar da URL arbitrario
             <img src={avatar} alt={name} onError={() => setImgErr(true)} className="w-9 h-9 rounded-full object-cover border border-zinc-700 shrink-0" />
@@ -109,7 +109,7 @@ export default function RoomSidebar() {
             <span className="block truncate text-[11px] text-zinc-500">{handle ? `@${handle}` : 'Builder — free'}</span>
           </span>
         </Link>
-        <Link href="/room/you?tab=profile" aria-label="Impostazioni" title="Impostazioni"
+        <Link href="/room/settings" aria-label="Impostazioni" title="Impostazioni"
           className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900/60 transition-colors shrink-0">
           <Settings size={16} />
         </Link>

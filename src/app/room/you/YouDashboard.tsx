@@ -123,7 +123,7 @@ export default function YouDashboard() {
     <div>
       <div className="flex items-start gap-3 mb-5">
         <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">You</h1>
-        <button onClick={() => router.replace('/room/you?tab=profile', { scroll: false })} aria-label="Impostazioni"
+        <button onClick={() => router.replace('/room/settings', { scroll: false })} aria-label="Impostazioni"
           className="w-11 h-11 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 hover:text-white hover:border-room transition-all">
           <Settings size={18} />
         </button>
