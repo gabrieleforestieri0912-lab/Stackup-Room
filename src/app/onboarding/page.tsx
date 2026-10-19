@@ -24,14 +24,21 @@ function deriveName(domain: string): string {
   return label.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-const LOC_INPUT = 'w-full px-3.5 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all text-zinc-100 text-sm rounded-xl';
+const LOC_INPUT = 'relative w-full';
+const LOC_FIELD = 'w-full px-3.5 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all text-zinc-100 text-sm rounded-xl';
 
-// Campo località con suggerimenti reali (geocoding gratuito Open-Meteo, senza chiave).
+type LocSug = { full: string; main: string; rest: string };
+
+// Campo località con completamento stile Google Maps: mentre scrivi vedi il
+// suggerimento in grigio dopo il testo digitato (Tab o → per accettarlo) e
+// l'elenco dei risultati sotto. Dati reali da Open-Meteo (gratuito, senza chiave).
 function LocalityInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
-  const [sugs, setSugs] = useState<string[]>([]);
+  const [sugs, setSugs] = useState<LocSug[]>([]);
   const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const q = value.trim();
@@ -39,18 +46,22 @@ function LocalityInput({ id, value, onChange }: { id: string; value: string; onC
     setLoading(true);
     const t = setTimeout(async () => {
       try {
-        const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=it&format=json`);
+        const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=7&language=it&format=json`);
         const d = (await r.json()) as { results?: Array<{ name: string; admin1?: string; country?: string }> };
-        const list = (d.results || []).map((x) => [x.name, x.admin1, x.country].filter(Boolean).join(', '));
+        const list: LocSug[] = (d.results || []).map((x) => {
+          const full = [x.name, x.admin1, x.country].filter(Boolean).join(', ');
+          return { full, main: x.name, rest: full.slice(x.name.length) };
+        });
         setSugs(list);
         setOpen(list.length > 0);
+        setHi(0);
       } catch {
         setSugs([]);
         setOpen(false);
       } finally {
         setLoading(false);
       }
-    }, 350);
+    }, 250);
     return () => clearTimeout(t);
   }, [value]);
 
@@ -63,37 +74,89 @@ function LocalityInput({ id, value, onChange }: { id: string; value: string; onC
     return () => document.removeEventListener('mousedown', onDown);
   }, []);
 
+  const accept = (s: LocSug) => {
+    onChange(s.full);
+    setOpen(false);
+    // Riporta il cursore alla fine dopo il completamento
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (el) { el.focus(); el.setSelectionRange(s.full.length, s.full.length); }
+    });
+  };
+
+  // Completamento inline: coda grigia del primo suggerimento dopo il testo digitato
+  const q = value;
+  const ghost = open && sugs.length > 0 && q.trim().length >= 2 && sugs[0].full.toLowerCase().startsWith(q.toLowerCase()) && sugs[0].full !== q
+    ? sugs[0].full.slice(q.length)
+    : '';
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') { setOpen(false); return; }
+    if (e.key === 'ArrowDown' && sugs.length > 0) {
+      e.preventDefault();
+      setOpen(true);
+      setHi((h) => (h + 1) % sugs.length);
+      return;
+    }
+    if (e.key === 'ArrowUp' && sugs.length > 0 && open) {
+      e.preventDefault();
+      setHi((h) => (h - 1 + sugs.length) % sugs.length);
+      return;
+    }
+    if (e.key === 'Tab' && ghost) { e.preventDefault(); accept(sugs[0]); return; }
+    if (e.key === 'ArrowRight' && ghost && inputRef.current?.selectionStart === q.length) {
+      e.preventDefault(); accept(sugs[0]); return;
+    }
+    if (e.key === 'Enter' && open && sugs.length > 0) {
+      e.preventDefault();
+      accept(sugs[hi] || sugs[0]);
+    }
+  };
+
   return (
-    <div ref={boxRef} className="relative">
-      <input
-        id={id}
-        className={LOC_INPUT}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => { if (sugs.length) setOpen(true); }}
-        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
-        placeholder="Milano, Lombardia, Italia"
-        maxLength={120}
-        role="combobox"
-        aria-expanded={open}
-        aria-autocomplete="list"
-        aria-controls={`${id}-sugs`}
-        autoComplete="off"
-      />
-      {loading && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600" aria-hidden>
-          <Loader2 size={14} className="animate-spin" />
-        </span>
-      )}
+    <div ref={boxRef} className={LOC_INPUT}>
+      <div className="relative">
+        <input
+          id={id}
+          ref={inputRef}
+          className={LOC_FIELD}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => { if (sugs.length) setOpen(true); }}
+          onKeyDown={onKeyDown}
+          placeholder="Milano, Lombardia, Italia"
+          maxLength={120}
+          role="combobox"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          aria-controls={`${id}-sugs`}
+          autoComplete="off"
+        />
+        {/* Fantasma del completamento, sovrapposto al campo (parte digitata trasparente) */}
+        {ghost && (
+          <div aria-hidden
+            className="pointer-events-none absolute inset-0 px-3.5 py-2.5 text-sm rounded-xl whitespace-pre overflow-hidden border border-transparent">
+            <span className="text-transparent">{value}</span>
+            <span className="text-zinc-600">{ghost}</span>
+          </div>
+        )}
+        {loading && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600" aria-hidden>
+            <Loader2 size={14} className="animate-spin" />
+          </span>
+        )}
+      </div>
       {open && sugs.length > 0 && (
         <ul id={`${id}-sugs`} role="listbox"
           className="absolute z-20 mt-1 w-full bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
-          {sugs.map((s) => (
-            <li key={s} role="option" aria-selected={s === value}>
-              <button type="button"
-                onClick={() => { onChange(s); setOpen(false); }}
-                className="w-full text-left px-3.5 py-2.5 text-sm text-zinc-200 hover:bg-zinc-900 transition-colors">
-                {s}
+          {sugs.map((s, i) => (
+            <li key={s.full} role="option" aria-selected={i === hi}>
+              <button type="button" tabIndex={-1}
+                onMouseEnter={() => setHi(i)}
+                onClick={() => accept(s)}
+                className={`w-full text-left px-3.5 py-2.5 text-sm transition-colors ${i === hi ? 'bg-zinc-900' : ''}`}>
+                <span className="font-bold text-white">{s.main}</span>
+                <span className="text-zinc-500">{s.rest}</span>
               </button>
             </li>
           ))}
