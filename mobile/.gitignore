@@ -1,0 +1,15 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+*.iml
+
+# Piattaforme generate da `flutter create .`
+android/.gradle/
+ios/Pods/
+ios/.symlinks/
