@@ -250,7 +250,7 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   if (loading) return <div className="flex justify-center items-center min-h-[calc(100dvh-320px)]" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
-    <div className="flex flex-col w-full max-w-2xl mx-auto flex-1 min-h-[calc(100dvh-260px)]">
+    <div className="flex flex-col w-full max-w-3xl mx-auto flex-1 min-h-[calc(100dvh-260px)]">
       <ul className="flex-1 min-h-[320px] space-y-2 mb-4 overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && (
           <li className="flex flex-col items-center justify-center text-center min-h-[320px] h-full border border-dashed border-zinc-800 rounded-2xl py-16 px-6">

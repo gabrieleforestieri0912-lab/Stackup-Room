@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import ProfileTab from '../you/ProfileTab';
 import { roomNarrow } from '../ui';
-import { ExternalLink, Loader2, Mail, Lightbulb, Rocket, ChevronRight, Volume2, MessageCircle, Users, Bell, Wind } from 'lucide-react';
+import { ExternalLink, Loader2, Mail, Lightbulb, Rocket, ChevronRight, Volume2, MessageCircle, Users, Bell, Wind, Pencil } from 'lucide-react';
 
-// Impostazioni Room in stile card: Account, Supporto, Suoni, Movimento, Profilo, Legale.
+// Impostazioni Room in stile card: Account, Supporto, Suoni, Movimento, Legale.
+// La modifica del profilo sta in "Tu" (scheda Profilo), non qui.
 const card = 'bg-zinc-950/70 border border-zinc-800 rounded-2xl p-4 sm:p-5';
 const kicker = 'text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500 mb-1';
 
@@ -192,9 +192,12 @@ export default function RoomSettingsPage() {
           right={<Toggle on={reduceMotion} label="Riduci animazioni" onChange={saveReduceMotion} />} />
       </section>
 
-      {/* PROFILO: form, privacy, consenso IA, certificati, export, zona pericolosa */}
-      <section className={card} aria-label="Profilo e dati">
-        <ProfileTab />
+      {/* PROFILO: la modifica del profilo è in "Tu" -> Profilo */}
+      <section className={card} aria-label="Profilo">
+        <p className={kicker}>Profilo</p>
+        <Row icon={<Pencil size={17} className="text-room" />} title="Modifica profilo"
+          desc="Nome, handle, bio, immagine, privacy e consenso AI."
+          href="/room/you?tab=profile" />
       </section>
 
       {/* LEGALE */}

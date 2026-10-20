@@ -123,5 +123,5 @@ export const roomInput =
   'w-full px-4 py-2.5 bg-black border border-zinc-800 focus:border-room outline-none text-zinc-100 text-sm rounded-xl';
 
 // Colonne di contenuto: centralizzate e non a tutta la larghezza.
-export const roomNarrow = 'w-full max-w-xl mx-auto'; // form e impostazioni
-export const roomColumn = 'w-full max-w-2xl mx-auto'; // chat e contenuti conversazionali
+export const roomNarrow = 'w-full max-w-2xl mx-auto'; // form e impostazioni
+export const roomColumn = 'w-full max-w-3xl mx-auto'; // chat e contenuti conversazionali
