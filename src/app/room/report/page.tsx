@@ -14,7 +14,7 @@ const SEVERITIES = [
 
 const AREAS = [
   { id: 'today', label: 'Today' },
-  { id: 'club', label: 'Club' },
+  { id: 'room', label: 'Room' },
   { id: 'coach', label: 'Coach' },
   { id: 'you', label: 'You' },
   { id: 'membership', label: 'Abbonamento' },

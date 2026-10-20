@@ -16,7 +16,7 @@
   --color-orange-300: oklch(.837 .128 66.29);
 }
 
-/* Room theme — stesso sistema di startupclub.app:
+/* Room theme — stesso sistema di startuproom:
    teal primario (azioni, nav, progress), orange/ember solo per streak & gamification */
 @theme {
   --color-room: #4de0c9;

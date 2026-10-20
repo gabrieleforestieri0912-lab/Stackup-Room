@@ -70,7 +70,7 @@ export default function RoomHome() {
         sub={`Livello ${level} · ${rank.title} · ${exp} EXP`}
       />
 
-      {/* Momentum giornaliero — stile Startup Club: streak + azione di oggi */}
+      {/* Momentum giornaliero — stile startup room: streak + azione di oggi */}
       <RoomCard className="mb-6 border-room/25 bg-gradient-to-br from-room/10 via-transparent to-transparent">
         <div className="flex flex-wrap items-center gap-4">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${todayDone ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-500'}`}>
@@ -111,13 +111,13 @@ export default function RoomHome() {
           ],
         },
         {
-          group: 'Club',
+          group: 'Room',
           items: [
-            { href: '/room/community?tab=chat', title: 'Chat', desc: 'La chat del club, ultimi 7 giorni.', icon: MessageSquare },
+            { href: '/room/community?tab=chat', title: 'Chat', desc: 'La chat della room, ultimi 7 giorni.', icon: MessageSquare },
             { href: '/room/community?tab=forum', title: 'Stanze', desc: 'Stanze di discussione per topic.', icon: MessagesSquare },
-            { href: '/room/community?tab=ranks', title: 'Classifiche', desc: 'Leaderboard verificate del club.', icon: Trophy },
+            { href: '/room/community?tab=ranks', title: 'Classifiche', desc: 'Leaderboard verificate della room.', icon: Trophy },
             { href: '/room/community?tab=network', title: 'Rete', desc: 'Bacheca offerte e richieste.', icon: BarChart3 },
-            { href: '/room/community?tab=eventi', title: 'Eventi', desc: 'Eventi e ritrovi del club.', icon: Rocket },
+            { href: '/room/community?tab=eventi', title: 'Eventi', desc: 'Eventi e ritrovi della room.', icon: Rocket },
           ],
         },
         {

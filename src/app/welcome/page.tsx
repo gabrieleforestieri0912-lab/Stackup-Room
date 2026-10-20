@@ -12,7 +12,7 @@ const FEATURES = [
   { icon: LayoutGrid, title: 'Molte startup, un’app', sub: 'Gestisci tutto il tuo portafoglio in un unico posto' },
   { icon: TrendingUp, title: 'Classifiche verificate', sub: 'Traccia le metriche che contano, da Stripe a GitHub' },
   { icon: Compass, title: 'Coaching personalizzato', sub: 'Tarato sulle tue app, il tuo mercato, il tuo lancio' },
-  { icon: Users, title: 'Il Club', sub: 'Entra in una community privata per founder seri' },
+  { icon: Users, title: 'La Room', sub: 'Entra in una community privata per founder seri' },
 ] as const;
 
 export default function WelcomePage() {
@@ -56,13 +56,13 @@ export default function WelcomePage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
             src="/stackup.png"
-            alt="Startup Club"
+            alt="Stackup Room"
             width={64}
             height={64}
             priority
             className="mb-4 h-16 w-16 object-contain drop-shadow-[0_0_30px_rgba(77,224,201,0.3)]"
           />
-          <h1 className="text-sm font-black uppercase tracking-[0.35em] text-room">Startup Club</h1>
+          <h1 className="text-sm font-black uppercase tracking-[0.35em] text-room">Stackup Room</h1>
           <p className="mt-6 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
             Spedisci ogni giorno.
             <br />

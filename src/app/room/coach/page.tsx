@@ -13,7 +13,7 @@ const MODES: Array<{ id: Mode; label: string; hint: string }> = [
   { id: 'standup', label: 'Standup', hint: 'Collo di bottiglia + 3 priorità dallo standup di oggi.' },
   { id: 'planner', label: 'Pianificatore', hint: 'Piano in blocchi orari dai task aperti, con tagli.' },
   { id: 'advisor', label: 'Consulente', hint: 'Diagnosi e azioni su validazione, pricing, launch.' },
-  { id: 'ask', label: 'Chiedi al club', hint: 'Bozza domanda forum pronta da pubblicare.' },
+  { id: 'ask', label: 'Chiedi alla room', hint: 'Bozza domanda forum pronta da pubblicare.' },
 ];
 
 const ADVISORS: Array<{ id: string; emoji: string; title: string; desc: string; prompt: string }> = [
@@ -162,7 +162,7 @@ export default function CoachPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
       body: JSON.stringify({ title, body: text, tag: 'ask' }),
     });
-    if (r.ok) alert('Pubblicato in Ask the club.');
+    if (r.ok) alert('Pubblicato in Ask the room.');
     else alert('Pubblicazione fallita.');
   };
 
@@ -252,7 +252,7 @@ export default function CoachPage() {
             {m.content || (streaming ? '…' : '')}
             {mode === 'ask' && m.role === 'assistant' && m.content && (
               <button onClick={() => publishAsk(m.content)} className="block mt-3 px-3 py-1.5 text-xs font-bold bg-room text-[#0B0D12] rounded-lg">
-                Pubblica in Ask the club
+                Pubblica in Ask the room
               </button>
             )}
           </div>
@@ -318,7 +318,7 @@ export default function CoachPage() {
           <p className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-zinc-500 mt-5 mb-3">Strumenti · Gratis</p>
           <div className="space-y-2.5">
             <Row emoji="🧭" title="Standup" desc="Collo di bottiglia + 3 priorità da oggi" locked={false} onClick={() => openCoach('standup')} />
-            <Row emoji="💬" title="Ask the club" desc="Bozza domanda forum pronta da pubblicare" locked={false} onClick={() => openCoach('ask')} />
+            <Row emoji="💬" title="Ask the room" desc="Bozza domanda forum pronta da pubblicare" locked={false} onClick={() => openCoach('ask')} />
           </div>
         </div>
       </div>

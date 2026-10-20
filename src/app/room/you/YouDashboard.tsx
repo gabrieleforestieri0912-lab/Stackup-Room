@@ -52,7 +52,7 @@ export default function YouDashboard() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [gh, setGh] = useState<GhDay[]>([]);
   const [verified, setVerified] = useState<Record<string, { mrr_cents: number; currency: string }>>({});
-  const [source, setSource] = useState<'club' | 'github'>('club');
+  const [source, setSource] = useState<'room' | 'github'>('room');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function YouDashboard() {
 
   const shipDays = new Set(streak?.heatmap || []);
   const ghDays = new Set(gh.filter((d) => d.count > 0).map((d) => d.day));
-  const heatSource = source === 'club' ? shipDays : ghDays;
+  const heatSource = source === 'room' ? shipDays : ghDays;
 
   // Calendario 12 mesi stilato come GitHub: colonne = settimane, righe = giorni (dal domenica)
   const today = new Date();
@@ -239,7 +239,7 @@ export default function YouDashboard() {
             <div className="flex items-center gap-3 mb-4">
               <h2 className={`${kicker} flex-1`}>Attività</h2>
               <div className="flex gap-1.5" role="tablist" aria-label="Sorgente attività">
-                {(['club', 'github'] as const).map((k) => (
+                {(['room', 'github'] as const).map((k) => (
                   <button key={k} role="tab" aria-selected={source === k} onClick={() => setSource(k)}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all capitalize ${
                       source === k
@@ -300,13 +300,13 @@ export default function YouDashboard() {
               <span className="ml-auto">{source === 'github' ? 'contributi GitHub · verdi' : 'attività Room · verde acqua'}</span>
             </div>
             <p className="text-[11px] text-zinc-600 mt-2">
-              {source === 'club' ? 'Contato dai task che segni — un quadrato al giorno.' : 'Contributi pubblici GitHub — solo conteggi, mai codice.'}
+              {source === 'room' ? 'Contato dai task che segni — un quadrato al giorno.' : 'Contributi pubblici GitHub — solo conteggi, mai codice.'}
             </p>
           </section>
 
           <section className={card} aria-label="Contributions">
             <div className="flex items-center gap-3 mb-3">
-              <h2 className={`${kicker} flex-1`}>Contribuzioni al club</h2>
+              <h2 className={`${kicker} flex-1`}>Contributi alla room</h2>
               <span className="text-[11px] text-zinc-600">da sempre</span>
             </div>
             <div className="flex items-center gap-3 py-2.5 border-b border-zinc-900 last:border-0">

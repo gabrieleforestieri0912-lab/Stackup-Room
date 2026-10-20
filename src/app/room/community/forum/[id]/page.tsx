@@ -8,7 +8,10 @@ import { roomInput as input } from '../../../ui';
 
 type Reaction = { emoji: string; count: number; mine: boolean };
 type Post = { id: string; body: string; created_at: string; author: string; mine: boolean; reactions: Reaction[] };
-const EMOJI = ['🔥', '🚀', '💡', '🙌'];
+
+// Rimuove le emoji dal testo dei messaggi.
+const EMOJI_RE = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu;
+const stripEmoji = (t: string) => t.replace(EMOJI_RE, '').replace(/\s{2,}/g, ' ').trim();
 
 export default function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const [id, setId] = useState<string | null>(null);
@@ -31,25 +34,13 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
     })();
   }, [id]);
 
-  const react = async (target: string, targetId: string, emoji: string) => {
-    await fetch(`/api/room/forum/${id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-      body: JSON.stringify({ target_type: target, target_id: targetId, emoji }),
-    });
-    const r = await fetch(`/api/room/forum/${id}`, { headers: await roomAuthHeaders() });
-    if (r.ok) {
-      const d = await r.json();
-      setTopic(d.topic);
-      setPosts(d.posts);
-    }
-  };
-
   const send = async (e: FormEvent) => {
     e.preventDefault();
-    if (!reply.trim()) return;
+    const body = stripEmoji(reply);
+    if (!body) return;
     const r = await fetch('/api/room/forum', {
       method: 'PUT', headers: { 'Content-Type': 'application/json', ...(await roomAuthHeaders()) },
-      body: JSON.stringify({ topic_id: id, body: reply }),
+      body: JSON.stringify({ topic_id: id, body }),
     });
     if (r.ok) {
       setReply('');
@@ -64,40 +55,18 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div>
       <Link href="/room/community" className="text-xs font-bold text-room">← Forum</Link>
-      <h1 className="text-xl font-extrabold mt-2">{topic.title}</h1>
+      <h1 className="text-xl font-extrabold mt-2 break-words">{topic.title}</h1>
       <p className="text-[11px] text-zinc-500">{topic.author} · {topic.tag}</p>
-      {topic.body && <p className="text-sm text-zinc-300 mt-3">{topic.body}</p>}
-      <div className="flex gap-1 mt-2">
-        {EMOJI.map((e) => {
-          const mine = topic.reactions.find((r) => r.emoji === e);
-          return (
-            <button key={e} onClick={() => react('topic', id!, e)}
-              className={`px-2 py-0.5 text-xs rounded-lg border ${mine?.mine ? 'border-room bg-room/20' : 'border-zinc-800'}`}>
-              {e} {mine?.count || ''}
-            </button>
-          );
-        })}
-      </div>
+      {topic.body && <p className="text-sm text-zinc-300 mt-3 break-words [overflow-wrap:anywhere]">{stripEmoji(topic.body)}</p>}
 
-      <ul className="space-y-2 mt-6">
+      <ul className="space-y-2 mt-6 min-w-0">
         {posts.map((p) => (
-          <li key={p.id} className="border border-zinc-800 rounded-2xl p-3">
+          <li key={p.id} className="border border-zinc-800 rounded-2xl p-3 min-w-0">
             <p className="text-[11px] font-bold text-room-bright">{p.author}</p>
-            <p className="text-sm text-zinc-200 mt-1 break-words">{p.body}</p>
-            <div className="flex gap-1 mt-1.5">
-              {EMOJI.map((e) => {
-                const mine = p.reactions.find((r) => r.emoji === e);
-                return (
-                  <button key={e} onClick={() => react('post', p.id, e)} aria-pressed={Boolean(mine?.mine)}
-                    className={`px-2 py-0.5 text-xs rounded-lg border ${mine?.mine ? 'border-room bg-room/20' : 'border-zinc-800'}`}>
-                    {e} {mine?.count || ''}
-                  </button>
-                );
-              })}
-            </div>
+            <p className="text-sm text-zinc-200 mt-1 break-words [overflow-wrap:anywhere]">{stripEmoji(p.body)}</p>
           </li>
         ))}
-        {posts.length === 0 && <li className="text-sm text-zinc-500 text-center py-6">Nessuna risposta. Scrivi la prima 👇</li>}
+        {posts.length === 0 && <li className="text-sm text-zinc-500 text-center py-6">Nessuna risposta. Scrivi la prima</li>}
       </ul>
 
       <form onSubmit={send} className="flex gap-2 mt-4">

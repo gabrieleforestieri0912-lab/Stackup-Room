@@ -15,8 +15,6 @@ type Msg = {
   reply: { author: string; body: string; hidden: boolean } | null;
 };
 
-const EMOJI = ['🔥', '🚀', '💡', '🙌'];
-
 async function authed(path: string, init?: RequestInit) {
   return fetch(path, { ...init, headers: { ...(init?.headers || {}), ...(await roomAuthHeaders()) } });
 }
@@ -56,32 +54,20 @@ function VoiceNote({ path, seconds }: { path: string; seconds: number | null; mi
   );
 }
 
-function renderBody(body: string) {
-  // Evidenzia @mention senza librerie esterne
-  const parts = body.split(/(@[a-z0-9_]{3,24})/gi);
-  return parts.map((p, i) =>
-    /^@[a-z0-9_]{3,24}$/i.test(p)
-      ? <strong key={i} className="text-room-bright">{p}</strong>
-      : <span key={i}>{p}</span>,
-  );
+// Rimuove le emoji dal testo dei messaggi (caratteri pictografici + variazioni/ZWJ residui).
+const EMOJI_RE = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu;
+
+function stripEmoji(text: string) {
+  return text.replace(EMOJI_RE, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-function Reactions({ reactions, onReact }: { reactions: Reaction[]; onReact: (e: string) => void }) {
-  return (
-    <span className="flex flex-wrap gap-1 mt-1">
-      {reactions.map((r) => (
-        <button key={r.emoji} onClick={() => onReact(r.emoji)} aria-pressed={r.mine}
-          className={`px-1.5 py-0.5 text-[11px] rounded-md border transition-colors ${r.mine ? 'border-room bg-room/15 text-room-bright' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500'}`}>
-          {r.emoji} {r.count}
-        </button>
-      ))}
-      <span className="contents">
-        {EMOJI.filter((e) => !reactions.some((r) => r.emoji === e)).map((e) => (
-          <button key={e} onClick={() => onReact(e)} aria-label={`Reagisci con ${e}`}
-            className="px-1 py-0.5 text-[11px] rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-900 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all">{e}</button>
-        ))}
-      </span>
-    </span>
+function renderBody(body: string) {
+  // Evidenzia @mention senza librerie esterne
+  const parts = stripEmoji(body).split(/(@[a-z0-9_]{3,24})/gi);
+  return parts.map((p, i) =>
+    /^@[a-z0-9_]{3,24}$/i.test(p)
+      ? <strong key={i} className="text-room-bright break-words">{p}</strong>
+      : <span key={i} className="break-words">{p}</span>,
   );
 }
 
@@ -160,8 +146,8 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   }, [online, typing, onPresence]);
 
   const send = async (extra?: { audio_path?: string; audio_seconds?: number }) => {
-    if (!text.trim() && !extra?.audio_path) return;
-    const bodyText = text;
+    const bodyText = stripEmoji(text);
+    if (!bodyText && !extra?.audio_path) return;
     // Ottimistico: mostra subito il messaggio
     const tempId = `temp-${Date.now()}`;
     const optimistic: Msg = {
@@ -185,10 +171,11 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   };
 
   const saveEdit = async (id: string) => {
-    if (!editText.trim()) return;
+    const body = stripEmoji(editText);
+    if (!body) return;
     const r = await authed(`/api/room/chat/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: editText }),
+      body: JSON.stringify({ body }),
     });
     if (r.ok) {
       setEditingId(null);
@@ -250,12 +237,12 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
   if (loading) return <div className="flex justify-center items-center min-h-[calc(100dvh-320px)]" role="status" aria-label="Caricamento"><Loader2 className="animate-spin text-room" /></div>;
 
   return (
-    <div className="flex flex-col w-full max-w-3xl mx-auto flex-1 min-h-[calc(100dvh-260px)]">
-      <ul className="flex-1 min-h-[320px] space-y-2 mb-4 overflow-y-auto pr-1" aria-live="polite" aria-label="Messaggi chat">
+    <div className="flex flex-col w-full max-w-3xl mx-auto flex-1 min-w-0 min-h-[calc(100dvh-260px)] overflow-x-hidden">
+      <ul className="flex-1 min-h-[320px] min-w-0 space-y-2 mb-4 overflow-y-auto overflow-x-hidden pr-1" aria-live="polite" aria-label="Messaggi chat">
         {msgs.length === 0 && (
           <li className="flex flex-col items-center justify-center text-center min-h-[320px] h-full border border-dashed border-zinc-800 rounded-2xl py-16 px-6">
             <p className="text-sm text-zinc-400 font-bold">Nessun messaggio negli ultimi 7 giorni.</p>
-            <p className="text-sm text-zinc-500 mt-1">Rompi il ghiaccio 👇</p>
+            <p className="text-sm text-zinc-500 mt-1">Rompi il ghiaccio</p>
           </li>
         )}
         {msgs.map((m, i) => {
@@ -263,7 +250,7 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
           const grouped = Boolean(prev && prev.author === m.author && prev.mine === m.mine
             && new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60 * 1000);
           return (
-          <li key={m.id} className={`relative group flex items-start gap-3 px-2 py-1 -mx-2 rounded-lg hover:bg-zinc-900/50 transition-colors animate-in fade-in duration-150 ${grouped ? 'mt-0' : 'mt-2'}`}>
+          <li key={m.id} className={`relative group flex items-start gap-3 w-full min-w-0 px-2 py-1 rounded-lg hover:bg-zinc-900/50 transition-colors animate-in fade-in duration-150 ${grouped ? 'mt-0' : 'mt-2'}`}>
             <span className={`shrink-0 w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-black mt-0.5 ${m.mine ? 'bg-room/20 border border-room/40 text-room-bright' : 'bg-zinc-800 border border-zinc-700 text-zinc-300'} ${grouped ? 'invisible' : ''}`}>
               {m.mine && user?.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element -- avatar utente
@@ -278,9 +265,9 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
                 {new Date(m.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
               </span>
             ) : (
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className={`text-[13px] font-bold ${m.mine ? 'text-room-bright' : 'text-white'}`}>{m.author}</span>
-              <time className="text-[10px] text-zinc-600">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap min-w-0">
+              <span className={`text-[13px] font-bold truncate max-w-[45%] ${m.mine ? 'text-room-bright' : 'text-white'}`}>{m.author}</span>
+              <time className="text-[10px] text-zinc-600 shrink-0">{new Date(m.created_at).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{m.edited_at ? ' · modificato' : ''}</time>
               <span className="ml-auto flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <button onClick={() => setReplyTo(m)} aria-label={`Rispondi a ${m.author}`} className="p-1 text-zinc-600 hover:text-room"><Reply size={12} /></button>
                 {!m.mine && (
@@ -308,23 +295,19 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
               <div className="flex items-center gap-1.5 mb-0.5 text-[11px] text-zinc-500">
                 <span className="w-4 h-3 border-l-2 border-t-2 border-zinc-700 rounded-tl-md -mb-1" aria-hidden />
                 <span className="font-bold text-zinc-400">{m.reply.author}</span>
-                <span className="truncate max-w-[240px]">{m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : m.reply.body || <em>allegato</em>}</span>
+                <span className="truncate max-w-[240px] min-w-0">{m.reply.hidden ? <em>messaggio nascosto (autore bloccato)</em> : stripEmoji(m.reply.body) || <em>allegato</em>}</span>
               </div>
             )}
             {editingId === m.id ? (
-              <div className="flex gap-2">
-                <input aria-label="Modifica messaggio" autoFocus className={input} value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={2000}
+              <div className="flex gap-2 min-w-0">
+                <input aria-label="Modifica messaggio" autoFocus className={`${input} min-w-0 flex-1`} value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={2000}
                   onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(m.id); if (e.key === 'Escape') setEditingId(null); }} />
                 <button onClick={() => saveEdit(m.id)} className="px-3 py-2 bg-room text-[#0B0D12] text-xs font-bold rounded-xl">OK</button>
               </div>
             ) : (
-              m.body && <p className="text-[13px] leading-snug text-zinc-200 break-words">{renderBody(m.body)}</p>
+              m.body && <p className="text-[13px] leading-snug text-zinc-200 break-words [overflow-wrap:anywhere]">{renderBody(m.body)}</p>
             )}
             {m.audio_path && <div className="mt-2"><VoiceNote path={m.audio_path} seconds={m.audio_seconds} mine={m.mine} /></div>}
-            <Reactions reactions={m.reactions} onReact={async (emoji) => {
-              await authed(`/api/room/chat/${m.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) });
-              load(true);
-            }} />
             </div>
           </li>
           );
@@ -334,13 +317,13 @@ export default function ChatTab({ onPresence }: { onPresence?: (p: { online: num
 
       {replyTo && (
         <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-2 mb-2 text-xs text-zinc-400">
-          <span className="flex-1 truncate">Rispondi a <strong className="text-room-bright">{replyTo.author}</strong>: {replyTo.body.slice(0, 80) || 'allegato'}</span>
+          <span className="flex-1 truncate min-w-0">Rispondi a <strong className="text-room-bright">{replyTo.author}</strong>: {stripEmoji(replyTo.body).slice(0, 80) || 'allegato'}</span>
           <button onClick={() => setReplyTo(null)} aria-label="Annulla risposta" className="font-bold text-zinc-500 hover:text-white">×</button>
         </div>
       )}
 
-      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
-        <input aria-label="Scrivi un messaggio" className={input} value={text} onChange={(e) => { setText(e.target.value); signalTyping(); }} placeholder="Scrivi alla room... (usa @handle per menzionare)" maxLength={2000} />
+      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2 min-w-0">
+        <input aria-label="Scrivi un messaggio" className={`${input} min-w-0 flex-1`} value={text} onChange={(e) => { setText(e.target.value); signalTyping(); }} placeholder="Scrivi alla room... (usa @handle per menzionare)" maxLength={2000} />
         <button type="button" onClick={toggleRec} aria-label={recording ? 'Ferma registrazione' : 'Registra nota vocale'} aria-pressed={recording}
           className={`px-3 py-2 border text-xs font-bold rounded-xl ${recording ? 'bg-red-600 border-red-600 text-white animate-pulse' : 'bg-zinc-900 border-zinc-700'}`}>
           <Mic size={14} />

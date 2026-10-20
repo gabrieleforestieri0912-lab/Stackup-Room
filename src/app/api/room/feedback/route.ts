@@ -6,7 +6,7 @@ import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 5 * 1024 * 1024;
-const AREAS = ['today', 'club', 'coach', 'you', 'membership', 'other'];
+const AREAS = ['today', 'room', 'club', 'coach', 'you', 'membership', 'other'];
 const SEVERITIES: Record<string, string[]> = {
   bug: ['annoying', 'blocks', 'unusable'],
   idea: ['nice', 'helpful', 'critical'],

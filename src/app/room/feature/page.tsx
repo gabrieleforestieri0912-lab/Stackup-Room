@@ -72,7 +72,7 @@ export default function FeatureRequestPage() {
           </div>
           <h2 className="text-lg font-extrabold text-white">Grazie, ricevuto.</h2>
           <p className="text-sm text-zinc-400 mt-1.5">
-            Le richieste del club decidono la roadmap: ti scriviamo quando la funzione esce.
+            Le richieste della room decidono la roadmap: ti scriviamo quando la funzione esce.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <Link href="/room" className="flex-1 py-3 bg-zinc-900 border border-zinc-700 hover:border-room text-white font-bold rounded-xl transition-all text-center">
@@ -86,7 +86,7 @@ export default function FeatureRequestPage() {
         </div>
       ) : (
         <form onSubmit={send} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
-          <p className="text-sm text-zinc-400 mb-5">Dicci cosa costruire dopo — il club vive di queste richieste.</p>
+          <p className="text-sm text-zinc-400 mb-5">Dicci cosa costruire dopo — la room vive di queste richieste.</p>
 
           {err && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{err}</div>}
 

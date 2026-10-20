@@ -10,7 +10,7 @@ import { initials, avatarGradient } from '@/lib/avatar';
 
 export const LINKS = [
   { href: '/room/planner', label: 'Oggi', icon: CalendarClock, match: '/room/planner' },
-  { href: '/room/community', label: 'Club', icon: Users, match: '/room/community' },
+  { href: '/room/community', label: 'Room', icon: Users, match: '/room/community' },
   { href: '/room/coach', label: 'Coach', icon: Sparkles, match: '/room/coach' },
   { href: '/room/you', label: 'Tu', icon: User, match: '/room/you' },
 ];

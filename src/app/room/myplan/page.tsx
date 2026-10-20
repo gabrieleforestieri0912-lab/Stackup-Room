@@ -220,7 +220,7 @@ export default function MyPlanPage() {
           <div className="py-10 text-center">
             <p className="text-lg font-extrabold text-white">Niente di programmate ancora</p>
             <p className="text-sm text-zinc-500 mt-2 max-w-md mx-auto">
-              Aggiungi una data di lancio, un rilascio feature o una scadenza privata silenziosa — quelle pubbliche finiscono sul calendario del club.
+              Aggiungi una data di lancio, un rilascio feature o una scadenza privata silenziosa — quelle pubbliche finiscono sul calendario della room.
             </p>
           </div>
         ) : (

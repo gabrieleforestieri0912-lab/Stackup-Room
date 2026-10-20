@@ -33,10 +33,10 @@ function CommunityInner() {
   const shown = tab === 'chat' ? presence : { online: 0, typing: 0 };
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      {/* Header "THE CLUB" + presenza */}
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-xl font-extrabold tracking-[0.16em] text-white">IL CLUB</h1>
+    <div className="w-full max-w-3xl mx-auto min-w-0 overflow-x-hidden">
+      {/* Header "LA ROOM" + presenza */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap min-w-0">
+        <h1 className="text-xl font-extrabold tracking-[0.16em] text-white">LA ROOM</h1>
         <span className="px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded-md bg-zinc-900 border border-zinc-700 text-zinc-400 flex items-center gap-1.5">
           <MessageCircle size={11} className="text-room" /> Community
         </span>
@@ -47,13 +47,13 @@ function CommunityInner() {
       </div>
 
       {/* Nav principale */}
-      <div className="border-b border-zinc-900 mb-5" role="tablist" aria-label="Sezioni Club">
-        <div className="flex justify-between max-w-3xl mx-auto">
+      <div className="border-b border-zinc-900 mb-5" role="tablist" aria-label="Sezioni Room">
+        <div className="flex justify-between max-w-3xl mx-auto min-w-0 overflow-x-auto">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
               <button key={t.id} role="tab" aria-selected={active} onClick={() => select(t.id)}
-                className={`flex flex-col items-center gap-1 px-4 pt-1.5 pb-2 min-w-[64px] transition-colors ${active ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                className={`flex flex-col items-center gap-1 px-4 pt-1.5 pb-2 min-w-[64px] shrink-0 transition-colors ${active ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
                 <t.icon size={17} className={active ? 'text-room' : ''} />
                 <span className="text-xs font-bold">{t.label}</span>
                 <span className={`h-0.5 w-full rounded-full transition-all ${active ? 'bg-room' : 'bg-transparent'}`} />

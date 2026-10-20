@@ -1,4 +1,4 @@
-// Primitivi UI condivisi della Room — sistema colore stile startupclub.app:
+// Primitivi UI condivisi della Room — sistema colore stile startuproom:
 // teal (#4DE0C9) = primario (azioni, nav attiva, progress, link)
 // ember (#FF8A3D) / gold = solo streak & gamification
 // Tutte le pagine Room devono usare questi componenti per restare consistenti.

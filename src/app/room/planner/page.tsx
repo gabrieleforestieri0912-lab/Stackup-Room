@@ -185,7 +185,7 @@ export default function TodayPage() {
           </p>
           <h2 className="text-lg font-extrabold text-white">{noteTitle}</h2>
           <p className="text-sm text-zinc-400 leading-relaxed mt-1.5">
-            È l&apos;abitudine su cui nasce il Club — una room a pagamento di founder solitari con ranking verificati,
+            È l&apos;abitudine su cui nasce la Room — una room a pagamento di founder solitari con ranking verificati,
             coaching giornaliero e feedback reali su ciò che shippi. Un&apos;occhiata e questa card sparisce per sempre.
           </p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">

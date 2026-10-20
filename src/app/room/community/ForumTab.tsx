@@ -41,7 +41,7 @@ export default function ForumTab() {
           <button key={t} role="tab" aria-selected={filter === t}
             onClick={() => { setFilter(t); load(t); }}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl ${filter === t ? 'bg-room text-[#0B0D12]' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
-            {t === '' ? 'Tutti' : t === 'ask' ? 'Ask the club' : t === 'show' ? 'Show' : 'Discussioni'}
+            {t === '' ? 'Tutti' : t === 'ask' ? 'Ask the room' : t === 'show' ? 'Show' : 'Discussioni'}
           </button>
         ))}
       </div>
@@ -51,13 +51,13 @@ export default function ForumTab() {
           <input aria-label="Titolo topic" required className={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Apri un topic..." maxLength={200} />
           <select aria-label="Tipo topic" className="px-3 py-2.5 bg-black border border-zinc-800 rounded-xl text-xs font-bold" value={tag} onChange={(e) => setTag(e.target.value)}>
             <option value="discussione">Discussione</option>
-            <option value="ask">Chiedi al club</option>
+            <option value="ask">Chiedi alla room</option>
             <option value="show">Show</option>
           </select>
         </div>
         <textarea aria-label="Dettaglio" rows={2} className={input} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Dettagli (facoltativo)..." maxLength={5000} />
         <button className="w-full py-2.5 bg-zinc-900 border border-zinc-700 text-sm font-bold rounded-xl hover:border-room">Pubblica</button>
-        <p className="text-[11px] text-zinc-600">Ask the club: la bozza assistita da AI arriva con la M5. Ora scrivi pure a mano.</p>
+        <p className="text-[11px] text-zinc-600">Ask the room: la bozza assistita da AI arriva con la M5. Ora scrivi pure a mano.</p>
       </form>
 
       {loading ? <div className="flex justify-center py-10" role="status"><Loader2 className="animate-spin text-room" /></div> :
