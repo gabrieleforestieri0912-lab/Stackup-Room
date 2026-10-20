@@ -8,6 +8,12 @@ import { roomInput as input } from '../ui';
 
 type Topic = { id: string; title: string; body: string; tag: string; created_at: string; author: string; mine: boolean; replies: number };
 
+const fetchTopics = async (f: string): Promise<Topic[]> => {
+  const r = await fetch(`/api/room/forum${f ? `?tag=${f}` : ''}`, { headers: await roomAuthHeaders() });
+  if (!r.ok) return [];
+  return r.json().then((d) => d.topics);
+};
+
 export default function ForumTab() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +24,10 @@ export default function ForumTab() {
 
   const load = async (f = filter) => {
     setLoading(true);
-    const r = await fetch(`/api/room/forum${f ? `?tag=${f}` : ''}`, { headers: await roomAuthHeaders() });
-    if (r.ok) setTopics(await r.json().then((d) => d.topics));
+    setTopics(await fetchTopics(f));
     setLoading(false);
   };
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(''); }, []);
+  useEffect(() => { fetchTopics('').then(setTopics); }, []);
 
   const create = async (e: FormEvent) => {
     e.preventDefault();
