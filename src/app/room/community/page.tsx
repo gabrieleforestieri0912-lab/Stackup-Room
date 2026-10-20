@@ -33,7 +33,7 @@ function CommunityInner() {
   const shown = tab === 'chat' ? presence : { online: 0, typing: 0 };
 
   return (
-    <div>
+    <div className="w-full max-w-2xl mx-auto">
       {/* Header "THE CLUB" + presenza */}
       <div className="flex items-center gap-3 mb-4">
         <h1 className="text-xl font-extrabold tracking-[0.16em] text-white">IL CLUB</h1>
@@ -48,7 +48,7 @@ function CommunityInner() {
 
       {/* Nav principale */}
       <div className="border-b border-zinc-900 mb-5" role="tablist" aria-label="Sezioni Club">
-        <div className="flex justify-between max-w-3xl mx-auto">
+        <div className="flex justify-between max-w-2xl mx-auto">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (

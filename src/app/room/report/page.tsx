@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { roomAuthHeaders } from '@/lib/auth-token';
-import { roomInput as input } from '../ui';
+import { roomInput as input, roomNarrow } from '../ui';
 import { Loader2, Check, ImagePlus } from 'lucide-react';
 
 const SEVERITIES = [
@@ -67,7 +67,7 @@ export default function ReportBugPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className={roomNarrow}>
       {/* Testata */}
       <div className="flex items-center gap-3 mb-5">
         <button onClick={() => { if (typeof window !== 'undefined' && window.history.length > 1) window.history.back(); else window.location.href = '/room'; }}

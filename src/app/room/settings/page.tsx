@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
 import ProfileTab from '../you/ProfileTab';
+import { roomNarrow } from '../ui';
 import { ExternalLink, Loader2, Mail, Lightbulb, Rocket, ChevronRight, Volume2, MessageCircle, Users, Bell, Wind } from 'lucide-react';
 
 // Impostazioni Room in stile card: Account, Supporto, Suoni, Movimento, Profilo, Legale.
@@ -112,7 +113,7 @@ export default function RoomSettingsPage() {
   const name = String(profile?.name || user?.name || user?.email || 'Utente');
   const email = String(user?.email || '');
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${roomNarrow}`}>
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">Impostazioni</h1>
       </div>
