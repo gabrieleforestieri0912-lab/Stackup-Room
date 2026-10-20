@@ -27,7 +27,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     patch.domain = u ? extractDomain(u) : null;
   }
   if ('tagline' in body) patch.tagline = cleanStr(body.tagline, 200) || null;
-  if ('logo_url' in body) patch.logo_url = cleanStr(body.logo_url, 1000) || null;
+  if ('logo_url' in body) {
+    const l = cleanStr(body.logo_url, 1000);
+    if (!isValidUrlOrEmpty(l)) return NextResponse.json({ message: 'Logo non valido' }, { status: 400 });
+    patch.logo_url = l || null;
+  }
   if ('stage' in body) {
     if (!(STAGES as readonly string[]).includes(String(body.stage))) return NextResponse.json({ message: 'Stadio non valido' }, { status: 400 });
     patch.stage = body.stage;

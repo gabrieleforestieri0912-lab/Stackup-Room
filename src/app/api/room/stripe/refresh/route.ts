@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { fetchMrr, fetchMrrForKey, connectClientId } from '@/lib/room/stripe';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { rateLimit, rateLimitKey, clientIp } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }).select().single();
     await supabaseAdmin.from('leaderboard_audit').insert({
       user_id: user.id, action: 'stripe.refresh', meta: { startup_id: startupId, mrr_cents: mrr.mrr_cents },
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+      ip: clientIp(req),
     });
     return NextResponse.json({ snapshot: data });
   } catch (e) {
@@ -55,7 +55,7 @@ export async function DELETE(req: NextRequest) {
     await supabaseAdmin.from('stripe_keys').delete().eq('id', keyId);
     await supabaseAdmin.from('leaderboard_audit').insert({
       user_id: user.id, action: 'stripe.key_unlink', meta: { startup_id: k.startup_id },
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+      ip: clientIp(req),
     });
     return NextResponse.json({ message: 'Chiave rimossa. Revocala anche da Stripe → API keys se non la usi altrove.' });
   }
@@ -73,7 +73,7 @@ export async function DELETE(req: NextRequest) {
   await supabaseAdmin.from('stripe_links').delete().eq('id', linkId);
   await supabaseAdmin.from('leaderboard_audit').insert({
     user_id: user.id, action: 'stripe.unlink', meta: { startup_id: link.startup_id },
-    ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+    ip: clientIp(req),
   });
   return NextResponse.json({ message: 'Account scollegato' });
 }

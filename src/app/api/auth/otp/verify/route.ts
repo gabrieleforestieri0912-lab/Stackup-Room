@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, supabaseAuth } from '@/lib/supabase-admin';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 import { EMAIL_RE } from '@/lib/room/validation';
 import { hashOtp } from '@/lib/room/otp';
@@ -19,6 +19,34 @@ function buildUserPayload(profile: Record<string, unknown>, enrollments: string[
     studyHours: profile.study_hours || 0, exp: profile.exp || 0,
     createdAt: profile.created_at,
   };
+}
+
+/**
+ * Cerca l'utente auth per email.
+ *
+ * `admin.listUsers()` senza paginazione restituisce solo i primi 50 utenti:
+ * oltre la 50esima posizione l'utente non veniva trovato e il login OTP
+ * falliva. Qui si guarda prima nel profilo (indicizzato per email) e, come
+ * fallback, si scandiscono le pagine di listUsers.
+ */
+async function findAuthUserByEmail(email: string): Promise<{ id: string } | null> {
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .ilike('email', email)
+    .maybeSingle();
+  if (profile?.id) {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(profile.id as string);
+    if (data?.user) return { id: data.user.id };
+  }
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users?.length) break;
+    const found = data.users.find((u) => u.email?.toLowerCase() === email);
+    if (found) return { id: found.id };
+    if (data.users.length < 1000) break;
+  }
+  return null;
 }
 
 // Verifica OTP -> crea utente se nuovo (passwordless), restituisce sessione.
@@ -53,8 +81,7 @@ export async function POST(req: NextRequest) {
     await supabaseAdmin.from('otp_codes').update({ consumed_at: new Date().toISOString() }).eq('id', row.id);
 
     // Utente esistente?
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
-    const authUser = existing?.users.find((u) => u.email?.toLowerCase() === email);
+    let authUser = await findAuthUserByEmail(email);
 
     let userId: string;
     if (authUser) {
@@ -63,22 +90,48 @@ export async function POST(req: NextRequest) {
       const { data, error } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true });
       if (error || !data?.user) throw error || new Error('createUser failed');
       userId = data.user.id;
-      const { data: link } = await supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email });
-      void link;
       await supabaseAdmin.from('profiles').insert({ id: userId, email, name: email.split('@')[0], auth_method: 'otp' });
     }
-
-    // Sessione: magiclink consumato via admin -> creiamo un link e lo scambiamo? Semplice: generateLink + signIn via OTP non disponibile admin-side.
-    // Strategia: usiamo generateLink magiclink e restituiamo l'action_link hash; il client lo apre per stabilire la sessione.
+    // La sessione viene stabilita lato SERVER.
+    //
+    // Prima il server restituiva al browser `actionLink` / `emailOtpToken`:
+    // erano bearer credential (link magici) che transitavano nel body della
+    // risposta — quindi in log di proxy/APM, cache e DevTools — e potevano
+    // essere usati per accedere all'account senza password. Ora il magic link
+    // viene scambiato qui, sul server, e al client arriva solo la sessione
+    // (access token + refresh token), come nel flusso login con password.
     const { data: magic, error: magicErr } = await supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email });
-    if (magicErr) throw magicErr;
+    if (magicErr || !magic?.properties) throw magicErr || new Error('generateLink failed');
+
+    // Lo scambio avviene con la anon key (path documentato di Supabase per
+    // `verifyOtp`); il client admin è il fallback. Si prova prima l'email_otp
+    // (stesso percorso del vecchio flusso client-side), poi il token_hash.
+    const attempts: Array<() => Promise<{ data: { session: { access_token: string; refresh_token: string } | null } | null; error: Error | null }>> = [];
+    if (magic.properties.email_otp) {
+      attempts.push(() => supabaseAuth.auth.verifyOtp({ email, token: magic.properties.email_otp as string, type: 'email' }));
+    }
+    attempts.push(() => supabaseAuth.auth.verifyOtp({ token_hash: magic.properties.hashed_token, type: 'email' }));
+    attempts.push(() => supabaseAdmin.auth.verifyOtp({ email, token: magic.properties.email_otp as string, type: 'email' }));
+    attempts.push(() => supabaseAdmin.auth.verifyOtp({ token_hash: magic.properties.hashed_token, type: 'email' }));
+
+    let session: { access_token: string; refresh_token: string } | null = null;
+    let sessionErr: Error | null = null;
+    for (const attempt of attempts) {
+      const res = await attempt();
+      session = res.data?.session ?? null;
+      sessionErr = res.error ?? null;
+      if (session) break;
+    }
+    if (!session) {
+      throw sessionErr || new Error('session exchange failed');
+    }
 
     const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).maybeSingle();
     const { data: enrollments } = await supabaseAdmin.from('enrollments').select('course_id').eq('user_id', userId);
 
     return NextResponse.json({
-      actionLink: magic.properties?.action_link ?? null,
-      emailOtpToken: magic.properties?.email_otp ?? null,
+      token: session.access_token,
+      refreshToken: session.refresh_token,
       user: profile ? buildUserPayload(profile, (enrollments || []).map((e: { course_id: string }) => e.course_id)) : null,
       onboardingCompleted: Boolean(profile?.onboarding_completed),
     });

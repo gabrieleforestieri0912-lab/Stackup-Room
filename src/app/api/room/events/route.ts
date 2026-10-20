@@ -10,7 +10,8 @@ import { isValidUrlOrEmpty } from '@/lib/room/validation';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('events').select('*').gte('starts_at', new Date().toISOString()).order('starts_at').limit(50);
   const blocked = await blockedIds(user.id);
@@ -27,15 +28,20 @@ export async function GET(req: NextRequest) {
   }
   const authors = await authorsFor(visible.map((e: { user_id: string }) => e.user_id));
   return NextResponse.json({
-    events: visible.map((e: Record<string, unknown>) => ({
-      ...e, author: displayName(authors[e.user_id as string]), mine: e.user_id === user.id,
-      rsvps: counts[e.id as string] || 0, attending: mine.has(e.id as string),
-    })),
+    events: visible.map((e: Record<string, unknown>) => {
+      // `user_id` non viene esposto (cfr. anonymous_mode).
+      const { user_id: _userId, ...rest } = e;
+      return {
+        ...rest, author: displayName(authors[e.user_id as string]), mine: e.user_id === user.id,
+        rsvps: counts[e.id as string] || 0, attending: mine.has(e.id as string),
+      };
+    }),
   });
 }
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `events:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
@@ -56,7 +62,8 @@ export async function POST(req: NextRequest) {
 
 // Partecipazione (toggle + notifica all'organizzatore).
 export async function PUT(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const eventId = typeof body.event_id === 'string' ? body.event_id : '';
@@ -73,7 +80,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   const { data: ev } = await supabaseAdmin.from('events').select('user_id').eq('id', id).maybeSingle();

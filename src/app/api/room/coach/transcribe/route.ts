@@ -11,7 +11,8 @@ export const runtime = 'nodejs';
 // Trascrive una nota vocale dell'utente. Solo con consenso AI: l'audio lascia i nostri
 // server verso il provider STT. Senza: 403 e la nota resta inviabile senza trascrizione.
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { data: profile } = await supabaseAdmin.from('profiles').select('ai_consent').eq('id', user.id).maybeSingle();
   if (!aiAllowed(profile)) {

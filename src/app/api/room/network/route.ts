@@ -9,7 +9,8 @@ import { isAdminEmail } from '@/lib/room/admin';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const kind = new URL(req.url).searchParams.get('kind');
   let q = supabaseAdmin.from('network_posts').select('*').order('created_at', { ascending: false }).limit(50);
@@ -19,14 +20,17 @@ export async function GET(req: NextRequest) {
   const visible = (data || []).filter((n: { user_id: string }) => !blocked.has(n.user_id));
   const authors = await authorsFor(visible.map((n: { user_id: string }) => n.user_id));
   return NextResponse.json({
-    posts: visible.map((n: Record<string, unknown>) => ({
-      ...n, author: displayName(authors[n.user_id as string]), mine: n.user_id === user.id,
-    })),
+    posts: visible.map((n: Record<string, unknown>) => {
+      // `user_id` non viene esposto (cfr. anonymous_mode).
+      const { user_id: _userId, ...rest } = n;
+      return { ...rest, author: displayName(authors[n.user_id as string]), mine: n.user_id === user.id };
+    }),
   });
 }
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `network:${user.id}`), 10, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
@@ -44,7 +48,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   const { data: n } = await supabaseAdmin.from('network_posts').select('user_id').eq('id', id).maybeSingle();

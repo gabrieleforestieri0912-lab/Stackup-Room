@@ -8,7 +8,8 @@ export const runtime = 'nodejs';
 
 // Cronologia di una sessione (solo proprietario).
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: sess } = await supabaseAdmin.from('ai_sessions').select('id,mode,startup_id,created_at').eq('id', id).eq('user_id', user.id).maybeSingle();

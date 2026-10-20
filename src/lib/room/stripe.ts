@@ -1,11 +1,19 @@
 import Stripe from 'stripe';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const secret = () => process.env.STRIPE_SECRET_KEY!;
 export const connectClientId = () => process.env.STRIPE_CONNECT_CLIENT_ID || '';
 
+// Segreto per firmare lo `state` OAuth Connect.
+//
+// Fallback hardcoded rimosso (lo `state` era falsificabile) e separato dal
+// webhook secret: una chiave per una funzione, una per l'altra.
 function stateSecret(): string {
-  return process.env.OTP_PEPPER || process.env.STRIPE_WEBHOOK_SECRET || 'stackup-room-state';
+  const s = process.env.STRIPE_STATE_SECRET || process.env.OTP_PEPPER;
+  if (!s || s.length < 16) {
+    throw new Error('STRIPE_STATE_SECRET mancante o troppo corta: imposta una stringa segreta di almeno 16 caratteri.');
+  }
+  return s;
 }
 
 export function signState(userId: string, startupId: string): string {
@@ -21,7 +29,9 @@ export function verifyState(state: string): { userId: string; startupId: string 
     const [userId, startupId, exp, sig] = raw.split('.');
     if (!userId || !startupId || !exp || !sig || Number(exp) < Date.now()) return null;
     const want = createHmac('sha256', stateSecret()).update(`${userId}.${startupId}.${exp}`).digest('hex');
-    if (want !== sig) return null;
+    // Confronto a tempo costante: evita di dedurre la firma byte a byte.
+    if (sig.length !== want.length) return null;
+    if (!timingSafeEqual(Buffer.from(sig, 'utf8'), Buffer.from(want, 'utf8'))) return null;
     return { userId, startupId };
   } catch {
     return null;

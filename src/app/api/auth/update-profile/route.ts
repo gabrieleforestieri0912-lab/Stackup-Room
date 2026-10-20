@@ -1,10 +1,16 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getAuthUser } from '../../../../lib/supabase-admin';
+import { rateLimit, rateLimitKey } from '../../../../lib/rateLimit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  const { allowed, retryAfter } = await rateLimit(rateLimitKey(req, 'update-profile'), 10, 3600_000);
+  if (!allowed) {
+    return NextResponse.json({ message: `Troppe richieste. Riprova tra ${retryAfter} secondi.` }, { status: 429 });
+  }
+
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ message: 'Non autorizzato' }, { status: 401 });

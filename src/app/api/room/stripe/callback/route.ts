@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { unauthorized } from '@/lib/room/api';
 import { verifyState, fetchMrr } from '@/lib/room/stripe';
+import { clientIp } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     await supabaseAdmin.from('leaderboard_audit').insert({
       user_id: verified.userId, action: 'stripe.link',
       meta: { startup_id: verified.startupId, livemode: token.livemode === true },
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+      ip: clientIp(req),
     });
 
     return NextResponse.redirect(`${appUrl}/room/you?tab=contributions&stripe=ok`);

@@ -28,7 +28,3 @@ export function isAdult16(birthDate: string): boolean {
   const min = new Date(now.getFullYear() - 16, now.getMonth(), now.getDate());
   return d <= min;
 }
-
-export function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}

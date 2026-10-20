@@ -12,6 +12,8 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
+      // L'hash OTP fallisce (fail-closed) senza un pepper valido.
+      OTP_PEPPER: 'test-pepper-value-0123456789',
     },
   },
 });

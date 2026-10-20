@@ -5,9 +5,21 @@ export function generateOtp(): string {
   return String(randomInt(100000, 1000000));
 }
 
+// Pepper per l'hash degli OTP.
+//
+// Fallback hardcoded rimosso: una stringa finita nel repository rende gli
+// hash pre-calcolabili da chiunque. Se la variabile manca il flusso OTP si
+// chiude (fail-closed) invece di degradare.
+function otpPepper(): string {
+  const pepper = process.env.OTP_PEPPER;
+  if (!pepper || pepper.length < 16) {
+    throw new Error('OTP_PEPPER mancante o troppo corta: imposta una stringa segreta di almeno 16 caratteri.');
+  }
+  return pepper;
+}
+
 export function hashOtp(code: string, email: string): string {
-  const pepper = process.env.OTP_PEPPER || 'stackup-room-otp';
-  return createHash('sha256').update(`${pepper}:${email.toLowerCase()}:${code}`).digest('hex');
+  return createHash('sha256').update(`${otpPepper()}:${email.toLowerCase()}:${code}`).digest('hex');
 }
 
 export async function sendOtpEmail(email: string, code: string): Promise<void> {

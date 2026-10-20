@@ -3,12 +3,14 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, blockedIds, displayName, EMOJI } from '@/lib/room/community';
+import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
 // Dettaglio topic + risposte + reazioni.
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { id } = await ctx.params;
   const { data: topic } = await supabaseAdmin.from('forum_topics').select('*').eq('id', id).maybeSingle();
@@ -37,17 +39,25 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const postR = agg(postReacts || []);
 
   return NextResponse.json({
-    topic: { ...topic, author: displayName(authors[topic.user_id]), mine: topic.user_id === user.id, reactions: topicR },
-    posts: visible.map((p: Record<string, unknown>) => ({
-      ...p, author: displayName(authors[p.user_id as string]), mine: p.user_id === user.id, reactions: postR[p.id as string] || [],
-    })),
+    topic: (() => {
+      // `user_id` non viene esposto (cfr. anonymous_mode).
+      const { user_id: _userId, ...rest } = topic;
+      return { ...rest, author: displayName(authors[topic.user_id]), mine: topic.user_id === user.id, reactions: topicR };
+    })(),
+    posts: visible.map((p: Record<string, unknown>) => {
+      const { user_id: _userId, ...rest } = p;
+      return { ...rest, author: displayName(authors[p.user_id as string]), mine: p.user_id === user.id, reactions: postR[p.id as string] || [] };
+    }),
   });
 }
 
 // Reazione a topic o risposta (toggle).
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
+  const rl = await rateLimit(rateLimitKey(req, `forum-react:${user.id}`), 60, 60_000);
+  if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const target = body.target_type === 'post' ? 'post' : 'topic';
   const targetId = typeof body.target_id === 'string' ? body.target_id : '';

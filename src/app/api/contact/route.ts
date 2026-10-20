@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +22,13 @@ function stripCrlf(input: string): string {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
+  // Rate limit: senza, l'endpoint può essere usato per spamare la casella del
+  // progetto e consumare quota Resend.
+  const rl = await rateLimit(rateLimitKey(req, 'contact'), 5, 3600_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
+  }
+
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
   const rawName = typeof body.name === 'string' ? body.name : '';

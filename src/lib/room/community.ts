@@ -7,6 +7,8 @@ import { requiresMembershipEnabled } from './flags';
 export type Author = { handle: string | null; anonymous: boolean };
 
 // Solo membri (handle impostato) quando il flag requiresMembership è attivo.
+// Restituisce `error` (403) quando l'utente non è membro: i route handler
+// devono propagarlo, non sostituirlo con un 401 generico.
 export async function requireMember(req: NextRequest) {
   const { error, user } = await requireUser(req);
   if (error || !user) return { error, user: null as null, profile: null as null };

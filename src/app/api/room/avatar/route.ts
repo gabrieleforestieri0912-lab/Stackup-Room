@@ -3,18 +3,14 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { readSafeImage } from '@/lib/room/upload';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 2 * 1024 * 1024;
 
-const EXT_BY_TYPE: Record<string, string> = {
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-};
-
 // Upload immagine profilo: salva sul bucket pubblico `avatars` e aggiorna il profilo.
+// Il tipo del file è dedotto dai magic bytes, non dal MIME dichiarato dal client:
+// altrimenti si potrebbe caricare SVG/HTML serviti dal bucket pubblico (stored XSS).
 export async function POST(req: NextRequest) {
   const { user } = await requireUser(req);
   if (!user) return unauthorized();
@@ -25,12 +21,17 @@ export async function POST(req: NextRequest) {
   const file = form?.get('avatar');
   if (!(file instanceof Blob) || file.size === 0) return NextResponse.json({ message: 'Immagine mancante' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ message: 'Immagine fino a 2MB' }, { status: 400 });
-  if (file.type && !file.type.startsWith('image/')) return NextResponse.json({ message: 'Solo immagini' }, { status: 400 });
 
-  const ext = EXT_BY_TYPE[file.type] || 'png';
-  const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+  let safe: Awaited<ReturnType<typeof readSafeImage>>;
+  try {
+    safe = await readSafeImage(file);
+  } catch {
+    return NextResponse.json({ message: 'Formato immagine non supportato (PNG, JPG, WEBP o GIF)' }, { status: 400 });
+  }
+
+  const path = `${user.id}/avatar-${Date.now()}.${safe.ext}`;
   const { error: up } = await supabaseAdmin.storage.from('avatars').upload(
-    path, Buffer.from(await file.arrayBuffer()), { contentType: file.type || 'image/png', upsert: true },
+    path, safe.buffer, { contentType: safe.contentType, upsert: true },
   );
   if (up) return NextResponse.json({ message: 'Upload fallito' }, { status: 500 });
 

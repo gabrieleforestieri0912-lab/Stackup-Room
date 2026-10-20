@@ -16,7 +16,8 @@ function sseError(message: string): Response {
 
 // Chat coach in streaming (SSE). Richiede consenso AI esplicito + limite giornaliero.
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const mode = COACH_MODES.includes(body.mode as CoachMode) ? (body.mode as CoachMode) : 'advisor';
@@ -89,14 +90,16 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('ai_sessions').select('id,mode,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(30);
   return NextResponse.json({ sessions: data || [] });
 }
 
 export async function DELETE(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   await supabaseAdmin.from('ai_sessions').delete().eq('id', id).eq('user_id', user.id);

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { readSafeImage } from '@/lib/room/upload';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -40,10 +41,15 @@ export async function POST(req: NextRequest) {
   const shot = form?.get('screenshot');
   if (shot instanceof Blob && shot.size > 0) {
     if (shot.size > MAX_BYTES) return NextResponse.json({ message: 'Lo screenshot può essere al massimo di 5MB.' }, { status: 400 });
-    if (shot.type && !shot.type.startsWith('image/')) return NextResponse.json({ message: 'Lo screenshot deve essere un\'immagine.' }, { status: 400 });
-    const path = `${user.id}/${Date.now()}.png`;
+    let safe: Awaited<ReturnType<typeof readSafeImage>>;
+    try {
+      safe = await readSafeImage(shot);
+    } catch {
+      return NextResponse.json({ message: 'Formato immagine non supportato (PNG, JPG, WEBP o GIF).' }, { status: 400 });
+    }
+    const path = `${user.id}/${Date.now()}.${safe.ext}`;
     const { error: up } = await supabaseAdmin.storage.from('feedback-shots').upload(
-      path, Buffer.from(await shot.arrayBuffer()), { contentType: shot.type || 'image/png', upsert: false },
+      path, safe.buffer, { contentType: safe.contentType, upsert: false },
     );
     if (up) return NextResponse.json({ message: 'Upload dello screenshot fallito.' }, { status: 500 });
     screenshotPath = path;

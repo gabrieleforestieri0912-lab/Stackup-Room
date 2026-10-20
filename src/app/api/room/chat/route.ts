@@ -11,7 +11,8 @@ const WINDOW_MS = 7 * 24 * 3600 * 1000;
 
 // Chat live (polling) con finestra mobile di 7 giorni. Testo, GIF, note vocali, reazioni.
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const sp = new URL(req.url).searchParams;
   const since = sp.get('since');
@@ -58,18 +59,24 @@ export async function GET(req: NextRequest) {
     }
   }
   return NextResponse.json({
-    messages: visible.map((m: Record<string, unknown>) => ({
-      ...m,
-      author: displayName(authors[m.user_id as string]),
-      mine: m.user_id === user.id,
-      reactions: reactions[m.id as string] || [],
-      reply: m.reply_to ? (replyPreview[m.reply_to as string] || null) : null,
-    })),
+    messages: visible.map((m: Record<string, unknown>) => {
+      // `user_id` non viene esposto: è l'UUID interno che, combinato con altri
+      // elenchi, renderebbe reversibile l'anonymous_mode.
+      const { user_id: _userId, ...rest } = m;
+      return {
+        ...rest,
+        author: displayName(authors[m.user_id as string]),
+        mine: m.user_id === user.id,
+        reactions: reactions[m.id as string] || [],
+        reply: m.reply_to ? (replyPreview[m.reply_to as string] || null) : null,
+      };
+    }),
   });
 }
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `chat:${user.id}`), 20, 60_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Rallenta un attimo.' }, { status: 429 });
@@ -81,7 +88,12 @@ export async function POST(req: NextRequest) {
   if (gif && !isValidUrlOrEmpty(gif)) return NextResponse.json({ message: 'GIF non valida' }, { status: 400 });
   if (!text && !gif && !audio) return NextResponse.json({ message: 'Messaggio vuoto' }, { status: 400 });
   if (audio) {
-    const { data: exists } = await supabaseAdmin.storage.from('voice-notes').list('', { search: audio.split('/').pop() });
+    // La nota vocale allegata deve essere stata caricata da chi scrive:
+    // il path inizia sempre con l'UUID dell'utente che ha fatto l'upload.
+    if (!audio.startsWith(`${user.id}/`)) {
+      return NextResponse.json({ message: 'Audio non valido' }, { status: 400 });
+    }
+    const { data: exists } = await supabaseAdmin.storage.from('voice-notes').list(user.id, { search: audio.split('/').pop() });
     if (!exists || exists.length === 0) return NextResponse.json({ message: 'Audio non trovato' }, { status: 400 });
   }
   const replyRaw = typeof body.reply_to === 'string' ? body.reply_to : null;

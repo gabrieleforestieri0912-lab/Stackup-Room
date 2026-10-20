@@ -7,7 +7,8 @@ export const runtime = 'nodejs';
 
 // Proxy ricerca GIF (Tenor). Chiave solo lato server.
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const key = process.env.TENOR_API_KEY;
   if (!key) return NextResponse.json({ message: 'GIF non configurate', gifs: [] }, { status: 501 });

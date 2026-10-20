@@ -182,20 +182,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || 'Codice non valido');
-  if (data.emailOtpToken) {
-   const { error } = await supabase.auth.verifyOtp({ email, token: data.emailOtpToken, type: 'email' });
-   if (error) throw new Error(error.message);
-   const { data: { session } } = await supabase.auth.getSession();
-   if (session?.access_token) persistToken(session.access_token);
-  } else if (data.actionLink) {
-   window.location.href = data.actionLink;
-   throw new Error('Completa il login dal link inviato via email.');
+  // La sessione è stabilita lato SERVER: il client riceve i token come nel
+  // login con password e non scambia più magic link o email OTP.
+  if (data.token) {
+   await establishSession(data.token, data.refreshToken);
   }
   if (data.user) setUser(data.user as User);
   else await refreshUser();
   toast.success('Accesso effettuato');
   return data.user as User;
- }, [refreshUser]);
+ }, [establishSession, refreshUser]);
 
  const logout = useCallback(async () => {
   setUser(null);

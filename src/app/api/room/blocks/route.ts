@@ -3,12 +3,14 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { unauthorized } from '@/lib/room/api';
 import { requireMember, authorsFor, displayName } from '@/lib/room/community';
+import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
 // Blocca un membro: nasconde tutti i suoi contenuti (liste filtrate lato server).
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const { data } = await supabaseAdmin.from('blocks').select('blocked_id').eq('blocker_id', user.id);
   const authors = await authorsFor((data || []).map((b: { blocked_id: string }) => b.blocked_id));
@@ -18,8 +20,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
+  const rl = await rateLimit(rateLimitKey(req, `blocks:${user.id}`), 60, 3600_000);
+  if (!rl.allowed) return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const targetHandle = typeof body.handle === 'string' ? body.handle.trim().toLowerCase().replace(/^@/, '') : '';
   if (!targetHandle) return NextResponse.json({ message: 'Handle mancante' }, { status: 400 });
@@ -30,7 +35,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const id = new URL(req.url).searchParams.get('id');
   await supabaseAdmin.from('blocks').delete().eq('blocker_id', user.id).eq('blocked_id', id);

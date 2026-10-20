@@ -36,7 +36,8 @@ async function snippetFor(target: string, id: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   const rl = await rateLimit(rateLimitKey(req, `report:${user.id}`), 20, 3600_000);
   if (!rl.allowed) return NextResponse.json({ message: 'Troppe segnalazioni. Riprova più tardi.' }, { status: 429 });
@@ -55,7 +56,8 @@ export async function POST(req: NextRequest) {
 
 // Coda di revisione admin (SLA 24h: ordinata per anzianità).
 export async function GET(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   if (!isAdminEmail(user.email)) return NextResponse.json({ message: 'Non autorizzato' }, { status: 403 });
   const status = new URL(req.url).searchParams.get('status') || 'open';
@@ -65,7 +67,8 @@ export async function GET(req: NextRequest) {
 
 // Risoluzione admin (con notifica al segnalante).
 export async function PATCH(req: NextRequest) {
-  const { user } = await requireMember(req);
+  const { error, user } = await requireMember(req);
+  if (error) return error;
   if (!user) return unauthorized();
   if (!isAdminEmail(user.email)) return NextResponse.json({ message: 'Non autorizzato' }, { status: 403 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;

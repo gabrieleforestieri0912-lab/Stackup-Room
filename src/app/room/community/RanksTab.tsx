@@ -6,9 +6,9 @@ import { splitPodium } from '@/lib/room/leaderboard';
 import { Coins, Flame, GitBranch, Loader2, Rocket, Trophy } from 'lucide-react';
 
 type Row = {
-  rank: number; owner: string; user_id?: string;
+  rank: number; owner: string;
   mrr_cents?: number; total_cents?: number; currency?: string; verified?: boolean;
-  startups?: string[]; name?: string;
+  startups?: string[]; name?: string; value?: number; todayDone?: boolean;
 };
 
 type PointRow = {

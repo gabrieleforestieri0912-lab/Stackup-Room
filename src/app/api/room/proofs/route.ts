@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, ownStartup, unauthorized } from '@/lib/room/api';
 import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { readSafeImage } from '@/lib/room/upload';
 
 export const runtime = 'nodejs';
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -23,11 +24,17 @@ export async function POST(req: NextRequest) {
   const shot = form?.get('screenshot');
   if (!(shot instanceof Blob) || shot.size === 0) return NextResponse.json({ message: 'Immagine mancante' }, { status: 400 });
   if (shot.size > MAX_BYTES) return NextResponse.json({ message: 'Immagine fino a 5MB' }, { status: 400 });
-  if (shot.type && !shot.type.startsWith('image/')) return NextResponse.json({ message: 'Solo immagini' }, { status: 400 });
 
-  const path = `${user.id}/${goalId}-${Date.now()}.png`;
+  let safe: Awaited<ReturnType<typeof readSafeImage>>;
+  try {
+    safe = await readSafeImage(shot);
+  } catch {
+    return NextResponse.json({ message: 'Formato immagine non supportato (PNG, JPG, WEBP o GIF)' }, { status: 400 });
+  }
+
+  const path = `${user.id}/${goalId}-${Date.now()}.${safe.ext}`;
   const { error: up } = await supabaseAdmin.storage.from('proofs').upload(
-    path, Buffer.from(await shot.arrayBuffer()), { contentType: shot.type || 'image/png', upsert: false },
+    path, safe.buffer, { contentType: safe.contentType, upsert: false },
   );
   if (up) return NextResponse.json({ message: 'Upload fallito' }, { status: 500 });
   await supabaseAdmin.from('goals').update({ screenshot_path: path }).eq('id', goalId);

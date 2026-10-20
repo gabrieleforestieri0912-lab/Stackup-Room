@@ -10,6 +10,21 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
+/**
+ * Client con la anon key, per le chiamate pubbliche di auth (es. `verifyOtp`).
+ *
+ * Da usare al posto di `supabaseAdmin.auth.verifyOtp`: l'endpoint /auth/v1/verify
+ * autentica l'utente tramite il token OTP, e un JWT di servizio non è un
+ * profilo utente valido per quel flusso.
+ */
+export const supabaseAuth = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false,
+  },
+});
+
 export async function getAuthUser(token: string) {
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !user) return null;

@@ -1,10 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config.dart';
 import 'api_client.dart';
 
 class AppUser {
@@ -69,35 +67,14 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> verifyOtp(String email, String code) async {
+    // La sessione è stabilita lato server: la risposta porta direttamente
+    // i token, non un magic link da scambiare.
     final j = await api.post('/api/auth/otp/verify', {
       'email': email.trim(),
       'code': code.trim(),
     });
-    final otpToken = j['emailOtpToken']?.toString();
-    if (otpToken == null || AppConfig.supabaseUrl.isEmpty) {
-      throw ApiException(
-        'Accesso OTP non configurato per il mobile: usa la login con password.',
-      );
-    }
-    final res = await http
-        .post(
-          Uri.parse('${AppConfig.supabaseUrl}/auth/v1/verify'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'type': 'email',
-            'email': email.trim(),
-            'token': otpToken,
-          }),
-        )
-        .timeout(const Duration(seconds: 25));
-    Map<String, dynamic> data;
-    try {
-      data = jsonDecode(res.body) as Map<String, dynamic>;
-    } catch (_) {
-      data = <String, dynamic>{};
-    }
-    final token = data['access_token']?.toString() ?? '';
-    if (res.statusCode >= 400 || token.isEmpty) {
+    final token = j['token']?.toString() ?? '';
+    if (token.isEmpty) {
       throw ApiException('Verifica del codice fallita');
     }
     await _save(token, (j['user'] as Map<String, dynamic>?) ?? {});

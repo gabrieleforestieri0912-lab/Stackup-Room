@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { fetchPublicCounts } from '@/lib/room/github';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { rateLimit, rateLimitKey, clientIp } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     lastAutoSync.set(user.id, Date.now());
     await supabaseAdmin.from('leaderboard_audit').insert({
       user_id: user.id, action: 'github.sync', meta: { days },
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+      ip: clientIp(req),
     });
     return NextResponse.json({ message: 'Sincronizzato', days });
   } catch (e) {

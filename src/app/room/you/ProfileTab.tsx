@@ -81,14 +81,25 @@ export default function ProfileTab() {
 
   const deleteAccount = async () => {
     if (confirmDelete !== 'DELETE') { setErr('Scrivi DELETE per confermare.'); return; }
+    // Re-autenticazione: la cancellazione richiede la password (o l'email per gli
+    // account passwordless), così un token rubato non basta a cancellare l'account.
+    const hasPassword = String(profile?.auth_method || 'local') === 'local';
+    const proof = hasPassword
+      ? window.prompt('Inserisci la tua password attuale per confermare la cancellazione.') || ''
+      : window.prompt(`Conferma il tuo indirizzo email (${user?.email || ''}) per eliminare l'account.`) || '';
+    if (!proof) return;
     if (!window.confirm('Eliminare definitivamente account e dati?')) return;
     const token = await getAccessToken();
     const res = await fetch('/api/room/account', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ confirm: 'DELETE' }),
+      body: JSON.stringify({ confirm: 'DELETE', currentPassword: hasPassword ? proof : '', confirmEmail: hasPassword ? '' : proof }),
     });
-    if (!res.ok) { setErr('Errore cancellazione'); return; }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErr(data.message || 'Errore cancellazione');
+      return;
+    }
     await logout();
   };
 

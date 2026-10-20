@@ -54,7 +54,17 @@ export async function GET(req: NextRequest) {
     const rows = rankFoundersByRevenue(list.map((s: { id: string; user_id: string; name: string; revenue_self_cents: number | null }) => ({
       startup_id: s.id, user_id: s.user_id, name: s.name,
       revenue_self_cents: s.revenue_self_cents, verified: verified.get(s.id),
-    }))).map((r) => ({ ...r, owner: label(r.user_id), mrr_cents: r.total_cents }));
+    }))).map((r) => ({
+      // `user_id` non viene esposto: è l'UUID interno che renderebbe reversibile
+      // l'anonimato (permette di collegare la riga a un profilo/handle).
+      rank: r.rank,
+      owner: label(r.user_id),
+      mrr_cents: r.total_cents,
+      currency: r.currency,
+      verified: r.verified,
+      // I nomi delle startup di un founder anonimo lo identificherebbero: mascherati.
+      startups: byId.get(r.user_id)?.anonymous_mode ? [] : r.startups,
+    }));
     // Compat: mantieni anche rankRevenue per eventuali consumer legacy
     void rankRevenue;
     return NextResponse.json({ type, period, rows });
@@ -152,6 +162,6 @@ export async function GET(req: NextRequest) {
     if (!perUser.has(s.user_id)) perUser.set(s.user_id, []);
     perUser.get(s.user_id)!.push(s.day);
   }
-  const rows = rankStreak(perUser, period).map((r) => ({ ...r, owner: label(r.user_id) }));
+  const rows = rankStreak(perUser, period).map((r) => ({ rank: r.rank, owner: label(r.user_id), value: r.value, todayDone: r.todayDone }));
   return NextResponse.json({ type, period, rows });
 }

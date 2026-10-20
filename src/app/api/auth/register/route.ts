@@ -36,8 +36,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (signUpError || !signUpData?.user) {
+      // Non si espone il messaggio di Supabase al client: "User already registered"
+      // permette di enumerare gli account esistenti. Il dettaglio resta nei log.
+      console.error('[register] createUser error:', signUpError?.message || 'user missing');
       return NextResponse.json(
-        { message: signUpError?.message || 'Errore durante la registrazione' },
+        { message: 'Errore durante la registrazione. Riprova.' },
         { status: 400 },
       );
     }

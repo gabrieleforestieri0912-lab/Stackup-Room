@@ -184,10 +184,18 @@ Tabelle:
 - **rate_limits** — Rate limiting
 
 Funzioni RPC:
-- `increment_rate_limit(p_key, p_window_ms, p_max_requests)` → JSONB
+- `increment_rate_limit(p_key, p_window_ms, p_max_requests)` → JSONB (atomica, `SECURITY DEFINER`, solo `service_role`)
 - `increment_enrollment_count(course_id)` → incrementa il contatore iscritti (usata dal webhook)
 
 **RLS**: policy conservative — gli utenti autenticati leggono/aggiornano solo i propri dati; il service role (usato da tutte le API) bypassa le policy. Sezioni/esercizi non hanno policy di lettura pubbliche.
+
+Le tabelle con dati "verificati" (`revenue_snapshots`, `stripe_links`, `github_cache`) hanno **solo policy di SELECT** per il client: le scritture passano esclusivamente dal service role, così un utente non può dichiararsi un MRR "verificato" né collegare a mano un account Stripe altrui (migrazione `015_room_security_hardening.sql`).
+
+### Rate limiting
+
+- Il rate limiter è **fail-closed**: se la RPC fallisce, la richiesta viene negata (con fallback in-memory per non bloccare l'app).
+- La chiave usa l'**ultimo** elemento di `x-forwarded-for` (quello aggiunto dal proxy più vicino): usare il primo permette di bypassare ogni limite ruotando l'header.
+- Endpoint protetti: login, register, OTP (request/verify), change/update password, reset password, contact, create-checkout, chat, forum, reazioni, blocchi, notifiche, upload, coach, Stripe.
 
 ---
 
@@ -196,12 +204,15 @@ Funzioni RPC:
 Flusso reale (fix del token applicato):
 
 1. **Login/registrazione** → le API restituiscono `user`, `token` (access token) e `refreshToken`.
-2. `AuthContext` chiama `supabase.auth.setSession()` → la sessione sopravvive al refresh — **e** persiste il token in `localStorage('token')`.
-3. Sul mount, `AuthContext` ripristina la sessione da Supabase e sincronizza il token.
-4. Le chiamate autenticate usano `getAccessToken()` (`src/lib/auth-token.ts`): sessione viva Supabase (auto-rinnovata) con fallback sul token persistito.
-5. **OAuth** (Google/GitHub): redirect a `/auth/callback`, il client ha già la sessione; `supabase-callback` sincronizza/crea il profilo dal JWT.
+2. **Login OTP** → il server verifica il codice, genera il magic link **lato server** e lo scambia in sessione: al client arriva solo `token`/`refreshToken`, mai un link o un OTP bearer.
+3. `AuthContext` chiama `supabase.auth.setSession()` → la sessione sopravvive al refresh — **e** persiste il token in `localStorage('token')`.
+4. Sul mount, `AuthContext` ripristina la sessione da Supabase e sincronizza il token.
+5. Le chiamate autenticate usano `getAccessToken()` (`src/lib/auth-token.ts`): sessione viva Supabase (auto-rinnovata) con fallback sul token persistito.
+6. **OAuth** (Google/GitHub): redirect a `/auth/callback`, il client ha già la sessione; `supabase-callback` sincronizza/crea il profilo dal JWT.
 
 Provider: email/password, Google, GitHub. Il `logout` rimuove sessione e token.
+
+Variabili d'ambiente obbligatorie per l'auth: `OTP_PEPPER` (pepper degli hash OTP, min. 16 caratteri) e `STRIPE_STATE_SECRET` (firma dello `state` OAuth Connect, min. 16 caratteri). Entrambe fall-closed: se mancano, il flusso corrispondente si rifiuta di partire invece di usare un segreto finito nel repository.
 
 ---
 

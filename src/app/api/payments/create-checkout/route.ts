@@ -2,10 +2,17 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabaseAdmin, getAuthUser } from '../../../../lib/supabase-admin';
+import { rateLimit, rateLimitKey } from '../../../../lib/rateLimit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  // Rate limit: una sessione di checkout è un costo per Stripe e per noi.
+  const rl = await rateLimit(rateLimitKey(req, 'checkout'), 10, 3600_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ message: 'Troppe richieste. Riprova più tardi.' }, { status: 429 });
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey || stripeKey === 'sk_test_your_stripe_key') {
     return NextResponse.json({ message: 'Stripe non configurato' }, { status: 500 });

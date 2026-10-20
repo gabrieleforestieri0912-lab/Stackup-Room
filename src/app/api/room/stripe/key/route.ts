@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { verifyRestrictedKey, fetchMrrForKey, maskKey } from '@/lib/room/stripe';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
+import { rateLimit, rateLimitKey, clientIp } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   await supabaseAdmin.from('leaderboard_audit').insert({
     user_id: user.id, action: 'stripe.key_link', meta: { startup_id: startupId, livemode },
-    ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() || null,
+    ip: clientIp(req),
   });
   return NextResponse.json({ message: 'Chiave collegata.', livemode }, { status: 201 });
 }
