@@ -66,3 +66,61 @@ export function rankStreak(perUser: Map<string, string[]>, period: Period) {
     .slice(0, 50)
     .map((r, i) => ({ rank: i + 1, ...r }));
 }
+
+// Il podio (1º, 2º, 3º) sta in cima alla classifica, sotto c'è il resto dal 4°.
+// Il podio esiste solo se ci sono almeno tre fondatori in classifica: con meno
+// righe non si inventa un podio e la lista resta quella completa.
+export function splitPodium<T extends { rank: number }>(rows: T[]): { podium: T[]; rest: T[] } {
+  if (rows.length < 3) return { podium: [], rest: rows };
+  return { podium: rows.slice(0, 3), rest: rows.slice(3) };
+}
+
+// Classifica "solo punti": 4 criteri, gli stessi numeri della card "Tu".
+// Regole: 10 punti per giorno di streak, 1 punto ogni 10€ di MRR mensile,
+// 1 punto per contributo GitHub dell'ultimo anno, 50 punti per app rilasciata.
+export const POINTS_RULES = {
+  streak: 10,
+  revenuePer10: 1,
+  contribution: 1,
+  app: 50,
+} as const;
+
+export type PointsInput = {
+  user_id: string;
+  streak: number;
+  mrr_cents: number;
+  contributions: number;
+  apps: number;
+};
+
+export type PointsBreakdown = PointsInput & {
+  streak_points: number;
+  revenue_points: number;
+  contributions_points: number;
+  apps_points: number;
+  total: number;
+};
+
+export function computePoints(r: PointsInput): PointsBreakdown {
+  const streak_points = Math.max(0, Math.floor(r.streak || 0)) * POINTS_RULES.streak;
+  const revenue_points = Math.floor(Math.max(0, r.mrr_cents || 0) / 1000) * POINTS_RULES.revenuePer10;
+  const contributions_points = Math.max(0, Math.floor(r.contributions || 0)) * POINTS_RULES.contribution;
+  const apps_points = Math.max(0, Math.floor(r.apps || 0)) * POINTS_RULES.app;
+  return {
+    ...r,
+    streak_points,
+    revenue_points,
+    contributions_points,
+    apps_points,
+    total: streak_points + revenue_points + contributions_points + apps_points,
+  };
+}
+
+export function rankPoints(rows: PointsInput[]) {
+  return rows
+    .map((r) => computePoints(r))
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total || b.streak - a.streak)
+    .slice(0, 50)
+    .map((r, i) => ({ rank: i + 1, ...r }));
+}

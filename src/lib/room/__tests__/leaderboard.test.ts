@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { maskOwner, rankRevenue, rankStreak } from '../leaderboard';
+import { computePoints, maskOwner, rankPoints, rankRevenue, rankStreak, splitPodium } from '../leaderboard';
 
 describe('maskOwner', () => {
   it('mostra handle quando pubblico', () => {
@@ -33,6 +33,70 @@ describe('rankRevenue', () => {
     const r = rankRevenue([{ startup_id: 'z', user_id: 'u', name: 'Z', revenue_self_cents: 999, verified: { mrr_cents: 0, currency: 'EUR' } }]);
     expect(r).toHaveLength(1);
     expect(r[0].mrr_cents).toBe(0);
+  });
+});
+
+describe('splitPodium', () => {
+  const rows = [1, 2, 3, 4, 5].map((n) => ({ rank: n }));
+
+  it('mette i primi 3 nel podio e il resto sotto', () => {
+    const { podium, rest } = splitPodium(rows);
+    expect(podium.map((r) => r.rank)).toEqual([1, 2, 3]);
+    expect(rest.map((r) => r.rank)).toEqual([4, 5]);
+  });
+
+  it('non crea un podio con meno di tre righe (la lista resta intera)', () => {
+    for (const n of [0, 1, 2]) {
+      const { podium, rest } = splitPodium(rows.slice(0, n));
+      expect(podium).toEqual([]);
+      expect(rest).toHaveLength(n);
+    }
+  });
+
+  it('con esattamente tre righe il podio è tutto e sotto non resta nulla', () => {
+    const { podium, rest } = splitPodium(rows.slice(0, 3));
+    expect(podium.map((r) => r.rank)).toEqual([1, 2, 3]);
+    expect(rest).toEqual([]);
+  });
+});
+
+describe('computePoints', () => {
+  it('sommi i 4 criteri: streak, ricavi, contributi, app', () => {
+    const p = computePoints({ user_id: 'u1', streak: 3, mrr_cents: 105000, contributions: 62, apps: 2 });
+    expect(p.streak_points).toBe(30);
+    expect(p.revenue_points).toBe(105);      // 1 punto ogni 10€ (1050€)
+    expect(p.contributions_points).toBe(62); // 1 punto per contributo
+    expect(p.apps_points).toBe(100);        // 50 per app
+    expect(p.total).toBe(30 + 105 + 62 + 100);
+  });
+
+  it('arrotonda per difetto i ricavi e azzera i valori negativi', () => {
+    expect(computePoints({ user_id: 'u', streak: 0, mrr_cents: 999, contributions: 0, apps: 0 }).revenue_points).toBe(0);
+    expect(computePoints({ user_id: 'u', streak: -5, mrr_cents: -100, contributions: -3, apps: -1 }).total).toBe(0);
+  });
+});
+
+describe('rankPoints', () => {
+  const rows = [
+    { user_id: 'u1', streak: 3, mrr_cents: 0, contributions: 62, apps: 2 },
+    { user_id: 'u2', streak: 10, mrr_cents: 0, contributions: 0, apps: 0 },
+    { user_id: 'u3', streak: 0, mrr_cents: 0, contributions: 0, apps: 0 },
+  ];
+  it('ordina per punti totali e assegna il rank', () => {
+    const r = rankPoints(rows);
+    expect(r.map((x) => x.user_id)).toEqual(['u1', 'u2']);
+    expect(r[0].rank).toBe(1);
+    expect(r[0].total).toBe(30 + 62 + 100);
+  });
+  it('esclude chi ha zero punti', () => {
+    expect(rankPoints(rows).some((x) => x.user_id === 'u3')).toBe(false);
+  });
+  it('a parità di punti conta lo streak', () => {
+    const r = rankPoints([
+      { user_id: 'a', streak: 1, mrr_cents: 0, contributions: 0, apps: 0 },
+      { user_id: 'b', streak: 5, mrr_cents: 0, contributions: 0, apps: 0 },
+    ]);
+    expect(r[0].user_id).toBe('b');
   });
 });
 
