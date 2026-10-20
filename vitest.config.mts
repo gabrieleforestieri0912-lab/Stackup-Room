@@ -6,7 +6,7 @@ export default defineConfig({
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
   test: {
-    include: ['src/lib/room/__tests__/**/*.test.ts'],
+    include: ['src/lib/room/__tests__/**/*.test.ts', 'src/app/**/__tests__/**/*.test.{ts,tsx}'],
     // Dummy: i test puri non toccano la rete, ma l'import chain richiede le env.
     env: {
       NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
