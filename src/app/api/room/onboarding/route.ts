@@ -4,11 +4,13 @@ import { supabaseAdmin, getAuthUser } from '@/lib/supabase-admin';
 import { unauthorized } from '@/lib/room/api';
 import { isAdult16, normalizeHandle, isValidHandle, isValidUrlOrEmpty } from '@/lib/room/validation';
 import { cleanStr, extractDomain, logoUrlFor, STAGES } from '@/lib/room/m2';
+import { isStartupStatus, stageForStatus } from '@/lib/room/onboarding';
 
 export const runtime = 'nodejs';
 
-// Onboarding guidato: profilo + background (età 16+) + startup attiva + primo obiettivo + prime task.
-// Tutto in un unico submit: se la startup passa la validazione, viene creata con goal e task.
+// Onboarding guidato: profilo + background (età 16+) + startup attiva + situazione
+// e focus + prime task. Tutto in un unico submit: se la startup passa la validazione,
+// viene creata con goal e task.
 export async function POST(req: NextRequest) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer /, '');
   const authUser = token ? await getAuthUser(token) : null;
@@ -18,6 +20,7 @@ export async function POST(req: NextRequest) {
   const situation = cleanStr(body.situation, 1000);
   const skills = Array.isArray(body.skills) ? body.skills.filter((s): s is string => typeof s === 'string').map((s) => s.trim().slice(0, 60)).filter(Boolean).slice(0, 20) : [];
   const goals = cleanStr(body.goals, 1000);
+  const startupStatus = isStartupStatus(body.startup_status) ? body.startup_status : '';
   const birthDate = typeof body.birth_date === 'string' ? body.birth_date : '';
   const handle = normalizeHandle(body.handle);
   const name = cleanStr(body.name, 80);
@@ -52,7 +55,7 @@ export async function POST(req: NextRequest) {
     if (!sName) return NextResponse.json({ message: 'Nome della startup richiesto' }, { status: 400 });
     if (!sDomain) return NextResponse.json({ message: 'Dominio startup non valido' }, { status: 400 });
     if (sUrlRaw && !isValidUrlOrEmpty(sUrlRaw)) return NextResponse.json({ message: 'Link startup non valido' }, { status: 400 });
-    const sStage = typeof sb.stage === 'string' && (STAGES as readonly string[]).includes(sb.stage) ? sb.stage : 'idea';
+    const sStage = typeof sb.stage === 'string' && (STAGES as readonly string[]).includes(sb.stage) ? sb.stage : stageForStatus(startupStatus);
     startupsData.push({ name: sName, url: `https://${sDomain}`, domain: sDomain, tagline: sTagline, stage: sStage });
   }
 
@@ -68,7 +71,8 @@ export async function POST(req: NextRequest) {
 
   const { data: profile, error } = await supabaseAdmin.from('profiles').update({
     name, handle, birth_date: birthDate, locality, bio, github_username: github || null,
-    onboarding: { situation, skills, goals },
+    // `goals` = focus principale scelto; `startup_status` = dove sei con la startup.
+    onboarding: { situation, skills, goals, startup_status: startupStatus || null },
     onboarding_completed: true,
     ...(avatarUrl ? { avatar_url: avatarUrl, avatar: avatarUrl } : {}),
   }).eq('id', authUser.id).select().maybeSingle();

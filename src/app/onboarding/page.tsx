@@ -3,17 +3,15 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, ArrowLeft, ArrowRight, Check, Camera, CheckCircle2, XCircle, AlertCircle, Plus, Github } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Camera, CheckCircle2, XCircle, AlertCircle, Plus, Github, Flame } from 'lucide-react';
 import { getAccessToken } from '@/lib/auth-token';
 import { useAuth } from '@/context/AuthContext';
 import { initials, avatarGradient } from '@/lib/avatar';
 import { extractDomain, logoUrlFor } from '@/lib/room/m2';
-
-const SITUATIONS = ['Solo founder full-time', 'Founder part-time', 'Dipendente che valida un\u2019idea', 'Studente', 'Freelance verso prodotto'] as const;
-const GOALS12 = ['Lanciare l\u2019MVP', 'Primi 10 clienti', '1.000€ MRR', '10.000€ MRR', 'Raccogliere fondi'] as const;
-const SKILL_PRESETS = ['JavaScript', 'TypeScript', 'React', 'Next.js', 'Python', 'Marketing', 'Vendite', 'Design', 'SEO'] as const;
-
-const STEPS = ['Profilo', 'Percorso', 'Startup', 'GitHub', 'Obiettivo'] as const;
+import {
+  ONBOARDING_STEPS, SITUATIONS, STARTUP_STATUSES, FOCUSES, SKILL_PRESETS, DEFAULT_TASKS, MAX_TASKS, STREAK_DAYS,
+  cleanTasks, defaultGoalTitle, type StartupStatusId, type FocusId,
+} from '@/lib/room/onboarding';
 
 type StartupDraft = { domain: string; name: string; tagline: string; auto: boolean };
 
@@ -184,7 +182,7 @@ function LogoPreview({ url, name }: { url: string | null; name: string }) {
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [step, setStep] = useState(0);
+  const [stepIdx, setStepIdx] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -209,11 +207,13 @@ export default function OnboardingPage() {
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const fileRef = useRef<HTMLInputElement>(null);
   const [situation, setSituation] = useState<string>(SITUATIONS[0]);
-  const [goals, setGoals] = useState<string>(GOALS12[0]);
+  const [startupStatus, setStartupStatus] = useState<StartupStatusId | ''>('');
+  const [focus, setFocus] = useState<FocusId | ''>('');
   const [skills, setSkills] = useState<string[]>([]);
   const [startups, setStartups] = useState<StartupDraft[]>([{ domain: '', name: '', tagline: '', auto: true }]);
   const [goalTitle, setGoalTitle] = useState('');
-  const [tasks, setTasks] = useState<string[]>(['']);
+  const [tasks, setTasks] = useState<string[]>([...DEFAULT_TASKS]);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -316,9 +316,13 @@ export default function OnboardingPage() {
 
   const filledStartups = startups.filter((s) => s.domain.trim() || s.name.trim() || s.tagline.trim());
   const hasStartups = filledStartups.length > 0;
-  // Se non aggiungi startup si salta lo step "Obiettivo" (legato a una startup).
-  const visibleSteps = hasStartups ? STEPS : STEPS.slice(0, -1);
-  const isLastStep = step >= visibleSteps.length - 1;
+  // I passi sono sempre gli stessi: il numero dei pallini non cambia durante il
+  // flusso. Senza startup la pagina delle task resta informative.
+  const visibleSteps = ONBOARDING_STEPS;
+  const current = visibleSteps[Math.min(stepIdx, visibleSteps.length - 1)];
+  const taskCount = cleanTasks(tasks).length;
+  const primaryStartupName = filledStartups[0]?.name.trim() || '';
+  const goalHint = defaultGoalTitle(focus || 'product', primaryStartupName);
 
   const updateStartup = (i: number, patch: Partial<StartupDraft>) =>
     setStartups((p) => p.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -331,7 +335,7 @@ export default function OnboardingPage() {
     }));
 
   const validStep = (): string => {
-    if (step === 0) {
+    if (current.id === 'profilo') {
       if (!name.trim()) return 'Inserisci il tuo nome.';
       if (handle.length < 3) return 'L\'handle deve avere almeno 3 caratteri.';
       if (!/^[a-z0-9_]{3,24}$/.test(handle)) return 'Handle: 3-24 caratteri (minuscole, numeri, _).';
@@ -342,20 +346,27 @@ export default function OnboardingPage() {
       if (!bio.trim()) return 'Scrivi qualcosa su di te (bio).';
       return '';
     }
-    if (step === 2) {
+    if (current.id === 'startup') {
       for (const s of filledStartups) {
         if (!extractDomain(s.domain)) return 'Dominio non valido (es. esempio.com).';
         if (!s.name.trim()) return 'Inserisci il nome della startup.';
       }
       return '';
     }
-    if (step === 3) {
+    if (current.id === 'github') {
       if (ghStatus !== 'connected') return 'Connetti il tuo account GitHub per proseguire.';
       return '';
     }
-    if (step === 4) {
-      if (!goalTitle.trim()) return 'Definisci il primo obiettivo.';
-      if (tasks.map((t) => t.trim()).filter(Boolean).length === 0) return 'Aggiungi almeno una task iniziale.';
+    if (current.id === 'situazione') {
+      if (hasStartups && !startupStatus) return 'Scegli dove sei con la startup.';
+      return '';
+    }
+    if (current.id === 'focus') {
+      if (!focus) return 'Scegli il tuo focus principale.';
+      return '';
+    }
+    if (current.id === 'task') {
+      if (hasStartups && taskCount === 0) return 'Aggiungi almeno una task iniziale.';
       return '';
     }
     return '';
@@ -365,13 +376,15 @@ export default function OnboardingPage() {
     const err = validStep();
     if (err) { setError(err); return; }
     setError('');
-    setStep((s) => Math.min(s + 1, visibleSteps.length - 1));
+    setStepIdx((s) => Math.min(s + 1, visibleSteps.length - 1));
   };
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  // Salva l'onboarding. Dalla pagina delle task si passa alla pagina della
+  // streak; dalla pagina della streak si entra nella Room.
+  const save = async (): Promise<boolean> => {
+    if (saved) return true;
     const err = validStep();
-    if (err) { setError(err); return; }
+    if (err) { setError(err); return false; }
     setError('');
     setLoading(true);
     try {
@@ -382,7 +395,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           name, handle, birth_date: birthDate,
           locality, bio, github_username: github, avatar_url: avatarUrl,
-          situation, goals, skills,
+          situation, goals: focus, skills, startup_status: startupStatus,
           startups: filledStartups.map((s) => {
             const domain = extractDomain(s.domain) || '';
             return {
@@ -392,23 +405,42 @@ export default function OnboardingPage() {
               tagline: s.tagline.trim(),
             };
           }),
-          goal_title: hasStartups ? goalTitle : '',
-          tasks: hasStartups ? tasks.map((t) => t.trim()).filter(Boolean) : [],
+          goal_title: hasStartups ? (goalTitle.trim() || defaultGoalTitle(focus || 'product', primaryStartupName)) : '',
+          tasks: hasStartups ? cleanTasks(tasks) : [],
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Errore salvataggio');
-      router.push('/room/planner');
+      setSaved(true);
+      return true;
     } catch (err2) {
       setError(err2 instanceof Error ? err2.message : 'Errore');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (current.id === 'streak') {
+      const ok = await save();
+      if (ok) router.push('/room/planner');
+      return;
+    }
+    if (current.id === 'task' && hasStartups) {
+      // "Inizia con queste N task": salva e porta alla pagina della streak.
+      const ok = await save();
+      if (ok) setStepIdx(visibleSteps.findIndex((s) => s.id === 'streak'));
+      return;
+    }
+    next();
+  };
+
   const input = 'w-full px-3.5 py-2.5 bg-black border border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-all text-zinc-100 text-sm rounded-xl';
   const label = 'block text-[10px] font-mono font-black uppercase tracking-widest text-zinc-400 mb-1';
   const selectWrap = 'grid gap-2';
+  const cardBase = 'block cursor-pointer rounded-xl border p-3 transition-colors';
 
   return (
     <main className="min-h-dvh bg-black text-zinc-100 px-4 py-6 flex items-center justify-center">
@@ -418,19 +450,28 @@ export default function OnboardingPage() {
           <h1 className="text-xl font-extrabold tracking-tight">Configura la Room.</h1>
         </div>
 
-        <ol className="flex gap-1.5 mb-5" aria-label="Avanzamento onboarding">
+        {/* Pallini di avanzamento: uno per pagina, quello più chiaro = step corrente */}
+        <nav aria-label="Avanzamento onboarding" className="flex items-center justify-center gap-2 mb-2">
           {visibleSteps.map((s, i) => (
-            <li key={s} className="flex-1">
-              <div className={`h-1.5 rounded-full ${i <= step ? 'bg-orange-600' : 'bg-zinc-800'}`} />
-              <p className={`text-[10px] font-bold mt-1 ${i === step ? 'text-orange-300' : 'text-zinc-600'}`}>{i + 1}. {s}</p>
-            </li>
+            <span
+              key={s.id}
+              aria-current={i === stepIdx ? 'step' : undefined}
+              className={`block h-2.5 w-2.5 rounded-full transition-all ${
+                i === stepIdx ? 'bg-orange-300 scale-125 shadow-[0_0_10px_rgba(253,186,116,0.55)]'
+                  : i < stepIdx ? 'bg-orange-600/70'
+                    : 'bg-zinc-800'
+              }`}
+            />
           ))}
-        </ol>
+        </nav>
+        <p className="text-center text-[10px] font-mono font-black uppercase tracking-widest text-zinc-500 mb-5">
+          Step {stepIdx + 1} di {visibleSteps.length} · {current.label}
+        </p>
 
         {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl" role="alert">{error}</div>}
 
-        <form onSubmit={isLastStep ? submit : (e) => { e.preventDefault(); next(); }}>
-          {step === 0 && (
+        <form onSubmit={submit}>
+          {current.id === 'profilo' && (
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2 flex items-center gap-4">
                 <div className="relative shrink-0">
@@ -532,35 +573,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 1 && (
-            <div className={selectWrap}>
-              <div>
-                <label className={label} htmlFor="ob-sit">La tua situazione</label>
-                <select id="ob-sit" className={input} value={situation} onChange={(e) => setSituation(e.target.value)}>
-                  {SITUATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={label} htmlFor="ob-goals">Obiettivo 12 mesi</label>
-                <select id="ob-goals" className={input} value={goals} onChange={(e) => setGoals(e.target.value)}>
-                  {GOALS12.map((g) => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
-              <div>
-                <span className={label}>Competenze (tocca per selezionare)</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {SKILL_PRESETS.map((s) => (
-                    <button key={s} type="button" onClick={() => toggleSkill(s)} aria-pressed={skills.includes(s)}
-                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${skills.includes(s) ? 'bg-orange-600 border-orange-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
+          {current.id === 'startup' && (
             <div className="grid gap-3">
               <p className="text-[11px] text-zinc-500">
                 Aggiungi le tue startup (anche solo il dominio). Puoi anche proseguire senza e aggiungerle più tardi.
@@ -631,7 +644,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {current.id === 'github' && (
             <div className={selectWrap}>
               <div>
                 <label className={label} htmlFor="ob-gh">Username GitHub</label>
@@ -697,45 +710,169 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {step === 4 && (
-            <div className={selectWrap}>
+          {current.id === 'situazione' && (
+            <div className="grid gap-5">
               <div>
-                <label className={label} htmlFor="ob-goal">Primo obiettivo</label>
-                <input id="ob-goal" className={input} value={goalTitle} onChange={(e) => setGoalTitle(e.target.value)} placeholder="Es. landing online entro venerdì" maxLength={200} />
+                <label className={label} htmlFor="ob-sit">La tua situazione</label>
+                <select id="ob-sit" className={input} value={situation} onChange={(e) => setSituation(e.target.value)}>
+                  {SITUATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
-              <div>
-                <span className={label}>Prime task (min 1, max 5)</span>
-                <div className="space-y-1.5">
-                  {tasks.map((t, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input aria-label={`Task ${i + 1}`} className={input} value={t} onChange={(e) => setTasks((p) => p.map((x, j) => (j === i ? e.target.value : x)))} placeholder={`Task ${i + 1}...`} maxLength={200} />
-                      {tasks.length > 1 && (
-                        <button type="button" aria-label={`Rimuovi task ${i + 1}`} onClick={() => setTasks((p) => p.filter((_, j) => j !== i))} className="px-2.5 text-zinc-500 hover:text-red-400 font-bold">×</button>
-                      )}
-                    </div>
+
+              <fieldset>
+                <legend className={label}>Dove sei con la startup</legend>
+                <div className="grid gap-2">
+                  {STARTUP_STATUSES.map((s) => (
+                    <label key={s.id} className={`${cardBase} has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10 border-zinc-800 bg-black`}>
+                      <input type="radio" name="startup-status" value={s.id} checked={startupStatus === s.id}
+                        onChange={() => setStartupStatus(s.id)} className="sr-only" />
+                      <span className="flex items-center gap-3">
+                        <span aria-hidden className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${startupStatus === s.id ? 'border-orange-400 bg-orange-400' : 'border-zinc-700'}`} />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-white">{s.label}</span>
+                          <span className="block text-[11px] text-zinc-500">{s.hint}</span>
+                        </span>
+                      </span>
+                    </label>
                   ))}
                 </div>
-                {tasks.length < 5 && (
-                  <button type="button" onClick={() => setTasks((p) => [...p, ''])} className="mt-1.5 text-xs font-bold text-orange-400">+ Aggiungi task</button>
-                )}
+              </fieldset>
+
+              <div>
+                <span className={label}>Le tue skill (tocca per selezionare)</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {SKILL_PRESETS.map((s) => (
+                    <button key={s} type="button" onClick={() => toggleSkill(s)} aria-pressed={skills.includes(s)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${skills.includes(s) ? 'bg-orange-600 border-orange-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
+          {current.id === 'focus' && (
+            <fieldset>
+              <legend className={label}>Qual è il tuo focus principale</legend>
+              <div className="grid gap-2">
+                {FOCUSES.map((f) => (
+                  <label key={f.id} className={`${cardBase} has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10 border-zinc-800 bg-black`}>
+                    <input type="radio" name="focus" value={f.id} checked={focus === f.id}
+                      onChange={() => setFocus(f.id)} className="sr-only" />
+                    <span className="flex items-center gap-3">
+                      <span aria-hidden className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${focus === f.id ? 'border-orange-400 bg-orange-400' : 'border-zinc-700'}`} />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-bold text-white">{f.label}</span>
+                        <span className="block text-[11px] text-zinc-500">{f.hint}</span>
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {current.id === 'task' && (
+            hasStartups ? (
+              <div className={selectWrap}>
+                <p className="text-[11px] text-zinc-500">
+                  Sono già impostate tre task di esempio: modificale, toglicine o aggiungine altre. Parti subito, le rifinirai dopo.
+                </p>
+                <div>
+                  <label className={label} htmlFor="ob-goal">Primo obiettivo</label>
+                  <input id="ob-goal" className={input} value={goalTitle} onChange={(e) => setGoalTitle(e.target.value)} placeholder={goalHint} maxLength={200} />
+                  <p className="mt-1 text-[10px] text-zinc-600">Default: {goalHint}</p>
+                </div>
+                <div>
+                  <span className={label}>Prime task (min 1, max {MAX_TASKS})</span>
+                  <div className="space-y-1.5">
+                    {tasks.map((t, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input aria-label={`Task ${i + 1}`} className={input} value={t} onChange={(e) => setTasks((p) => p.map((x, j) => (j === i ? e.target.value : x)))} placeholder={`Task ${i + 1}...`} maxLength={200} />
+                        {tasks.length > 1 && (
+                          <button type="button" aria-label={`Rimuovi task ${i + 1}`} onClick={() => setTasks((p) => p.filter((_, j) => j !== i))} className="px-2.5 text-zinc-500 hover:text-red-400 font-bold">×</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {tasks.length < MAX_TASKS && (
+                    <button type="button" onClick={() => setTasks((p) => [...p, ''])} className="mt-1.5 text-xs font-bold text-orange-400">+ Aggiungi task</button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center">
+                <p className="text-sm font-bold text-white">Nessuna startup, nessuna task.</p>
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Le task si agganciano a una startup: aggiungila dal portfolio quando vuoi e troverai già le impostazioni pronte.
+                </p>
+              </div>
+            )
+          )}
+
+          {current.id === 'streak' && (
+            <div className="grid gap-6 text-center">
+              {/* Fuoco animato: la streak parte da oggi */}
+              <div className="relative mx-auto h-28 w-28" aria-hidden>
+                <div className="absolute inset-2 rounded-full bg-ember/20 blur-2xl animate-pulse" />
+                <Flame size={92} className="flame-anim absolute inset-0 m-auto text-ember" strokeWidth={1.5} />
+                <Flame size={52} className="flame-anim-inner absolute inset-0 m-auto text-gold" strokeWidth={1.5} />
+              </div>
+
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight text-white">Startup Club — the streak starts now.</h2>
+                <p className="text-sm text-zinc-400 mt-2">
+                  Complete a task to make today count — the streak tracks days you ship, not days you plan to.
+                </p>
+              </div>
+
+              <ol className="grid grid-cols-7 gap-1.5" aria-label="Streak dei prossimi 7 giorni">
+                {Array.from({ length: STREAK_DAYS }, (_, i) => i + 1).map((d) => (
+                  <li
+                    key={d}
+                    aria-current={d === 1 ? 'step' : undefined}
+                    className={`rounded-xl border p-2 ${
+                      d === 1
+                        ? 'border-ember/60 bg-ember/10 text-ember'
+                        : 'border-zinc-800 bg-black text-zinc-600'
+                    }`}
+                  >
+                    <span className="block text-[9px] font-black tracking-wider">DAY {d}</span>
+                    <span className="mt-1 flex justify-center">
+                      {d === 1
+                        ? <Flame size={14} className="flame-anim text-ember" />
+                        : <span className="h-3.5 w-3.5 rounded-full border border-zinc-800" />}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              <p className="text-[11px] text-zinc-500">
+                Run standups each morning, let the AI plan your day, and watch your activity graph fill with proof.
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-3 mt-5">
-            {step > 0 && (
-              <button type="button" onClick={() => { setError(''); setStep((s) => s - 1); }} className="px-4 py-3 bg-zinc-900 border border-zinc-700 font-bold rounded-xl flex items-center gap-2 text-sm">
+            {stepIdx > 0 && (
+              <button type="button" onClick={() => { setError(''); setStepIdx((s) => s - 1); }} className="px-4 py-3 bg-zinc-900 border border-zinc-700 font-bold rounded-xl flex items-center gap-2 text-sm">
                 <ArrowLeft size={16} /> Indietro
               </button>
             )}
-            {!isLastStep ? (
-              <button type="submit" disabled={step === 3 && ghStatus !== 'connected'} className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-                Continua <ArrowRight size={16} />
-              </button>
-            ) : (
+            {current.id === 'task' && hasStartups ? (
               <button type="submit" disabled={loading} className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-60 rounded-xl flex items-center justify-center gap-2">
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                {loading ? 'Creazione...' : `Inizia con queste ${taskCount} task`}
+              </button>
+            ) : current.id === 'streak' ? (
+              <button type="submit" disabled={loading} className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-60 rounded-xl flex items-center justify-center gap-2">
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <Flame size={18} className="flame-anim" />}
                 {loading ? 'Creazione...' : 'Entra nella Room'}
+              </button>
+            ) : (
+              <button type="submit" disabled={current.id === 'github' && ghStatus !== 'connected'} className="flex-1 py-3 bg-orange-600 text-white text-sm font-bold hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                Continua <ArrowRight size={16} />
               </button>
             )}
           </div>
