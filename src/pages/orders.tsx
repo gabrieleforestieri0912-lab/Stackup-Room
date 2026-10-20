@@ -66,7 +66,7 @@ const OrdersPage: React.FC = () => {
  if (loading) {
  return (
  <>
- <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su StackUp." url="/orders" />
+ <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su Stackup." url="/orders" />
  <div className="min-h-screen flex items-center justify-center bg-black">
  <div className="flex flex-col items-center gap-4">
  <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent animate-spin" />
@@ -80,7 +80,7 @@ const OrdersPage: React.FC = () => {
  if (error) {
  return (
  <>
- <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su StackUp." url="/orders" />
+ <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su Stackup." url="/orders" />
  <div className="min-h-screen flex items-center justify-center bg-black">
  <div className="text-center">
  <p className="text-red-500 font-bold mb-4">{error}</p>
@@ -100,12 +100,12 @@ const OrdersPage: React.FC = () => {
  transition={{ duration: 0.5 }}
  className="max-w-7xl mx-auto px-6 pt-20 md:pt-24 pb-16 flex flex-col gap-10 min-h-screen"
  >
- <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su StackUp." url="/orders" />
+ <SEO title="I tuoi Ordini" description="Visualizza la cronologia dei tuoi acquisti su Stackup." url="/orders" />
 
  <div className="flex items-center justify-between">
  <div>
  <h1 className="text-4xl font-jakarta font-extrabold text-zinc-100 mb-2">I tuoi Ordini</h1>
- <p className="text-sm text-zinc-400 font-medium">Cronologia dei tuoi acquisti su StackUp.</p>
+ <p className="text-sm text-zinc-400 font-medium">Cronologia dei tuoi acquisti su Stackup.</p>
  </div>
  <Link href="/courses" className="hidden sm:flex items-center gap-2 px-5 py-3 bg-black text-white text-sm font-bold hover:bg-orange-600 transition-all shadow-lg">
  Esplora corsi <ArrowRight size={16} />

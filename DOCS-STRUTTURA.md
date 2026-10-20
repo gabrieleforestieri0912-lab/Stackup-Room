@@ -1,8 +1,8 @@
-# StackUp — Documentazione della Struttura
+# Stackup — Documentazione della Struttura
 
 ## Architettura Generale
 
-StackUp è una piattaforma Next.js 16 per l'apprendimento della programmazione: corsi a pagamento, guide, percorsi di carriera e un'area utente con dashboard, ordini e certificati.
+Stackup è una piattaforma Next.js 16 per l'apprendimento della programmazione: corsi a pagamento, guide, percorsi di carriera e un'area utente con dashboard, ordini e certificati.
 
 **Stack:** Next.js 16.2.2 (App Router + Turbopack in dev), React 19, TypeScript, Tailwind CSS 4, Supabase (Auth + PostgreSQL), Stripe, Resend, Framer Motion, react-hot-toast, lucide-react.
 
@@ -225,7 +225,7 @@ I contenuti a pagamento sono protetti **server-side** in `GET /api/courses/[slug
 
 Nell'UI i non iscritti vedono lucchetti e messaggi "riservato ai membri".
 
-### Gating moduli (blueprint StackUp)
+### Gating moduli (blueprint Stackup)
 
 Ogni corso è organizzato in **moduli** (sezioni) che terminano con un **checkpoint pratico** (esercizio marcato `is_checkpoint = true`):
 

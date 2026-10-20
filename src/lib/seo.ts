@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 
-export const SITE_NAME = 'StackUp Room';
+export const SITE_NAME = 'Stackup Room';
 export const SITE_TAGLINE =
   'La community per imparare a programmare con metodo pratico: corsi su React, Next.js, Node.js, Python e TypeScript con mentoring 1:1 e progetti reali.';
 

@@ -18,7 +18,7 @@ export default function Document() {
   background: '#f8fafc', fontFamily: 'system-ui, sans-serif', textAlign: 'center', padding: 20
  }}>
  <div>
- <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>StackUp</h1>
+ <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Stackup</h1>
  <p style={{ color: '#64748b', fontSize: 14 }}>Abilita JavaScript per utilizzare la piattaforma.</p>
  </div>
  </div>

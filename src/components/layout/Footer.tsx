@@ -88,7 +88,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 pb-8 border-t border-zinc-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-zinc-600 text-xs font-medium">
-            &copy; {new Date().getFullYear()} StackUp Room. Sviluppato da{' '}
+            &copy; {new Date().getFullYear()} Stackup Room. Sviluppato da{' '}
             <span className="text-zinc-400 font-semibold">Gabriele Forestieri</span>
           </p>
           <div className="flex items-center gap-6">

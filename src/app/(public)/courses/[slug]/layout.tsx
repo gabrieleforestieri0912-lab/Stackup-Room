@@ -31,11 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (course) {
       return {
-        title: `${course.title} | StackUp Room`,
+        title: `${course.title} | Stackup Room`,
         description:
           course.subtitle ||
           course.description ||
-          `Impara ${course.title} su StackUp Room: lezioni pratiche, esercizi guidati e progetto finale.`,
+          `Impara ${course.title} su Stackup Room: lezioni pratiche, esercizi guidati e progetto finale.`,
         alternates: { canonical: `/courses/${slug}` },
       };
     }
@@ -44,8 +44,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'Corso | StackUp Room',
-    description: 'Dettaglio corso StackUp Room.',
+    title: 'Corso | Stackup Room',
+    description: 'Dettaglio corso Stackup Room.',
     alternates: { canonical: `/courses/${slug}` },
   };
 }

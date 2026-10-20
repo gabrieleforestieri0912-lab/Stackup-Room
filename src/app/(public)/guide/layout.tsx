@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Guide',
   description:
-    'Guide pratiche StackUp Room: dalla teoria al codice. Ideazione, stack, pricing, go-to-market e tooling per sviluppatori.',
+    'Guide pratiche Stackup Room: dalla teoria al codice. Ideazione, stack, pricing, go-to-market e tooling per sviluppatori.',
   alternates: { canonical: '/guide' },
 };
 

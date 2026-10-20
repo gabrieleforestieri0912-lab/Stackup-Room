@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: 'AI Skill',
-    description: 'Skill AI StackUp Room.',
+    description: 'Skill AI Stackup Room.',
     alternates: { canonical: `/ai-skills/${slug}` },
   };
 }

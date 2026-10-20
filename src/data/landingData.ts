@@ -160,7 +160,7 @@ export const COURSES_PREVIEW = COURSES_DATA.slice(0, 6)
 
 export const FAQ = [
   {
-    q: "Quali corsi offre StackUp?",
+    q: "Quali corsi offre Stackup?",
     a: "Offriamo 18 corsi pratici tra frontend, backend e tooling: da HTML, CSS e JavaScript a React, Next.js, Angular, TypeScript, Python, Java, Go, Node.js, SQL, Docker, Tailwind CSS, Git e altro. Ogni corso combina teoria essenziale, esercizi interattivi e progetti reali."
   },
   {
@@ -169,11 +169,11 @@ export const FAQ = [
   },
   {
     q: "Come funziona il mentoring 1:1?",
-    a: "Con l'abbonamento a StackUp Room hai accesso a sessioni di mentoring 1:1, code review e un piano di studio personalizzato in base ai tuoi obiettivi. La frequenza dipende dal piano scelto."
+    a: "Con l'abbonamento a Stackup Room hai accesso a sessioni di mentoring 1:1, code review e un piano di studio personalizzato in base ai tuoi obiettivi. La frequenza dipende dal piano scelto."
   },
   {
     q: "Ricevo una certificazione?",
-    a: "Sì. Al completamento di tutti gli esercizi di un corso ottieni un certificato di completamento StackUp, scaricabile e condivisibile su LinkedIn e sul tuo curriculum."
+    a: "Sì. Al completamento di tutti gli esercizi di un corso ottieni un certificato di completamento Stackup, scaricabile e condivisibile su LinkedIn e sul tuo curriculum."
   },
   {
     q: "Posso accedere ai corsi da mobile?",

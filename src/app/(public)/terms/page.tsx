@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
  title: 'Termini e Condizioni',
- description: 'Termini e Condizioni di StackUp Room',
+ description: 'Termini e Condizioni di Stackup Room',
 };
 
 export default function TermsPage() {
@@ -12,9 +12,9 @@ export default function TermsPage() {
     <h1 className="text-4xl font-jakarta font-black text-zinc-100 mb-8">Termini e Condizioni</h1>
     <p className="text-sm text-zinc-400 mb-8">Ultimo aggiornamento: 5 settembre 2026</p>
     <div className="prose prose-slate max-w-none space-y-6 text-zinc-400">
-     <p>Benvenuto su StackUp Room. Utilizzando la piattaforma accetti i seguenti termini.</p>
+     <p>Benvenuto su Stackup Room. Utilizzando la piattaforma accetti i seguenti termini.</p>
      <h2 className="text-lg font-bold text-zinc-100">Titolare del servizio</h2>
-     <p>StackUp Room — progetto di Gabriele Forestieri, Milano, Italia. Contatto: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
+     <p>Stackup Room — progetto di Gabriele Forestieri, Milano, Italia. Contatto: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
      <h2 className="text-lg font-bold text-zinc-100">Account</h2>
      <p>Sei responsabile della sicurezza delle credenziali. L&apos;account è personale e non cedibile.</p>
      <h2 className="text-lg font-bold text-zinc-100">Acquisti e accesso ai contenuti</h2>
@@ -22,7 +22,7 @@ export default function TermsPage() {
      <h2 className="text-lg font-bold text-zinc-100">Mentoring e servizi</h2>
      <p>Le sessioni di mentoring, ove incluse nel piano, vanno prenotate con almeno 48 ore di anticipo. Disdette entro 24 ore non danno diritto a recupero automatico.</p>
      <h2 className="text-lg font-bold text-zinc-100">Proprietà intellettuale</h2>
-     <p>Tutti i materiali didattici sono di proprietà di StackUp Room. È vietata la redistribuzione o riproduzione non autorizzata.</p>
+     <p>Tutti i materiali didattici sono di proprietà di Stackup Room. È vietata la redistribuzione o riproduzione non autorizzata.</p>
      <h2 className="text-lg font-bold text-zinc-100">Limitazioni</h2>
      <p>I risultati dipendono da impegno, prerequisiti e contesto personale: non garantiamo esiti occupazionali specifici.</p>
      <h2 className="text-lg font-bold text-zinc-100">Contatti</h2>

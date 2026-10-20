@@ -10,7 +10,7 @@ interface SEOProps {
 }
 
 const SEO = ({ title, description, keywords, image, url }: SEOProps) => {
-  const siteName = "StackUp Room";
+  const siteName = "Stackup Room";
  const defaultTitle = "Master Your Code";
  const fullTitle = title ? `${title} | ${siteName}` : `${siteName} | ${defaultTitle}`;
  const defaultDescription = "La community dove imparare a programmare sul serio. Corsi di React, Next.js, Node.js, Python, TypeScript e tanto altro con mentorship 1:1.";

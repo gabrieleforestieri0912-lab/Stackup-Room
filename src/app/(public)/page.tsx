@@ -505,7 +505,7 @@ const Home: React.FC = () => {
             transition={{ duration: 0.4 }}
             className="text-center mb-16"
           >
-            <Badge className="mx-auto">Entra in StackUp Room</Badge>
+            <Badge className="mx-auto">Entra in Stackup Room</Badge>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
@@ -650,7 +650,7 @@ const Home: React.FC = () => {
                 Flessibilità per iniziare
               </p>
               <p className="text-base text-zinc-500 leading-relaxed mb-8">
-                Il piano ideale per chi vuole testare il metodo StackUp Room con
+                Il piano ideale per chi vuole testare il metodo Stackup Room con
                 un impegno flessibile. Accesso completo a tutte le risorse e
                 mentorship 1:1.
               </p>
@@ -710,7 +710,7 @@ const Home: React.FC = () => {
               Il primo passo
             </p>
             <p className="text-base text-zinc-500 leading-relaxed mb-8">
-              Il piano ideale per provare il metodo StackUp Room con un
+              Il piano ideale per provare il metodo Stackup Room con un
               impegno minimo. Accesso completo a tutte le risorse e
               mentorship 1:1.
             </p>
@@ -956,7 +956,7 @@ const Home: React.FC = () => {
               codice legacy o contribuire a un team.
             </p>
             <p>
-              Ho fondato StackUp Room per colmare quel divario. Ogni corso, ogni progetto e ogni
+              Ho fondato Stackup Room per colmare quel divario. Ogni corso, ogni progetto e ogni
               sessione di mentoring è costruita sulla mia esperienza sul campo: niente fluff,
               niente tutorial infiniti. Solo competenze concrete, architetture reali e flussi di
               lavoro che troverai davvero in azienda. Non insegno a programmare, insegno a
@@ -984,7 +984,7 @@ const Home: React.FC = () => {
               Oggi aiuto sviluppatori a fare il salto da junior a professionisti pronti per
               aziende top tier o per lanciare i propri prodotti. Il feedback che ricevo più spesso?
               "Perché nessuno mi ha mai insegnato queste cose prima d'ora." È per questo che
-              continuo a costruire StackUp Room.
+              continuo a costruire Stackup Room.
             </p>
 
             <div className="w-full h-48 sm:h-64 bg-linear-to-br from-zinc-900/80 to-black border border-zinc-800 rounded-xl flex items-center justify-center my-8 overflow-hidden relative">
@@ -1039,7 +1039,7 @@ const Home: React.FC = () => {
           >
             <Badge className="mx-auto">
               Cosa ottieni entrando in{" "}
-              <span className="text-orange-400">StackUp Room</span>
+              <span className="text-orange-400">Stackup Room</span>
             </Badge>
           </motion.div>
 

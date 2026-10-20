@@ -412,7 +412,7 @@ const CoursesCatalog: React.FC = () => {
       <section className="relative max-w-3xl">
         <div className="absolute inset-0 bg-orange-500/5 blur-3xl -z-10" />
         <div>
-          <Badge>Il Metodo StackUp</Badge>
+          <Badge>Il Metodo Stackup</Badge>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-jakarta font-black text-white mb-6 leading-[0.9] tracking-tight">
             Più della teoria, <br />
             <span className="text-orange-400">risultati reali.</span>
@@ -438,7 +438,7 @@ const CoursesCatalog: React.FC = () => {
               Esplora il Catalogo
             </h2>
             <p className="text-zinc-500 font-medium text-sm mt-2">
-              Ogni corso ha lezioni gratuite. Sblocca tutto con StackUp Room.
+              Ogni corso ha lezioni gratuite. Sblocca tutto con Stackup Room.
             </p>
             <div className="w-12 h-1 bg-orange-500/50 rounded-full mt-4"></div>
           </div>
@@ -511,13 +511,13 @@ const CoursesCatalog: React.FC = () => {
       <section className="bg-linear-to-br from-orange-500/10 via-black to-orange-600/5 border border-orange-500/10 p-10 sm:p-14 rounded-2xl relative overflow-hidden text-center">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-orange-500/5 blur-[120px] -z-10" />
         <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-          <Badge>StackUp Room</Badge>
+          <Badge>Stackup Room</Badge>
           <h2 className="text-3xl sm:text-4xl font-jakarta font-black text-white tracking-tight">
             Sblocca <span className="text-orange-400">tutti i corsi.</span>
           </h2>
           <p className="text-zinc-400 font-medium text-base leading-relaxed max-w-lg mx-auto">
             Ogni corso ha una parte gratuita per iniziare subito. Diventa membro
-            di StackUp Room per accedere a lezioni complete, progetti in
+            di Stackup Room per accedere a lezioni complete, progetti in
             produzione e mentoring 1:1.
           </p>
           <div className="grid grid-cols-3 gap-6 max-w-md mx-auto pt-4">
@@ -547,7 +547,7 @@ const CoursesCatalog: React.FC = () => {
               href="/register"
               className="px-8 py-3.5 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-all inline-flex items-center gap-2"
             >
-              Entra in StackUp Room <ArrowRight size={16} />
+              Entra in Stackup Room <ArrowRight size={16} />
             </Link>
             <Link
               href="/paths"

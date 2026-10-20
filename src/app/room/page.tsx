@@ -17,7 +17,7 @@ const RANKS = [
   { min: 1500, title: 'Architetto' },
   { min: 2200, title: 'Maestro' },
   { min: 3000, title: 'Leggenda' },
-  { min: 4000, title: 'StackUp Elite' },
+  { min: 4000, title: 'Stackup Elite' },
 ];
 
 

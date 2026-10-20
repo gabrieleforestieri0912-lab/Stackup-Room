@@ -104,7 +104,7 @@ const Navbar = () => {
      <div className="relative flex items-center justify-center">
       <Image
        src="/stackup.png"
-        alt="StackUp Room Logo"
+        alt="Stackup Room Logo"
        width={40}
        height={40}
         priority
@@ -112,7 +112,7 @@ const Navbar = () => {
       />
      </div>
       <span className="font-extrabold text-base text-white tracking-tight">
-        StackUp Room
+        Stackup Room
       </span>
     </Link>
 

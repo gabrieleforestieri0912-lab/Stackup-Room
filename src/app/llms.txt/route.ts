@@ -17,7 +17,7 @@ export async function GET() {
   lines.push('');
   lines.push(`> ${SITE_TAGLINE}`);
   lines.push('');
-  lines.push('StackUp Room è una piattaforma di corsi di programmazione in italiano, project-based, con mentoring 1:1. Ogni corso include lezioni pratiche, esercizi guidati con checkpoint, materiali di supporto e un certificato finale. I corsi sono pensati per sviluppatori principianti e intermedi che vogliono costruire applicazioni reali.');
+  lines.push('Stackup Room è una piattaforma di corsi di programmazione in italiano, project-based, con mentoring 1:1. Ogni corso include lezioni pratiche, esercizi guidati con checkpoint, materiali di supporto e un certificato finale. I corsi sono pensati per sviluppatori principianti e intermedi che vogliono costruire applicazioni reali.');
   lines.push('');
   lines.push('## Courses');
   lines.push('');

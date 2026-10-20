@@ -13,15 +13,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (guide) {
     return {
-      title: `${guide.title} | StackUp Room`,
+      title: `${guide.title} | Stackup Room`,
       description: guide.desc,
       alternates: { canonical: `/guide/${slug}` },
     };
   }
 
   return {
-    title: 'Guida | StackUp Room',
-    description: 'Guida pratica StackUp Room.',
+    title: 'Guida | Stackup Room',
+    description: 'Guida pratica Stackup Room.',
     alternates: { canonical: `/guide/${slug}` },
   };
 }

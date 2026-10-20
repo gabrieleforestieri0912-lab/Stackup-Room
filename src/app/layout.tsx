@@ -21,8 +21,8 @@ const baseUrl = siteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'StackUp Room | Master Your Code',
-    template: '%s | StackUp Room',
+    default: 'Stackup Room | Master Your Code',
+    template: '%s | Stackup Room',
   },
   description: SITE_TAGLINE,
   keywords: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     'mentoring programmazione',
     'coding bootcamp italiano',
     'sviluppatore web',
-    'StackUp Room',
+    'Stackup Room',
   ],
   applicationName: SITE_NAME,
   authors: [{ name: 'Gabriele Forestieri' }],
@@ -62,13 +62,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: 'it_IT',
     url: baseUrl,
-    title: 'StackUp Room | Master Your Code',
+    title: 'Stackup Room | Master Your Code',
     description: SITE_TAGLINE,
     images: [{ url: absUrl('/stackup-og.svg'), width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'StackUp Room | Master Your Code',
+    title: 'Stackup Room | Master Your Code',
     description: SITE_TAGLINE,
     images: [absUrl('/stackup-og.svg')],
   },

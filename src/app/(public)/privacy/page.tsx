@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
  title: 'Privacy Policy',
- description: 'Privacy Policy di StackUp Room',
+ description: 'Privacy Policy di Stackup Room',
 };
 
 export default function PrivacyPage() {
@@ -12,9 +12,9 @@ export default function PrivacyPage() {
     <h1 className="text-4xl font-jakarta font-black text-zinc-100 mb-8">Privacy Policy</h1>
     <p className="text-sm text-zinc-400 mb-8">Ultimo aggiornamento: 5 settembre 2026</p>
     <div className="prose prose-slate max-w-none space-y-6 text-zinc-400">
-     <p>StackUp Room rispetta la tua privacy. Questa informativa descrive, ai sensi del Reg. UE 2016/679 (GDPR), come raccogliamo e trattiamo i dati personali.</p>
+     <p>Stackup Room rispetta la tua privacy. Questa informativa descrive, ai sensi del Reg. UE 2016/679 (GDPR), come raccogliamo e trattiamo i dati personali.</p>
      <h2 className="text-lg font-bold text-zinc-100">Titolare del trattamento</h2>
-     <p>Gabriele Forestieri — StackUp Room, Milano, Italia. Contatto privacy: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
+     <p>Gabriele Forestieri — Stackup Room, Milano, Italia. Contatto privacy: <span className="text-orange-400">gabriele.forestieri0912@gmail.com</span>.</p>
      <h2 className="text-lg font-bold text-zinc-100">Dati raccolti</h2>
      <p>Account: nome, email, avatar (se usi Google/GitHub OAuth). Uso della piattaforma: corsi acquistati, progressi esercizi, ordini, preferenze.</p>
      <h2 className="text-lg font-bold text-zinc-100">Base giuridica e finalità</h2>

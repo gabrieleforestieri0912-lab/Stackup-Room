@@ -414,7 +414,7 @@ export default function OnboardingPage() {
     <main className="min-h-dvh bg-black text-zinc-100 px-4 py-6 flex items-center justify-center">
       <div className="w-full max-w-lg mx-auto">
         <div className="text-center mb-4">
-          <Image src="/stackup.png" alt="StackUp Room" width={44} height={44} priority className="w-11 h-11 object-contain mx-auto mb-2" />
+          <Image src="/stackup.png" alt="Stackup Room" width={44} height={44} priority className="w-11 h-11 object-contain mx-auto mb-2" />
           <h1 className="text-xl font-extrabold tracking-tight">Configura la Room.</h1>
         </div>
 

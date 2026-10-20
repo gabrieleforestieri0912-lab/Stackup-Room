@@ -111,18 +111,10 @@ export default function RoomSettingsPage() {
 
   const name = String(profile?.name || user?.name || user?.email || 'Utente');
   const email = String(user?.email || '');
-  const handle = profile?.handle as string | null;
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-extrabold tracking-tight text-white flex-1">Impostazioni</h1>
-        {handle && (
-          <Link href={`/u/${handle}`} target="_blank" rel="noreferrer"
-            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-300 hover:border-room transition-all flex items-center gap-1.5">
-            <ExternalLink size={13} /> Profilo pubblico
-          </Link>
-        )}
       </div>
 
       {/* ACCOUNT */}

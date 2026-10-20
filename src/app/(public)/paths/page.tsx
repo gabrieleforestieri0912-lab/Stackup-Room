@@ -73,7 +73,7 @@ const PathsPage = () => {
               <span className="text-orange-400">percorso.</span>
             </h1>
             <p className="text-zinc-400 font-medium text-base sm:text-lg max-w-xl mx-auto">
-              Ogni percorso include lezioni gratuite per iniziare subito. Sblocca tutto diventando membro di StackUp Room.
+              Ogni percorso include lezioni gratuite per iniziare subito. Sblocca tutto diventando membro di Stackup Room.
             </p>
           </motion.div>
 
@@ -193,7 +193,7 @@ const PathsPage = () => {
             className="mt-16"
           >
             <h2 className="text-xl sm:text-2xl font-jakarta font-black text-white tracking-tight text-center mb-8">
-              Perché scegliere un percorso <span className="text-orange-400">StackUp</span>
+              Perché scegliere un percorso <span className="text-orange-400">Stackup</span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {[

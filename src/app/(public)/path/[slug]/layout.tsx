@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: 'Percorso',
-    description: 'Dettaglio percorso StackUp Room.',
+    description: 'Dettaglio percorso Stackup Room.',
     alternates: { canonical: `/path/${slug}` },
   };
 }
@@ -39,7 +39,7 @@ export default async function PathDetailLayout({ children, params }: { children:
         url: absUrl(`/path/${slug}`),
         provider: {
           '@type': 'Organization',
-          name: 'StackUp Room',
+          name: 'Stackup Room',
           url: absUrl('/'),
         },
         educationalProgramMode: 'online',

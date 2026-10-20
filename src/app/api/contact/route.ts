@@ -58,13 +58,13 @@ export async function POST(req: NextRequest) {
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
 
     await resend.emails.send({
-      from: `StackUp <${process.env.RESEND_FROM_EMAIL}>`,
+      from: `Stackup <${process.env.RESEND_FROM_EMAIL}>`,
       replyTo: email,
       to: 'gabriele.forestieri0912@gmail.com',
-      subject: `[StackUp] ${subject || 'Nuovo messaggio'} — da ${name}`,
+      subject: `[Stackup] ${subject || 'Nuovo messaggio'} — da ${name}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-          <h2 style="color:#9333ea;">Nuovo messaggio da StackUp</h2>
+          <h2 style="color:#9333ea;">Nuovo messaggio da Stackup</h2>
           <table style="width:100%;border-collapse:collapse;margin:20px 0;">
             <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:bold;border:1px solid #e2e8f0;">Nome</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${safeName}</td></tr>
             <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:bold;border:1px solid #e2e8f0;">Email</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${safeEmail}</td></tr>
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
             <p style="margin:0;color:#475569;line-height:1.6;">${safeMessage}</p>
           </div>
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
-          <p style="font-size:12px;color:#94a3b8;">StackUp Academy</p>
+          <p style="font-size:12px;color:#94a3b8;">Stackup Academy</p>
         </div>
       `,
     });

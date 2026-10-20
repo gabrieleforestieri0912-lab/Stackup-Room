@@ -13,15 +13,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (resource) {
     return {
-      title: `${resource.title} | StackUp Room`,
+      title: `${resource.title} | Stackup Room`,
       description: resource.desc,
       alternates: { canonical: `/resources/${slug}` },
     };
   }
 
   return {
-    title: 'Risorsa | StackUp Room',
-    description: 'Risorsa StackUp Room.',
+    title: 'Risorsa | Stackup Room',
+    description: 'Risorsa Stackup Room.',
     alternates: { canonical: `/resources/${slug}` },
   };
 }

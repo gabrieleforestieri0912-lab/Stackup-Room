@@ -161,7 +161,7 @@ const GuideSlugPage: React.FC = () => {
               href="/register"
               className="px-8 py-3.5 bg-orange-500 text-white font-bold text-sm hover:bg-orange-400 transition-all shadow-lg shadow-orange-500/20 inline-flex items-center gap-2 rounded-xl"
             >
-              Entra in StackUp Room <ArrowRight size={16} />
+              Entra in Stackup Room <ArrowRight size={16} />
             </Link>
             <Link
               href="/guide"

@@ -64,7 +64,7 @@ const CoursePreview = () => {
  className="min-h-screen bg-black"
  >
  <SEO
- title={`${course.title} — StackUp Academy`}
+ title={`${course.title} — Stackup Academy`}
  description={course.shortDesc}
  url={`/courses/preview/${slugStr}`}
  />

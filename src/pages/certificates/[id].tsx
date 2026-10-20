@@ -80,7 +80,7 @@ const CertificateView: React.FC = () => {
  if (authLoading || loading) {
  return (
  <>
- <SEO title="Certificato - StackUp" description="Certificato di completamento StackUp." />
+ <SEO title="Certificato - Stackup" description="Certificato di completamento Stackup." />
  <div className="min-h-screen flex items-center justify-center bg-black">
  <div className="flex flex-col items-center gap-4">
  <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
@@ -94,7 +94,7 @@ const CertificateView: React.FC = () => {
  if (error || !cert) {
  return (
  <>
- <SEO title="Certificato - StackUp" description="Certificato di completamento StackUp." />
+ <SEO title="Certificato - Stackup" description="Certificato di completamento Stackup." />
  <div className="min-h-screen flex flex-col items-center justify-center bg-black gap-6">
  <p className="text-red-500 font-bold">{error || 'Certificato non trovato'}</p>
  <Link href="/room/you?tab=profile" className="px-6 py-3 bg-black text-white font-bold hover:bg-orange-600 transition-all">
@@ -116,8 +116,8 @@ const CertificateView: React.FC = () => {
  return (
  <>
  <SEO
- title={`Certificato - ${course.title || 'StackUp'}`}
- description={`Certificato di completamento per il corso ${course.title || ''} su StackUp.`}
+ title={`Certificato - ${course.title || 'Stackup'}`}
+ description={`Certificato di completamento per il corso ${course.title || ''} su Stackup.`}
  />
 
  <div className="no-print bg-black border-b border-zinc-800 px-5 py-3 flex items-center justify-between">
@@ -150,7 +150,7 @@ const CertificateView: React.FC = () => {
  </div>
 
  <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-orange-600 mb-4">
- StackUp &mdash; Certificate of Completion
+ Stackup &mdash; Certificate of Completion
  </p>
 
  <h1 className="text-4xl sm:text-4xl font-jakarta font-black text-zinc-100 mb-4 leading-tight">
@@ -170,7 +170,7 @@ const CertificateView: React.FC = () => {
  </p>
 
  <h3 className="text-xl sm:text-2xl font-jakarta font-bold text-orange-600 mb-6">
- {course.title || 'Corso StackUp'}
+ {course.title || 'Corso Stackup'}
  </h3>
 
  <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 mb-6">
@@ -195,7 +195,7 @@ const CertificateView: React.FC = () => {
  <div className="w-5 h-5 rounded bg-black flex items-center justify-center">
  <span className="text-white text-[10px] font-black">S</span>
  </div>
- <span className="text-sm font-bold text-zinc-300">StackUp</span>
+ <span className="text-sm font-bold text-zinc-300">Stackup</span>
  </div>
  <p className="text-[10px] text-zinc-400 font-medium">
  stackup.it &mdash; Formazione tecnica di eccellenza

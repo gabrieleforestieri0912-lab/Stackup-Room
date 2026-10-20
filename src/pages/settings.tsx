@@ -117,7 +117,7 @@ const SettingsPage: React.FC = () => {
   if (authLoading || !user) {
   return (
   <>
-  <SEO title="Impostazioni" description="Gestisci le tue impostazioni su StackUp." />
+  <SEO title="Impostazioni" description="Gestisci le tue impostazioni su Stackup." />
   <div className="min-h-screen bg-black flex">
   <aside className="hidden lg:flex w-72 bg-zinc-900/30 border-r border-zinc-800 flex-col sticky top-0 h-screen pt-20">
   <div className="px-6 py-8 space-y-6">
@@ -149,7 +149,7 @@ const SettingsPage: React.FC = () => {
 
   return (
   <div className="min-h-screen bg-black flex">
-  <SEO title="Impostazioni" description="Gestisci le tue impostazioni su StackUp." />
+  <SEO title="Impostazioni" description="Gestisci le tue impostazioni su Stackup." />
 
   <aside className="hidden lg:flex w-72 bg-zinc-900/30 border-r border-zinc-800 flex-col sticky top-0 h-screen pt-20">
   <div className="px-6 py-8">

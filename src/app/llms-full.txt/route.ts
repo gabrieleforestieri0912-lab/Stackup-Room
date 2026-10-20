@@ -19,9 +19,9 @@ export async function GET() {
   out.push('');
   out.push('## Chi siamo');
   out.push('');
-  out.push('StackUp Room è una piattaforma di formazione in programmazione in lingua italiana fondata da Gabriele Forestieri. L\'approccio è project-based: ogni corso porta lo studente a costruire un progetto reale e deployabile, con esercizi guidati, checkpoint di verifica, materiali di supporto e mentoring 1:1. Non è una raccolta di tutorial: è un metodo strutturato per trasformare principianti e intermedi in sviluppatori pronti per il mondo del lavoro.');
+  out.push('Stackup Room è una piattaforma di formazione in programmazione in lingua italiana fondata da Gabriele Forestieri. L\'approccio è project-based: ogni corso porta lo studente a costruire un progetto reale e deployabile, con esercizi guidati, checkpoint di verifica, materiali di supporto e mentoring 1:1. Non è una raccolta di tutorial: è un metodo strutturato per trasformare principianti e intermedi in sviluppatori pronti per il mondo del lavoro.');
   out.push('');
-  out.push('### Cosa rende StackUp Room diversa');
+  out.push('### Cosa rende Stackup Room diversa');
   out.push('');
   out.push('- Mentorship 1:1 con sviluppatori senior');
   out.push('- Progetti reali che finiscono in produzione e nel portfolio');
@@ -31,7 +31,7 @@ export async function GET() {
   out.push('');
   out.push('## Courses');
   out.push('');
-  out.push('Ogni corso ha una parte gratuita e si sblocca completamente con l\'abbonamento StackUp Room. I corsi includono moduli progressivi, esercizi con XP e streak, e un progetto finale.');
+  out.push('Ogni corso ha una parte gratuita e si sblocca completamente con l\'abbonamento Stackup Room. I corsi includono moduli progressivi, esercizi con XP e streak, e un progetto finale.');
   out.push('');
   for (const c of courses) {
     out.push(`### [${c.title}](${base}/courses/${c.slug})`);
@@ -94,7 +94,7 @@ export async function GET() {
   }
   out.push('## Accesso');
   out.push('');
-  out.push(`La registrazione è gratuita: [registrati qui](${base}/register). L'abbonamento StackUp Room sblocca tutti i corsi, i percorsi completi, le risorse premium e il mentoring 1:1.`);
+  out.push(`La registrazione è gratuita: [registrati qui](${base}/register). L'abbonamento Stackup Room sblocca tutti i corsi, i percorsi completi, le risorse premium e il mentoring 1:1.`);
   out.push('');
   out.push(`Versione sintetica: ${base}/llms.txt`);
 
