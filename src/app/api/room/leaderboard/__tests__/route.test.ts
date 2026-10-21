@@ -69,7 +69,9 @@ describe('GET /api/room/leaderboard?type=points', () => {
     expect(d.rows).toHaveLength(3);
 
     const ada = d.rows[0];
-    expect(ada.user_id).toBe('u-ada');
+    // `user_id` non viene più esposto (identità interna): la riga si identifica
+    // per l'handle mostrato.
+    expect(ada.user_id).toBeUndefined();
     expect(ada.owner).toBe('@ada');
     expect(ada.rank).toBe(1);
     expect(ada.streak).toBe(2);
@@ -84,7 +86,7 @@ describe('GET /api/room/leaderboard?type=points', () => {
   it('chi non condivide i ricavi non li espone e non prende punti da quelli', async () => {
     const res = await GET(req('points'));
     const d = await res.json();
-    const bruno = d.rows.find((r: { user_id: string }) => r.user_id === 'u-bruno');
+    const bruno = d.rows.find((r: { owner: string }) => r.owner === '@bruno');
     expect(bruno).toBeTruthy();
     expect(bruno.mrr_cents).toBe(0);        // privacy: nessun fatturato esposto
     expect(bruno.mrr_shared).toBe(false);
@@ -96,7 +98,7 @@ describe('GET /api/room/leaderboard?type=points', () => {
   it('chi ha solo app prende i punti delle app', async () => {
     const res = await GET(req('points'));
     const d = await res.json();
-    const carla = d.rows.find((r: { user_id: string }) => r.user_id === 'u-carla');
+    const carla = d.rows.find((r: { owner: string }) => r.owner === '@carla');
     expect(carla.total).toBe(50);
     expect(carla.apps).toBe(1);
     expect(carla.streak).toBe(0);
@@ -106,10 +108,10 @@ describe('GET /api/room/leaderboard?type=points', () => {
     const res = await GET(req('revenue'));
     const d = await res.json();
     expect(d.type).toBe('revenue');
-    const ada = d.rows.find((r: { user_id: string }) => r.user_id === 'u-ada');
+    const ada = d.rows.find((r: { owner: string }) => r.owner === '@ada');
     expect(ada.total_cents).toBe(105000);
     expect(ada.startups).toEqual(['Ada App', 'Ada SaaS']);
     // chi non ha show_revenue non compare nella classifica dei ricavi
-    expect(d.rows.some((r: { user_id: string }) => r.user_id === 'u-bruno')).toBe(false);
+    expect(d.rows.some((r: { owner: string }) => r.owner === '@bruno')).toBe(false);
   });
 });

@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
       rank: r.rank,
       owner: label(r.user_id),
       mrr_cents: r.total_cents,
+      total_cents: r.total_cents,
       currency: r.currency,
       verified: r.verified,
       // I nomi delle startup di un founder anonimo lo identificherebbero: mascherati.
@@ -140,8 +141,19 @@ export async function GET(req: NextRequest) {
           };
         }),
     ).map((r) => ({
-      ...r,
+      // `user_id` non viene esposto: è l'UUID interno che renderebbe reversibile
+      // l'anonimato (permette di collegare la riga a un profilo/handle).
+      rank: r.rank,
       owner: label(r.user_id),
+      streak: r.streak,
+      mrr_cents: r.mrr_cents,
+      contributions: r.contributions,
+      apps: r.apps,
+      streak_points: r.streak_points,
+      revenue_points: r.revenue_points,
+      contributions_points: r.contributions_points,
+      apps_points: r.apps_points,
+      total: r.total,
       mrr_verified: perUser.get(r.user_id)?.verified ?? false,
       mrr_shared: sharesRevenue.has(r.user_id),
       contributions_week: contribWeek.get(r.user_id) || 0,
