@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getAccessToken } from '@/lib/auth-token';
-import { ArrowRight, Loader2, Trophy } from 'lucide-react';
+import { ArrowRight, Loader2, Trophy, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 type Profile = Record<string, unknown>;
 type Cert = { id: string; courseTitle: string; completedAt: string; finalScore: number };
+type HandleStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'error';
 
 export default function ProfileTab() {
   const { user, loading, logout } = useAuth();
@@ -20,6 +21,8 @@ export default function ProfileTab() {
   const [confirmDelete, setConfirmDelete] = useState('');
   const [certs, setCerts] = useState<Cert[]>([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [handleStatus, setHandleStatus] = useState<HandleStatus>('idle');
+  const [handleDraft, setHandleDraft] = useState<string | null>(null);
 
   const load = async () => {
     const token = await getAccessToken();
@@ -38,11 +41,41 @@ export default function ProfileTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user]);
 
+  // Handle corrente in editing (null = non ancora modificato).
+  const handleValue = handleDraft ?? String(profile?.handle ?? '');
+
+  // Verifica disponibilità handle con debounce (dopo che l'utente smette di digitare).
+  useEffect(() => {
+    const saved = String(profile?.handle ?? '');
+    if (handleValue === saved) { setHandleStatus('idle'); return; }
+    if (handleValue.length < 3) { setHandleStatus('idle'); return; }
+    if (!/^[a-z0-9_]{3,24}$/.test(handleValue)) { setHandleStatus('invalid'); return; }
+    setHandleStatus('checking');
+    const t = setTimeout(async () => {
+      try {
+        const token = await getAccessToken();
+        const res = await fetch(`/api/room/handle?handle=${encodeURIComponent(handleValue)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) { setHandleStatus('error'); return; }
+        const d = await res.json();
+        setHandleStatus(d.available ? 'available' : 'taken');
+      } catch {
+        setHandleStatus('error');
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [handleValue, profile?.handle]);
+
   const set = (k: string, v: unknown) => setProfile((p) => ({ ...(p || {}), [k]: v }));
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    setErr(''); setMsg(''); setSaving(true);
+    setErr(''); setMsg('');
+    // Non si salva un handle già preso da qualcun altro (la verifica sotto
+    // l'input lo segnala; il PATCH lo rifiuterebbe comunque con 409).
+    if (handleStatus === 'taken') { setErr('Questo handle è già in uso.'); return; }
+    setSaving(true);
     try {
       const token = await getAccessToken();
       const res = await fetch('/api/room/profile', {
@@ -58,6 +91,8 @@ export default function ProfileTab() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Errore salvataggio');
       setProfile(data.profile);
+      setHandleDraft(null);
+      setHandleStatus('idle');
       setMsg('Profilo salvato.');
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : 'Errore');
@@ -146,7 +181,41 @@ export default function ProfileTab() {
       <form onSubmit={save} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className={label} htmlFor="s-name">Nome</label><input id="s-name" className={input} value={String(profile.name || '')} onChange={(e) => set('name', e.target.value)} /></div>
-          <div><label className={label} htmlFor="s-handle">Handle</label><input id="s-handle" className={input} value={String(profile.handle || '')} onChange={(e) => set('handle', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} /></div>
+          <div>
+            <label className={label} htmlFor="s-handle">Handle</label>
+            <input
+              id="s-handle"
+              aria-describedby="s-handle-status"
+              className={input}
+              value={handleValue}
+              onChange={(e) => {
+                const next = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
+                setHandleDraft(next);
+                set('handle', next);
+              }}
+              placeholder="adalov"
+              minLength={3}
+            />
+            <p
+              id="s-handle-status"
+              role="status"
+              aria-live="polite"
+              className={`mt-1 flex items-center gap-1 text-[10px] font-bold ${
+                handleStatus === 'available' ? 'text-emerald-400' :
+                handleStatus === 'taken' ? 'text-red-400' :
+                handleStatus === 'error' ? 'text-amber-400' :
+                handleStatus === 'checking' ? 'text-zinc-500' : 'text-zinc-600'
+              }`}
+            >
+              {handleStatus === 'available' && <><CheckCircle2 size={12} /> Disponibile</>}
+              {handleStatus === 'taken' && <><XCircle size={12} /> Già in uso</>}
+              {handleStatus === 'checking' && <><Loader2 size={12} className="animate-spin" /> Verifica...</>}
+              {handleStatus === 'invalid' && <><AlertCircle size={12} /> Formato non valido</>}
+              {handleStatus === 'error' && <><AlertCircle size={12} /> Verifica non disponibile, riprova</>}
+              {handleStatus === 'idle' && handleValue && handleValue === String(profile?.handle ?? '') && <><CheckCircle2 size={12} /> È il tuo handle attuale</>}
+              {handleStatus === 'idle' && !(handleValue && handleValue === String(profile?.handle ?? '')) && <><AlertCircle size={12} /> Almeno 3 caratteri</>}
+            </p>
+          </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className={label} htmlFor="s-loc">Località</label><input id="s-loc" className={input} value={String(profile.locality || '')} onChange={(e) => set('locality', e.target.value)} placeholder="Milano, IT" /></div>

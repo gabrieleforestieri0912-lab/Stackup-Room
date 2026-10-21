@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireUser, unauthorized } from '@/lib/room/api';
 import { normalizeHandle, isValidHandle } from '@/lib/room/validation';
+import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -10,6 +11,9 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   const { user } = await requireUser(req);
   if (!user) return unauthorized();
+  // La verifica parte a ogni digitazione: serve un tetto per non martellare il DB.
+  const rl = await rateLimit(rateLimitKey(req, `handle-check:${user.id}`), 60, 60_000);
+  if (!rl.allowed) return NextResponse.json({ available: false, reason: 'rate_limited' }, { status: 429 });
 
   const h = normalizeHandle(new URL(req.url).searchParams.get('handle'));
   if (!isValidHandle(h)) {

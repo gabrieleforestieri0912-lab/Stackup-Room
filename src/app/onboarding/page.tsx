@@ -204,7 +204,7 @@ export default function OnboardingPage() {
   }>(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'error'>('idle');
   const fileRef = useRef<HTMLInputElement>(null);
   const [situation, setSituation] = useState<string>(SITUATIONS[0]);
   const [startupStatus, setStartupStatus] = useState<StartupStatusId | ''>('');
@@ -238,11 +238,11 @@ export default function OnboardingPage() {
         const res = await fetch(`/api/room/handle?handle=${encodeURIComponent(handle)}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        if (!res.ok) { setHandleStatus('idle'); return; }
+        if (!res.ok) { setHandleStatus('error'); return; }
         const d = await res.json();
         setHandleStatus(d.available ? 'available' : 'taken');
       } catch {
-        setHandleStatus('idle');
+        setHandleStatus('error');
       }
     }, 500);
     return () => clearTimeout(t);
@@ -534,6 +534,7 @@ export default function OnboardingPage() {
                   className={`mt-1 flex items-center gap-1 text-[10px] font-bold ${
                     handleStatus === 'available' ? 'text-emerald-400' :
                     handleStatus === 'taken' ? 'text-red-400' :
+                    handleStatus === 'error' ? 'text-amber-400' :
                     handleStatus === 'checking' ? 'text-zinc-500' : 'text-zinc-600'
                   }`}
                 >
@@ -541,6 +542,7 @@ export default function OnboardingPage() {
                   {handleStatus === 'taken' && <><XCircle size={12} /> Già in uso</>}
                   {handleStatus === 'checking' && <><Loader2 size={12} className="animate-spin" /> Verifica...</>}
                   {handleStatus === 'invalid' && <><AlertCircle size={12} /> Formato non valido</>}
+                  {handleStatus === 'error' && <><AlertCircle size={12} /> Verifica non disponibile, riprova</>}
                   {handleStatus === 'idle' && <><AlertCircle size={12} /> Almeno 3 caratteri</>}
                 </p>
               </div>
